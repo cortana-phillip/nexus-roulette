@@ -13,7 +13,8 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{background:#0f1923;min-height:100%;}
-button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-family:inherit;cursor:pointer;}
+button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-family:inherit;cursor:pointer;transition:transform 0.08s,opacity 0.08s;}
+button:active{transform:scale(0.93);opacity:0.8;}
 #root{min-height:100vh;}
 </style>
 </head>
@@ -369,6 +370,13 @@ var TRACK_ICONS = {
 var KEY = "nexus-roulette-v1";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
+
+// Global haptic feedback helper
+function haptic(ms) {
+  try {
+    if (navigator.vibrate) navigator.vibrate(ms || 8);
+  } catch (e) {}
+}
 var CURRENCIES = {
   USD: {
     symbol: "$",
@@ -2590,7 +2598,8 @@ function FibGrid(_ref22) {
     return /*#__PURE__*/React.createElement("button", {
       key: val,
       onClick: function onClick() {
-        return onNumber(val);
+        haptic(12);
+        onNumber(val);
       },
       onContextMenu: function onContextMenu(e) {
         e.preventDefault();
@@ -2653,7 +2662,8 @@ function FibGrid(_ref22) {
     return /*#__PURE__*/React.createElement("button", {
       key: v,
       onClick: function onClick() {
-        return onNumber(v);
+        haptic(12);
+        onNumber(v);
       },
       style: {
         padding: "11px 0",
@@ -2788,7 +2798,8 @@ function SolGrid(_ref27) {
     return /*#__PURE__*/React.createElement("button", {
       key: v,
       onClick: function onClick() {
-        return onNumber(v);
+        haptic(12);
+        onNumber(v);
       },
       style: {
         padding: "9px 0",
@@ -2827,7 +2838,8 @@ function SolGrid(_ref27) {
     return /*#__PURE__*/React.createElement("button", {
       key: val,
       onClick: function onClick() {
-        return onNumber(val);
+        haptic(12);
+        onNumber(val);
       },
       style: {
         padding: "7px 0",
@@ -6052,7 +6064,6 @@ function SimModePage(_ref59) {
       }
     }, "$", v >= 1000 ? v / 1000 + "K" : v);
   })))))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Lbl, null, "Strategies to Benchmark (" + simCfg.strategies.length + ")"), simCfg.strategies.map(function (strat, i) {
-    var _strat$config$colTarg;
     return /*#__PURE__*/React.createElement("div", {
       key: i,
       style: {
@@ -6062,7 +6073,16 @@ function SimModePage(_ref59) {
         border: "1px solid #2d4057",
         marginBottom: 8
       }
-    }, /*#__PURE__*/React.createElement("div", {
+    }, editStratIdx === i ? /*#__PURE__*/React.createElement(SimStratEditor, {
+      strat: strat,
+      idx: i,
+      simCfg: simCfg,
+      setSimCfg: setSimCfg,
+      cur: cur,
+      onClose: function onClose() {
+        return setEditStratIdx(null);
+      }
+    }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         justifyContent: "space-between",
@@ -6082,7 +6102,7 @@ function SimModePage(_ref59) {
       }
     }, /*#__PURE__*/React.createElement("button", {
       onClick: function onClick() {
-        return setEditStratIdx(editStratIdx === i ? null : i);
+        return setEditStratIdx(i);
       },
       style: {
         padding: "3px 8px",
@@ -6093,7 +6113,7 @@ function SimModePage(_ref59) {
         fontSize: 9,
         cursor: "pointer"
       }
-    }, "\u270F\uFE0F"), /*#__PURE__*/React.createElement("button", {
+    }, "\u270F\uFE0F Edit"), /*#__PURE__*/React.createElement("button", {
       onClick: function onClick() {
         return removeStrategy(i);
       },
@@ -6113,18 +6133,9 @@ function SimModePage(_ref59) {
       }
     }, strat.type === "fibonacci" ? "".concat(strat.config.betMode || "progression", " \xB7 ").concat((strat.config.evenTargets || []).length > 0 ? strat.config.evenTargets.join("+") : ((strat.config.dozenTargets || []).map(function (d) {
       return DZ_LABELS[d];
-    }).join("+") || "--") + (((_strat$config$colTarg = strat.config.colTargets) === null || _strat$config$colTarg === void 0 ? void 0 : _strat$config$colTarg.length) > 0 ? " + " + strat.config.colTargets.map(function (c) {
+    }).join("+") || "--") + (strat.config.colTargets && strat.config.colTargets.length > 0 ? " + " + strat.config.colTargets.map(function (c) {
       return COL_LABELS[c];
-    }).join("+") : "")) : "Solution \xB7 entry ".concat(strat.config.entryThreshold), " \xB7 ROI ", strat.config.roi, "% \xB7 stop $", cur.symbol, strat.config.stopLoss), editStratIdx === i && /*#__PURE__*/React.createElement(SimStratEditor, {
-      strat: strat,
-      idx: i,
-      simCfg: simCfg,
-      setSimCfg: setSimCfg,
-      cur: cur,
-      onClose: function onClose() {
-        return setEditStratIdx(null);
-      }
-    }));
+    }).join("+") : "")) : "Solution \xB7 entry ".concat(strat.config.entryThreshold), " \xB7 ROI ", strat.config.roi, "% \xB7 stop ", cur.symbol, strat.config.stopLoss)));
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -6133,7 +6144,8 @@ function SimModePage(_ref59) {
     }
   }, /*#__PURE__*/React.createElement("button", {
     onClick: function onClick() {
-      return addStrategy("fibonacci");
+      addStrategy("fibonacci");
+      setEditStratIdx(simCfg.strategies.length);
     },
     style: {
       flex: 1,
@@ -6147,7 +6159,8 @@ function SimModePage(_ref59) {
     }
   }, "+ Progression Bet"), /*#__PURE__*/React.createElement("button", {
     onClick: function onClick() {
-      return addStrategy("solution");
+      addStrategy("solution");
+      setEditStratIdx(simCfg.strategies.length);
     },
     style: {
       flex: 1,
@@ -6771,7 +6784,68 @@ function SimStratEditor(_ref68) {
         cursor: "pointer"
       }
     }, l);
-  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Even Money"), /*#__PURE__*/React.createElement("div", {
+  }))), cfg.parkRules && (cfg.parkRules.followTheLeader || cfg.parkRules.droughtThreshold) ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Outside Bet Type ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#a78bfa"
+    }
+  }, "(auto-picks best)")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 5,
+      marginBottom: 6
+    }
+  }, (cfg.parkRules.followTheLeader ? [["dozens", "📊 Dozens"], ["columns", "📊 Columns"], ["even", "🎯 Even Money"]] : [["dozens", "📊 Set of 12"], ["even", "🎯 Even Money"]]).map(function (_ref71) {
+    var _ref72 = _slicedToArray(_ref71, 2),
+      t = _ref72[0],
+      l = _ref72[1];
+    var sel = cfg.ftlTargetType === t || t === "dozens" && cfg.ftlTargetType === "columns";
+    return /*#__PURE__*/React.createElement("button", {
+      key: t,
+      onClick: function onClick() {
+        return upCfg("ftlTargetType", t);
+      },
+      style: {
+        flex: 1,
+        padding: "7px 0",
+        borderRadius: 8,
+        border: "2px solid " + (sel ? "#a78bfa" : "#2d4057"),
+        background: sel ? "#1a0a2e" : "#0f1923",
+        color: sel ? "#c4b5fd" : "#64748b",
+        fontSize: 10,
+        fontWeight: 700,
+        cursor: "pointer"
+      }
+    }, l);
+  })), cfg.parkRules.followTheLeader && (cfg.ftlTargetType === "dozens" || cfg.ftlTargetType === "columns") && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 5
+    }
+  }, [1, 2].map(function (n) {
+    var sel = (cfg.ftlCount || 1) === n;
+    return /*#__PURE__*/React.createElement("button", {
+      key: n,
+      onClick: function onClick() {
+        return upCfg("ftlCount", n);
+      },
+      style: {
+        flex: 1,
+        padding: "6px 0",
+        borderRadius: 7,
+        border: "2px solid " + (sel ? "#a78bfa" : "#2d4057"),
+        background: sel ? "#1a0a2e" : "#0f1923",
+        color: sel ? "#c4b5fd" : "#64748b",
+        fontSize: 10,
+        fontWeight: 700,
+        cursor: "pointer"
+      }
+    }, n, " at a time");
+  })), !cfg.ftlTargetType && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "#f87171"
+    }
+  }, "\u26A0 Select a bet type.")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Even Money"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr 1fr",
@@ -6886,7 +6960,7 @@ function SimStratEditor(_ref68) {
         cursor: "pointer"
       }
     }, COL_LABELS[i]);
-  }))))), strat.type === "solution" && /*#__PURE__*/React.createElement("div", {
+  })))))), strat.type === "solution" && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -7196,14 +7270,14 @@ function App() {
   if (!settings.onboarded) {
     return /*#__PURE__*/React.createElement(OnboardingScreen, {
       initialBankroll: settings._restartBankroll,
-      onComplete: function onComplete(_ref71) {
-        var roulette = _ref71.roulette,
-          bankroll = _ref71.bankroll,
-          defaultBuyIn = _ref71.defaultBuyIn,
-          curr = _ref71.currency,
-          tableMinBet = _ref71.tableMinBet,
-          tableMaxBet = _ref71.tableMaxBet,
-          tableMaxTotal = _ref71.tableMaxTotal;
+      onComplete: function onComplete(_ref73) {
+        var roulette = _ref73.roulette,
+          bankroll = _ref73.bankroll,
+          defaultBuyIn = _ref73.defaultBuyIn,
+          curr = _ref73.currency,
+          tableMinBet = _ref73.tableMinBet,
+          tableMaxBet = _ref73.tableMaxBet,
+          tableMaxTotal = _ref73.tableMaxTotal;
         updApp(function (s) {
           var prevBankroll = s.settings._restartBankroll;
           s.settings.onboarded = true;
@@ -8302,10 +8376,10 @@ function App() {
       l: "JP Profit",
       v: (outcomes.jackpot.profit * (primaryTrack.config.unit || 1) >= 0 ? "+" : "-") + cur.symbol + Math.abs(outcomes.jackpot.profit * (primaryTrack.config.unit || 1)).toFixed(cur.dec),
       c: outcomes.jackpot.profit >= 0 ? "#4ade80" : "#f87171"
-    }].map(function (_ref72) {
-      var l = _ref72.l,
-        v = _ref72.v,
-        c = _ref72.c;
+    }].map(function (_ref74) {
+      var l = _ref74.l,
+        v = _ref74.v,
+        c = _ref74.c;
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -8387,10 +8461,10 @@ function App() {
       l: "Partial Profit",
       v: outcomes ? signChips(outcomes.partial.profit, primaryTrack.config.unit || 1, currency) : "--",
       c: outcomes && outcomes.partial.profit >= 0 ? "#4ade80" : "#f97316"
-    }].map(function (_ref73) {
-      var l = _ref73.l,
-        v = _ref73.v,
-        c = _ref73.c;
+    }].map(function (_ref75) {
+      var l = _ref75.l,
+        v = _ref75.v,
+        c = _ref75.c;
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -8719,10 +8793,10 @@ function App() {
         flexDirection: "column",
         gap: 3
       }
-    }, legendRows.map(function (_ref74) {
-      var _ref75 = _slicedToArray(_ref74, 2),
-        abbr = _ref75[0],
-        desc = _ref75[1];
+    }, legendRows.map(function (_ref76) {
+      var _ref77 = _slicedToArray(_ref76, 2),
+        abbr = _ref77[0],
+        desc = _ref77[1];
       return /*#__PURE__*/React.createElement("div", {
         key: abbr,
         style: {
@@ -9045,10 +9119,10 @@ function App() {
       l: "Net P&L",
       v: (pnlVal >= 0 ? "+" : "-") + cur.symbol + Math.abs(pnlVal).toFixed(cur.dec),
       c: pnlColor
-    }].map(function (_ref76) {
-      var l = _ref76.l,
-        v = _ref76.v,
-        c = _ref76.c;
+    }].map(function (_ref78) {
+      var l = _ref78.l,
+        v = _ref78.v,
+        c = _ref78.c;
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -9193,11 +9267,11 @@ function App() {
           gap: 6,
           marginBottom: 8
         }
-      }, [["Wins", g.wins, "#4ade80"], ["Losses", g.losses, "#f87171"], ["Win Rate", winRate, "#86efac"]].map(function (_ref77) {
-        var _ref78 = _slicedToArray(_ref77, 3),
-          l = _ref78[0],
-          v = _ref78[1],
-          c = _ref78[2];
+      }, [["Wins", g.wins, "#4ade80"], ["Losses", g.losses, "#f87171"], ["Win Rate", winRate, "#86efac"]].map(function (_ref79) {
+        var _ref80 = _slicedToArray(_ref79, 3),
+          l = _ref80[0],
+          v = _ref80[1],
+          c = _ref80[2];
         return /*#__PURE__*/React.createElement("div", {
           key: l,
           style: {
@@ -9422,10 +9496,10 @@ function App() {
         display: "flex",
         gap: 8
       }
-    }, [["american", "🇺🇸 American (00)"], ["european", "🇪🇺 European"]].map(function (_ref79) {
-      var _ref80 = _slicedToArray(_ref79, 2),
-        v = _ref80[0],
-        label = _ref80[1];
+    }, [["american", "🇺🇸 American (00)"], ["european", "🇪🇺 European"]].map(function (_ref81) {
+      var _ref82 = _slicedToArray(_ref81, 2),
+        v = _ref82[0],
+        label = _ref82[1];
       return /*#__PURE__*/React.createElement("button", {
         key: v,
         onClick: function onClick() {
@@ -9515,10 +9589,10 @@ function App() {
       label: "Max Total (per spin)",
       key: "tableMaxTotal",
       color: "#f87171"
-    }].map(function (_ref81) {
-      var label = _ref81.label,
-        key = _ref81.key,
-        color = _ref81.color;
+    }].map(function (_ref83) {
+      var label = _ref83.label,
+        key = _ref83.key,
+        color = _ref83.color;
       var val = settings[key] || 1;
       function dec() {
         if (key === "tableMinBet") {
@@ -9697,8 +9771,8 @@ function App() {
   }
 
   // -- Bankroll Edit --
-  function BankrollEdit(_ref82) {
-    var onClose = _ref82.onClose;
+  function BankrollEdit(_ref84) {
+    var onClose = _ref84.onClose;
     var _useState97 = (0, _react.useState)(sess.bankrollCurrent),
       _useState98 = _slicedToArray(_useState97, 2),
       val = _useState98[0],
