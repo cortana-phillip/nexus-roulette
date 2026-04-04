@@ -3,13 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>Nexus Roulette — Diagnostic</title>
-<style>body{background:#0f1923;margin:0;padding:20px 0;}h3{color:#94a3b8;font-family:monospace;padding:16px;margin:0;}</style>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nexus Roulette">
+<meta name="theme-color" content="#0f1923">
+<link rel="manifest" href="manifest.json">
+<title>Nexus Roulette Tracker</title>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}html,body{background:#0f1923;min-height:100%;}button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-family:inherit;cursor:pointer;}#root{min-height:100vh;}</style>
 </head>
 <body>
-<h3>Nexus Roulette Diagnostic</h3>
 <div id="root"></div>
-<script>window.onerror=function(m,s,l,c,e){document.getElementById('root').innerHTML+='<div style="font-family:monospace;font-size:12px;padding:2px 16px;color:#f87171">GLOBAL ERROR: '+m+' (line '+l+')</div>';return true;};</script>
 <script>/**
  * @license React
  * react.production.min.js
@@ -310,32 +313,12 @@ var d=null!=c&&c.hydratedSources||null,e=!1,f="",g=aj;null!==c&&void 0!==c&&(!0=
 function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmountComponentAtNode=function(a){if(!Vd(a))throw Error(m(40));return a._reactRootContainer?(yb(function(){Wd(null,null,a,!1,function(){a._reactRootContainer=null;a[Ja]=null})}),!0):!1};Q.unstable_batchedUpdates=Tf;Q.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!Vd(c))throw Error(m(200));if(null==a||void 0===a._reactInternals)throw Error(m(38));return Wd(a,b,c,!1,d)};Q.version="18.3.1-next-f1338f8080-20240426"});
 })();
 </script>
-<script>(function(){
-  var root = document.getElementById('root');
-  function log(msg, color) {
-    root.innerHTML += '<div style="font-family:monospace;font-size:12px;padding:2px 16px;color:'+(color||'#4ade80')+'">'+msg+'</div>';
-  }
-
-  log('Step 1: IIFE running');
-
-  function require(m){
-    if(m==='react') { log('Step 2a: requiring react'); return window.React; }
-    if(m==='react-dom') { return window.ReactDOM; }
-    return{};
-  }
-
-  log('Step 2: require() defined');
-
-  if(!window.React){ log('ERROR: window.React is undefined!','#f87171'); return; }
-  if(!window.ReactDOM){ log('ERROR: window.ReactDOM is undefined!','#f87171'); return; }
-  log('Step 3: React='+typeof window.React+' ReactDOM='+typeof window.ReactDOM);
-  log('Step 3b: createRoot='+typeof window.ReactDOM.createRoot);
-
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}
+(function(){
+  function require(m){if(m==='react')return window.React;if(m==='react-dom')return window.ReactDOM;return{};}
   var module={exports:{}},exports=module.exports;
-  log('Step 4: module initialized');
-
-  try {
-    "use strict";
+  "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -5143,44 +5126,22 @@ function App() {
     onExport: exportJSON
   }));
 }
-    log('Step 5: module code ran OK');
-  } catch(e) {
-    log('ERROR in module: '+e.message,'#f87171');
-    log(e.stack,'#f87171');
-    return;
-  }
-
   var App=module.exports['default']||module.exports;
-  log('Step 6: App='+typeof App+' name='+App.name);
-
-  if(typeof App!=='function'){ log('ERROR: App is not a function','#f87171'); return; }
-
-  class EB extends React.Component {
+  class EB extends React.Component{
     constructor(p){super(p);this.state={e:null};}
     static getDerivedStateFromError(e){return{e:e};}
-    componentDidCatch(e,i){
-      document.getElementById('root').innerHTML='<pre style="color:#f87171;padding:20px;font-size:11px;white-space:pre-wrap;margin:0">React Error:\n'+e.message+'\n\n'+e.stack+'</pre>';
-    }
     render(){
       if(this.state.e)return React.createElement('pre',
         {style:{color:'#f87171',padding:'20px',fontSize:'11px',whiteSpace:'pre-wrap',background:'#0f1923',minHeight:'100vh',margin:0}},
-        'React Error: '+this.state.e.message+'\n\n'+this.state.e.stack
+        'Error: '+this.state.e.message+'\n\n'+this.state.e.stack
       );
       return this.props.children;
     }
   }
-
-  log('Step 7: ErrorBoundary defined');
-
-  try {
-    var r = ReactDOM.createRoot(document.getElementById('root'));
-    log('Step 8: createRoot OK');
-    r.render(React.createElement(EB,null,React.createElement(App,null)));
-    log('Step 9: render() called');
-  } catch(e) {
-    log('ERROR in render: '+e.message,'#f87171');
-    log(e.stack,'#f87171');
-  }
-})();</script>
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    React.createElement(EB,null,React.createElement(App,null))
+  );
+})();
+</script>
 </body>
 </html>
