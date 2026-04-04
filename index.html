@@ -5332,16 +5332,16 @@ function App() {
           flexShrink: 0
         }
       }), TRACK_ICONS[t.type], " Lvl ", t.level);
-    }))), !primaryTrack && /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Lbl, null, sess.sessionStartedAt ? "Tap Winning Number" : "Catch-up — Tap to Log Spin"), /*#__PURE__*/React.createElement(FibGrid, {
+    }))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Lbl, null, sess.sessionStartedAt ? "Tap Winning Number" : "Catch-up — Tap to Log Spin"), /*#__PURE__*/React.createElement(FibGrid, {
       onNumber: function onNumber(v) {
         return tapNumber(v, nonClosedTracks.some(function (t) {
           return t.state === "active";
         }));
       },
       onGhost: ghostSpin,
-      dozenTargets: [],
-      colTargets: [],
-      fibRow: null,
+      dozenTargets: primaryTrack && primaryTrack.type === "fibonacci" ? dts : [],
+      colTargets: primaryTrack && primaryTrack.type === "fibonacci" ? cts : [],
+      fibRow: primaryTrack && primaryTrack.type === "fibonacci" ? row : null,
       trackOverlays: trackOverlays,
       flashNum: flashNum
     }), /*#__PURE__*/React.createElement("div", {
