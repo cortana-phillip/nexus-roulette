@@ -296,7 +296,7 @@ c,!1,d,e);a[Ja]=b.current;sc(8===a.nodeType?a.parentNode:a);return new Xf(b)};Q.
 var d=null!=c&&c.hydratedSources||null,e=!1,f="",g=aj;null!==c&&void 0!==c&&(!0===c.unstable_strictMode&&(e=!0),void 0!==c.identifierPrefix&&(f=c.identifierPrefix),void 0!==c.onRecoverableError&&(g=c.onRecoverableError));b=Wi(b,null,a,1,null!=c?c:null,e,!1,f,g);a[Ja]=b.current;sc(a);if(d)for(a=0;a<d.length;a++)c=d[a],e=c._getVersion,e=e(c._source),null==b.mutableSourceEagerHydrationData?b.mutableSourceEagerHydrationData=[c,e]:b.mutableSourceEagerHydrationData.push(c,e);return new Ud(b)};Q.render=
 function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmountComponentAtNode=function(a){if(!Vd(a))throw Error(m(40));return a._reactRootContainer?(yb(function(){Wd(null,null,a,!1,function(){a._reactRootContainer=null;a[Ja]=null})}),!0):!1};Q.unstable_batchedUpdates=Tf;Q.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!Vd(c))throw Error(m(200));if(null==a||void 0===a._reactInternals)throw Error(m(38));return Wd(a,b,c,!1,d)};Q.version="18.3.1-next-f1338f8080-20240426"});
 })();
-</script><script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js");}(function(){function require(m){if(m==="react")return window.React;if(m==="react-dom")return window.ReactDOM;return{};}var module={exports:{}},exports=module.exports;"use strict";
+</script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}(function(){function require(m){if(m==='react')return window.React;if(m==='react-dom')return window.ReactDOM;return{};}var module={exports:{}},exports=module.exports;"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -4316,7 +4316,41 @@ function App() {
       }]);
     });
   }
+  function autoExport(allSessions) {
+    try {
+      var data = {
+        exportedAt: new Date().toISOString(),
+        autoExport: true,
+        sessions: allSessions.map(function (s) {
+          return _objectSpread(_objectSpread({}, s), {}, {
+            metrics: computeMetrics(s)
+          });
+        }),
+        aggregate: {
+          totalSessions: allSessions.length,
+          totalSpins: allSessions.reduce(function (a, s) {
+            return a + s.spins.length;
+          }, 0),
+          netPnL: allSessions.reduce(function (a, s) {
+            return a + (s.bankrollCurrent - s.bankroll);
+          }, 0)
+        }
+      };
+      var blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json"
+      });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "nexus-roulette-autosave-" + new Date().toISOString().slice(0, 10) + ".json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {/* silently fail if download blocked */}
+  }
   function saveSession() {
+    var allSessions;
     updApp(function (s) {
       s.currentSession.modified = Date.now();
       s.currentSession.metrics = computeMetrics(s.currentSession);
@@ -4324,9 +4358,15 @@ function App() {
         return x.id === s.currentSession.id;
       });
       if (idx >= 0) s.savedSessions[idx] = JSON.parse(JSON.stringify(s.currentSession));else s.savedSessions.push(JSON.parse(JSON.stringify(s.currentSession)));
+      allSessions = s.savedSessions;
     });
+    // Auto-export backup to Downloads after every save
+    setTimeout(function () {
+      return autoExport(allSessions);
+    }, 300);
   }
   function endSession() {
+    var allSessions;
     updApp(function (s) {
       s.currentSession.sessionEndedAt = Date.now();
       s.currentSession.modified = Date.now();
@@ -4335,9 +4375,12 @@ function App() {
         return x.id === s.currentSession.id;
       });
       if (idx >= 0) s.savedSessions[idx] = JSON.parse(JSON.stringify(s.currentSession));else s.savedSessions.push(JSON.parse(JSON.stringify(s.currentSession)));
-      // Start fresh session
+      allSessions = s.savedSessions;
       s.currentSession = newSession(s.currentSession.roulette, s.currentSession.bankrollCurrent);
     });
+    setTimeout(function () {
+      return autoExport(allSessions);
+    }, 300);
     setTab(0);
   }
   function ghostSpin(val) {
@@ -6605,4 +6648,4 @@ function App() {
     },
     onExport: exportJSON
   }));
-}var App=module.exports["default"]||module.exports;class EB extends React.Component{constructor(p){super(p);this.state={e:null};}static getDerivedStateFromError(e){return{e:e};}render(){if(this.state.e)return React.createElement("pre",{style:{color:"#f87171",padding:"20px",fontSize:"11px",whiteSpace:"pre-wrap",background:"#0f1923",minHeight:"100vh",margin:0}},"Error: "+this.state.e.message+"\n\n"+this.state.e.stack);return this.props.children;}}ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(EB,null,React.createElement(App,null)));})();</script></body></html>
+}var App=module.exports['default']||module.exports;class EB extends React.Component{constructor(p){super(p);this.state={e:null};}static getDerivedStateFromError(e){return{e:e};}render(){if(this.state.e)return React.createElement('pre',{style:{color:'#f87171',padding:'20px',fontSize:'11px',whiteSpace:'pre-wrap',background:'#0f1923',minHeight:'100vh',margin:0}},'Error: '+this.state.e.message+'\n\n'+this.state.e.stack);return this.props.children;}}ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(EB,null,React.createElement(App,null)));})();</script></body></html>
