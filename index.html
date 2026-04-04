@@ -4169,40 +4169,12 @@ function defaultSimConfig() {
     sessions: 100,
     spinsPerSession: 500,
     roulette: "european",
-    gravityMode: false,
-    gravityBonusNums: 3,
     strategies: [] // array of {type, config} same shape as live tracks
   };
 }
-var GRAVITY_MULTIPLIERS = [50, 100, 150, 200, 1000];
-var GRAVITY_WEIGHTS = [0.042, 0.020, 0.010, 0.006, 0.0015]; // ~7% combined per num per spin
-
 function spinWheel(roulette) {
   var nums = getWheelNums(roulette);
   return nums[Math.floor(Math.random() * nums.length)];
-}
-function gravityBonus(wheelNums, bonusCount) {
-  // Pick `bonusCount` unique numbers and assign multipliers
-  var shuffled = _toConsumableArray(wheelNums).filter(function (v) {
-    return v !== "0" && v !== "00";
-  }).sort(function () {
-    return Math.random() - 0.5;
-  });
-  var bonus = {};
-  for (var i = 0; i < bonusCount && i < shuffled.length; i++) {
-    var r = Math.random();
-    var cum = 0,
-      mult = 50;
-    for (var j = 0; j < GRAVITY_MULTIPLIERS.length; j++) {
-      cum += GRAVITY_WEIGHTS[j];
-      if (r < cum) {
-        mult = GRAVITY_MULTIPLIERS[j];
-        break;
-      }
-    }
-    bonus[shuffled[i]] = mult;
-  }
-  return bonus;
 }
 function runSimulation(simCfg, onProgress, shouldStop) {
   var wheelNums = getWheelNums(simCfg.roulette);
@@ -4247,7 +4219,7 @@ function runSimulation(simCfg, onProgress, shouldStop) {
     var _loop3 = function _loop3() {
       if (shouldStop && shouldStop()) return 1; // break
       var val = spinWheel(simCfg.roulette);
-      var bonus = simCfg.gravityMode ? gravityBonus(wheelNums, simCfg.gravityBonusNums) : {};
+      var bonus = {};
       spinNum++;
 
       // Update droughts
@@ -7803,7 +7775,7 @@ function SimModePage(_ref54) {
         var _loop5 = function _loop5() {
           if (simStopRef.current) return 1; // break
           var val = wheelNums[Math.floor(Math.random() * wheelNums.length)];
-          var bonus = simCfg.gravityMode ? gravityBonus(wheelNums, simCfg.gravityBonusNums) : {};
+          var bonus = {};
           sState.forEach(function (st) {
             Object.keys(st.droughts).forEach(function (k) {
               return st.droughts[k]++;
@@ -8190,87 +8162,7 @@ function SimModePage(_ref54) {
         cursor: "pointer"
       }
     }, v >= 1000 ? v / 1000 + "K" : v);
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "10px 12px",
-      borderRadius: 10,
-      border: "1px solid " + (simCfg.gravityMode ? "#fbbf24" : "#2d4057"),
-      background: simCfg.gravityMode ? "#1c1000" : "#0f1923"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: simCfg.gravityMode ? 8 : 0
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 700,
-      color: simCfg.gravityMode ? "#fbbf24" : "#94a3b8"
-    }
-  }, "\u26A1 Gravity Roulette Mode"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 9,
-      color: "#64748b"
-    }
-  }, "x50-x1000 bonus multipliers per spin")), /*#__PURE__*/React.createElement("button", {
-    onClick: function onClick() {
-      return setSimCfg(function (c) {
-        return _objectSpread(_objectSpread({}, c), {}, {
-          gravityMode: !c.gravityMode
-        });
-      });
-    },
-    style: {
-      padding: "5px 14px",
-      borderRadius: 8,
-      border: "none",
-      background: simCfg.gravityMode ? "#fbbf24" : "#374151",
-      color: simCfg.gravityMode ? "#000" : "#fff",
-      fontSize: 11,
-      fontWeight: 700,
-      cursor: "pointer"
-    }
-  }, simCfg.gravityMode ? "ON" : "OFF")), simCfg.gravityMode && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#64748b",
-      marginBottom: 4
-    }
-  }, "Bonus numbers per spin: ", /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "#fbbf24"
-    }
-  }, simCfg.gravityBonusNums)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 5
-    }
-  }, [1, 2, 3, 4, 5].map(function (v) {
-    return /*#__PURE__*/React.createElement("button", {
-      key: v,
-      onClick: function onClick() {
-        return setSimCfg(function (c) {
-          return _objectSpread(_objectSpread({}, c), {}, {
-            gravityBonusNums: v
-          });
-        });
-      },
-      style: {
-        flex: 1,
-        padding: "5px 0",
-        borderRadius: 7,
-        border: "1px solid " + (simCfg.gravityBonusNums === v ? "#fbbf24" : "#2d4057"),
-        background: simCfg.gravityBonusNums === v ? "#1c1000" : "#0f1923",
-        color: simCfg.gravityBonusNums === v ? "#fbbf24" : "#64748b",
-        fontSize: 12,
-        fontWeight: 700,
-        cursor: "pointer"
-      }
-    }, v);
-  })))))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Lbl, null, "Strategies to Benchmark (" + simCfg.strategies.length + ")"), simCfg.strategies.map(function (strat, i) {
+  }))))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Lbl, null, "Strategies to Benchmark (" + simCfg.strategies.length + ")"), simCfg.strategies.map(function (strat, i) {
     var _strat$config$colTarg;
     return /*#__PURE__*/React.createElement("div", {
       key: i,
@@ -8606,7 +8498,7 @@ function SimModePage(_ref54) {
       color: "#64748b",
       textAlign: "center"
     }
-  }, simCfg.sessions.toLocaleString(), " sessions \xD7 ", simCfg.spinsPerSession.toLocaleString(), " spins", simCfg.gravityMode ? " · ⚡ Gravity" : ""), simCfg.strategies.map(function (strat, i) {
+  }, simCfg.sessions.toLocaleString(), " sessions \xD7 ", simCfg.spinsPerSession.toLocaleString(), " spins"), simCfg.strategies.map(function (strat, i) {
     var r = simResults[i];
     if (!r) return null;
     var stats = computeSimStats(r);
