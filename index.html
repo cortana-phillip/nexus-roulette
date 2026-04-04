@@ -3792,7 +3792,25 @@ function ParkPlayRulesEditor(_ref35) {
     return /*#__PURE__*/React.createElement("button", {
       key: key,
       onClick: function onClick() {
-        if (key === "droughtThreshold") upRule("droughtThreshold", rules.droughtThreshold ? null : (presets === null || presets === void 0 ? void 0 : presets.yellow) || 4);else upRule(key, !rules[key]);
+        if (key === "droughtThreshold") {
+          var newVal = rules.droughtThreshold ? null : (presets === null || presets === void 0 ? void 0 : presets.yellow) || 4;
+          upRule("droughtThreshold", newVal);
+          // Clear static targets when activating
+          if (newVal) {
+            upCfg("dozenTargets", []);
+            upCfg("colTargets", []);
+            upCfg("evenTargets", []);
+          }
+        } else {
+          var _newVal = !rules[key];
+          upRule(key, _newVal);
+          // Clear static targets when activating
+          if (_newVal) {
+            upCfg("dozenTargets", []);
+            upCfg("colTargets", []);
+            upCfg("evenTargets", []);
+          }
+        }
       },
       style: {
         flex: 1,
@@ -5488,8 +5506,10 @@ function SimModePage(_ref59) {
               droughts: initDroughts(simCfg.roulette)
             };
           });
+          var sessionSpins = 0;
           var _loop5 = function _loop5() {
             if (simStopRef.current) return 1; // break
+            sessionSpins++;
             var val = wheelNums[Math.floor(Math.random() * wheelNums.length)];
             var bonus = {};
             sState.forEach(function (st) {
@@ -5539,6 +5559,7 @@ function SimModePage(_ref59) {
                 }
                 var payMult = evts.length > 0 ? 2 : 3;
                 var row = tbl[Math.min(st.level, tbl.length - 1)];
+                st.spinsActuallyBet = (st.spinsActuallyBet || 0) + 1;
                 if (em === "flat") {
                   if (hitCount > 0) {
                     st.pnl += (hitCount * payMult - numTargets) * (cfg.unit || 1);
@@ -5554,13 +5575,10 @@ function SimModePage(_ref59) {
                   var cat = isZ ? "loss" : getCategory(val, dts, cts, row, evts);
                   if (cat !== "loss") {
                     var sd = hitCount * payMult * (row ? row.c : 1) - (row ? row.c : 1) * numTargets;
-                    var mult = bonus[val] || 1;
-                    var bd = mult > 1 ? (row ? row.c : 1) * (mult - 35) * (cfg.unit || 1) : 0;
-                    st.pnl += sd * (cfg.unit || 1) + bd;
+                    st.pnl += sd * (cfg.unit || 1);
                     st.wins++;
                     st.level = 0;
                     pushStreak(results[si], true);
-                    if (rules.waitForWin) st.waitingForWin = false;
                   } else {
                     st.pnl -= (row ? row.c : 1) * numTargets * (cfg.unit || 1);
                     st.losses++;
@@ -5581,7 +5599,6 @@ function SimModePage(_ref59) {
                 var inRange = wheelNums.filter(function (v) {
                   return v !== "0" && v !== "00" && (st.droughts[v] || 0) >= entry;
                 });
-                // Check inRange FIRST
                 if (!inRange.length) return;
                 if (rules.waitForWin && st.waitingForWin) {
                   if (inRange.some(function (n) {
@@ -5627,14 +5644,14 @@ function SimModePage(_ref59) {
               losses: st.losses,
               stopLossHits: st.stopLossHits,
               spinsActuallyBet: st.spinsActuallyBet || 0,
-              spinsPlayed: spinNum
+              spinsPlayed: sessionSpins
             });
             results[si].totalPnl += st.pnl;
             results[si].totalWins += st.wins;
             results[si].totalLosses += st.losses;
             results[si].stopLossHits += st.stopLossHits;
             results[si].totalSpinsActuallyBet = (results[si].totalSpinsActuallyBet || 0) + (st.spinsActuallyBet || 0);
-            results[si].totalSpinsPlayed = (results[si].totalSpinsPlayed || 0) + spinNum;
+            results[si].totalSpinsPlayed = (results[si].totalSpinsPlayed || 0) + sessionSpins;
             results[si].pnlHistory.push(results[si].totalPnl);
           });
         };
