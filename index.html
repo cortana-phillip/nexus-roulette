@@ -3792,24 +3792,25 @@ function ParkPlayRulesEditor(_ref35) {
     return /*#__PURE__*/React.createElement("button", {
       key: key,
       onClick: function onClick() {
-        if (key === "droughtThreshold") {
-          var newVal = rules.droughtThreshold ? null : (presets === null || presets === void 0 ? void 0 : presets.yellow) || 4;
-          upRule("droughtThreshold", newVal);
-          // Clear static targets when activating
-          if (newVal) {
-            upCfg("dozenTargets", []);
-            upCfg("colTargets", []);
-            upCfg("evenTargets", []);
-          }
+        if (on) {
+          // Turn off
+          if (key === "droughtThreshold") upRule("droughtThreshold", null);else upRule(key, false);
         } else {
-          var _newVal = !rules[key];
-          upRule(key, _newVal);
-          // Clear static targets when activating
-          if (_newVal) {
-            upCfg("dozenTargets", []);
-            upCfg("colTargets", []);
-            upCfg("evenTargets", []);
+          // Turn on — turn the other one off, clear static targets
+          if (key === "droughtThreshold") {
+            upCfg("parkRules", _objectSpread(_objectSpread({}, rules), {}, {
+              droughtThreshold: (presets === null || presets === void 0 ? void 0 : presets.yellow) || 4,
+              followTheLeader: false
+            }));
+          } else {
+            upCfg("parkRules", _objectSpread(_objectSpread({}, rules), {}, {
+              followTheLeader: true,
+              droughtThreshold: null
+            }));
           }
+          upCfg("dozenTargets", []);
+          upCfg("colTargets", []);
+          upCfg("evenTargets", []);
         }
       },
       style: {
