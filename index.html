@@ -1,19 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Nexus Roulette">
-<meta name="theme-color" content="#0f1923">
-<link rel="manifest" href="manifest.json">
-<title>Nexus Roulette Tracker</title>
-<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}html,body{background:#0f1923;min-height:100%;}button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-family:inherit;cursor:pointer;}#root{min-height:100vh;}</style>
-</head>
-<body>
-<div id="root"></div>
-<script>/**
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Nexus Roulette"><meta name="theme-color" content="#0f1923"><link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0OCIgZmlsbD0iIzBjMTUyMCIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjQ2IiBmaWxsPSJub25lIiBzdHJva2U9IiNmYmJmMjQiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgPHBhdGggZD0iTTUwLjE2NiAxMi4wMDAgQTM4IDM4IDAgMCAxIDU2LjA5MSAxMi40OTEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzE2YTM0YSIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik01Ni40MTggMTIuNTQ2IEEzOCAzOCAwIDAgMSA2Mi4xODIgMTQuMDA1IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8cGF0aCBkPSJNNjIuNDk1IDE0LjExMyBBMzggMzggMCAwIDEgNjcuOTQwIDE2LjUwMSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZGMyNjI2IiBzdHJva2Utd2lkdGg9IjEwIi8+CiAgPHBhdGggZD0iTTY4LjIzMiAxNi42NTkgQTM4IDM4IDAgMCAxIDczLjIwOSAxOS45MTEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzM3NDE1MSIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik03My40NzEgMjAuMTE1IEEzOCAzOCAwIDAgMSA3Ny44NDUgMjQuMTQyIiBmaWxsPSJub25lIiBzdHJva2U9IiNkYzI2MjYiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8cGF0aCBkPSJNNzguMDcwIDI0LjM4NiBBMzggMzggMCAwIDEgODEuNzIxIDI5LjA3NyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzc0MTUxIiBzdHJva2Utd2lkdGg9IjEwIi8+CiAgPHBhdGggZD0iTTgxLjkwMyAyOS4zNTUgQTM4IDM4IDAgMCAxIDg0LjczMiAzNC41ODQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2RjMjYyNiIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik04NC44NjYgMzQuODg4IEEzOCAzOCAwIDAgMSA4Ni43OTYgNDAuNTExIiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8cGF0aCBkPSJNODYuODc4IDQwLjgzMiBBMzggMzggMCAwIDEgODcuODU2IDQ2LjY5NyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZGMyNjI2IiBzdHJva2Utd2lkdGg9IjEwIi8+CiAgPHBhdGggZD0iTTg3Ljg4NCA0Ny4wMjcgQTM4IDM4IDAgMCAxIDg3Ljg4NCA1Mi45NzMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzM3NDE1MSIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik04Ny44NTYgNTMuMzAzIEEzOCAzOCAwIDAgMSA4Ni44NzggNTkuMTY4IiBmaWxsPSJub25lIiBzdHJva2U9IiNkYzI2MjYiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8cGF0aCBkPSJNODYuNzk2IDU5LjQ4OSBBMzggMzggMCAwIDEgODQuODY2IDY1LjExMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzc0MTUxIiBzdHJva2Utd2lkdGg9IjEwIi8+CiAgPHBhdGggZD0iTTg0LjczMiA2NS40MTYgQTM4IDM4IDAgMCAxIDgxLjkwMyA3MC42NDUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2RjMjYyNiIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik04MS43MjEgNzAuOTIzIEEzOCAzOCAwIDAgMSA3OC4wNzAgNzUuNjE0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8cGF0aCBkPSJNNzcuODQ1IDc1Ljg1OCBBMzggMzggMCAwIDEgNzMuNDcxIDc5Ljg4NSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZGMyNjI2IiBzdHJva2Utd2lkdGg9IjEwIi8+CiAgPHBhdGggZD0iTTczLjIwOSA4MC4wODkgQTM4IDM4IDAgMCAxIDY4LjIzMiA4My4zNDEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzM3NDE1MSIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik02Ny45NDAgODMuNDk5IEEzOCAzOCAwIDAgMSA2Mi40OTUgODUuODg3IiBmaWxsPSJub25lIiBzdHJva2U9IiNkYzI2MjYiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8cGF0aCBkPSJNNjIuMTgyIDg1Ljk5NSBBMzggMzggMCAwIDEgNTYuNDE4IDg3LjQ1NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzc0MTUxIiBzdHJva2Utd2lkdGg9IjEwIi8+CiAgPHBhdGggZD0iTTU2LjA5MSA4Ny41MDkgQTM4IDM4IDAgMCAxIDUwLjE2NiA4OC4wMDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2RjMjYyNiIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik00OS44MzQgODguMDAwIEEzOCAzOCAwIDAgMSA0My45MDkgODcuNTA5IiBmaWxsPSJub25lIiBzdHJva2U9IiMxNmEzNGEiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8cGF0aCBkPSJNNDMuNTgyIDg3LjQ1NCBBMzggMzggMCAwIDEgMzcuODE4IDg1Ljk5NSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZGMyNjI2IiBzdHJva2Utd2lkdGg9IjEwIi8+CiAgPHBhdGggZD0iTTM3LjUwNSA4NS44ODcgQTM4IDM4IDAgMCAxIDMyLjA2MCA4My40OTkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzM3NDE1MSIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik0zMS43NjggODMuMzQxIEEzOCAzOCAwIDAgMSAyNi43OTEgODAuMDg5IiBmaWxsPSJub25lIiBzdHJva2U9IiNkYzI2MjYiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8cGF0aCBkPSJNMjYuNTI5IDc5Ljg4NSBBMzggMzggMCAwIDEgMjIuMTU1IDc1Ljg1OCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzc0MTUxIiBzdHJva2Utd2lkdGg9IjEwIi8+CiAgPHBhdGggZD0iTTIxLjkzMCA3NS42MTQgQTM4IDM4IDAgMCAxIDE4LjI3OSA3MC45MjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2RjMjYyNiIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik0xOC4wOTcgNzAuNjQ1IEEzOCAzOCAwIDAgMSAxNS4yNjggNjUuNDE2IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8cGF0aCBkPSJNMTUuMTM0IDY1LjExMiBBMzggMzggMCAwIDEgMTMuMjA0IDU5LjQ4OSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZGMyNjI2IiBzdHJva2Utd2lkdGg9IjEwIi8+CiAgPHBhdGggZD0iTTEzLjEyMiA1OS4xNjggQTM4IDM4IDAgMCAxIDEyLjE0NCA1My4zMDMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzM3NDE1MSIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik0xMi4xMTYgNTIuOTczIEEzOCAzOCAwIDAgMSAxMi4xMTYgNDcuMDI3IiBmaWxsPSJub25lIiBzdHJva2U9IiNkYzI2MjYiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8cGF0aCBkPSJNMTIuMTQ0IDQ2LjY5NyBBMzggMzggMCAwIDEgMTMuMTIyIDQwLjgzMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzc0MTUxIiBzdHJva2Utd2lkdGg9IjEwIi8+CiAgPHBhdGggZD0iTTEzLjIwNCA0MC41MTEgQTM4IDM4IDAgMCAxIDE1LjEzNCAzNC44ODgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2RjMjYyNiIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik0xNS4yNjggMzQuNTg0IEEzOCAzOCAwIDAgMSAxOC4wOTcgMjkuMzU1IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8cGF0aCBkPSJNMTguMjc5IDI5LjA3NyBBMzggMzggMCAwIDEgMjEuOTMwIDI0LjM4NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZGMyNjI2IiBzdHJva2Utd2lkdGg9IjEwIi8+CiAgPHBhdGggZD0iTTIyLjE1NSAyNC4xNDIgQTM4IDM4IDAgMCAxIDI2LjUyOSAyMC4xMTUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzM3NDE1MSIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik0yNi43OTEgMTkuOTExIEEzOCAzOCAwIDAgMSAzMS43NjggMTYuNjU5IiBmaWxsPSJub25lIiBzdHJva2U9IiNkYzI2MjYiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8cGF0aCBkPSJNMzIuMDYwIDE2LjUwMSBBMzggMzggMCAwIDEgMzcuNTA1IDE0LjExMyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzc0MTUxIiBzdHJva2Utd2lkdGg9IjEwIi8+CiAgPHBhdGggZD0iTTM3LjgxOCAxNC4wMDUgQTM4IDM4IDAgMCAxIDQzLjU4MiAxMi41NDYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2RjMjYyNiIgc3Ryb2tlLXdpZHRoPSIxMCIvPgogIDxwYXRoIGQ9Ik00My45MDkgMTIuNDkxIEEzOCAzOCAwIDAgMSA0OS44MzQgMTIuMDAwIiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS13aWR0aD0iMTAiLz4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIzMyIgZmlsbD0iIzBjMTUyMCIgc3Ryb2tlPSIjZmJiZjI0IiBzdHJva2Utd2lkdGg9IjEiLz4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI2IiBmaWxsPSIjZmJiZjI0Ii8+CiAgPGNpcmNsZSBjeD0iNTMuNTIzIiBjeT0iNy4xNDUiIHI9IjQuNSIgZmlsbD0iI2YxZjVmOSIgc3Ryb2tlPSIjOTRhM2I4IiBzdHJva2Utd2lkdGg9IjEiLz4KPC9zdmc+Cg=="><title>Nexus Roulette Tracker</title><style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}html,body{background:#0f1923;min-height:100%;}button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-family:inherit;cursor:pointer;}#root{min-height:100vh;}</style></head><body><div id="root"></div><script>/**
  * @license React
  * react.production.min.js
  *
@@ -44,8 +31,7 @@ render:a}};c.isValidElement=M;c.lazy=function(a){return{$$typeof:Aa,_payload:{_s
 c.useEffect=function(a,b){return g.current.useEffect(a,b)};c.useId=function(){return g.current.useId()};c.useImperativeHandle=function(a,b,c){return g.current.useImperativeHandle(a,b,c)};c.useInsertionEffect=function(a,b){return g.current.useInsertionEffect(a,b)};c.useLayoutEffect=function(a,b){return g.current.useLayoutEffect(a,b)};c.useMemo=function(a,b){return g.current.useMemo(a,b)};c.useReducer=function(a,b,c){return g.current.useReducer(a,b,c)};c.useRef=function(a){return g.current.useRef(a)};
 c.useState=function(a){return g.current.useState(a)};c.useSyncExternalStore=function(a,b,c){return g.current.useSyncExternalStore(a,b,c)};c.useTransition=function(){return g.current.useTransition()};c.version="18.3.1"});
 })();
-</script>
-<script>/**
+</script><script>/**
  * @license React
  * react-dom.production.min.js
  *
@@ -312,10 +298,7 @@ c,!1,d,e);a[Ja]=b.current;sc(8===a.nodeType?a.parentNode:a);return new Xf(b)};Q.
 var d=null!=c&&c.hydratedSources||null,e=!1,f="",g=aj;null!==c&&void 0!==c&&(!0===c.unstable_strictMode&&(e=!0),void 0!==c.identifierPrefix&&(f=c.identifierPrefix),void 0!==c.onRecoverableError&&(g=c.onRecoverableError));b=Wi(b,null,a,1,null!=c?c:null,e,!1,f,g);a[Ja]=b.current;sc(a);if(d)for(a=0;a<d.length;a++)c=d[a],e=c._getVersion,e=e(c._source),null==b.mutableSourceEagerHydrationData?b.mutableSourceEagerHydrationData=[c,e]:b.mutableSourceEagerHydrationData.push(c,e);return new Ud(b)};Q.render=
 function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmountComponentAtNode=function(a){if(!Vd(a))throw Error(m(40));return a._reactRootContainer?(yb(function(){Wd(null,null,a,!1,function(){a._reactRootContainer=null;a[Ja]=null})}),!0):!1};Q.unstable_batchedUpdates=Tf;Q.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!Vd(c))throw Error(m(200));if(null==a||void 0===a._reactInternals)throw Error(m(38));return Wd(a,b,c,!1,d)};Q.version="18.3.1-next-f1338f8080-20240426"});
 })();
-</script>
-<script>
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}
-(function(){
+</script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}(function(){
   function require(m){if(m==='react')return window.React;if(m==='react-dom')return window.ReactDOM;return{};}
   var module={exports:{}},exports=module.exports;
   "use strict";
@@ -777,6 +760,11 @@ function loadApp() {
       if (!d.currentSession.buyIns) d.currentSession.buyIns = [];
       if (!d.currentSession.totalCashOut) d.currentSession.totalCashOut = 0;
       if (!d.currentSession.cashOuts) d.currentSession.cashOuts = [];
+      // Auto-recalibrate bankroll from track P&Ls to fix any drift
+      var sess = d.currentSession;
+      sess.bankrollCurrent = Math.round((sess.bankroll + (sess.totalBuyIn || 0) - (sess.totalCashOut || 0) + (sess.tracks || []).reduce(function (sum, t) {
+        return sum + t.pnl * (t.config.unit || 1);
+      }, 0)) * 100) / 100;
       return d;
     }
   } catch (e) {}
@@ -3322,7 +3310,9 @@ function App() {
           });
         }
       });
-      s.bankrollCurrent = Math.round((s.bankrollCurrent + totalDelta) * 100) / 100;
+      s.bankrollCurrent = Math.round((s.bankroll + (s.totalBuyIn || 0) - (s.totalCashOut || 0) + s.tracks.reduce(function (sum, t) {
+        return sum + t.pnl * (t.config.unit || 1);
+      }, 0)) * 100) / 100;
     });
     if (trackResults.length > 0) setResult({
       val: val,
@@ -5225,21 +5215,6 @@ function App() {
   }));
 }
   var App=module.exports['default']||module.exports;
-  class EB extends React.Component{
-    constructor(p){super(p);this.state={e:null};}
-    static getDerivedStateFromError(e){return{e:e};}
-    render(){
-      if(this.state.e)return React.createElement('pre',
-        {style:{color:'#f87171',padding:'20px',fontSize:'11px',whiteSpace:'pre-wrap',background:'#0f1923',minHeight:'100vh',margin:0}},
-        'Error: '+this.state.e.message+'\n\n'+this.state.e.stack
-      );
-      return this.props.children;
-    }
-  }
-  ReactDOM.createRoot(document.getElementById('root')).render(
-    React.createElement(EB,null,React.createElement(App,null))
-  );
-})();
-</script>
-</body>
-</html>
+  class EB extends React.Component{constructor(p){super(p);this.state={e:null};}static getDerivedStateFromError(e){return{e:e};}render(){if(this.state.e)return React.createElement('pre',{style:{color:'#f87171',padding:'20px',fontSize:'11px',whiteSpace:'pre-wrap',background:'#0f1923',minHeight:'100vh',margin:0}},'Error: '+this.state.e.message+'\n\n'+this.state.e.stack);return this.props.children;}}
+  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(EB,null,React.createElement(App,null)));
+})();</script></body></html>
