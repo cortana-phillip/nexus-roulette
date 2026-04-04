@@ -761,7 +761,8 @@ function defaultSettings() {
   return {
     currency: "USD",
     defaultBuyIn: 100,
-    onboarded: false
+    onboarded: false,
+    vibration: true
   };
 }
 function loadApp() {
@@ -1076,7 +1077,8 @@ function FibGrid(_ref7) {
     dozenTargets = _ref7.dozenTargets,
     colTargets = _ref7.colTargets,
     fibRow = _ref7.fibRow,
-    trackOverlays = _ref7.trackOverlays;
+    trackOverlays = _ref7.trackOverlays,
+    flashNum = _ref7.flashNum;
   var rows = Array.from({
     length: 12
   }, function (_, r) {
@@ -1096,6 +1098,7 @@ function FibGrid(_ref7) {
       });
       return false;
     });
+    var isFlash = flashNum === val;
     return /*#__PURE__*/React.createElement("button", {
       key: val,
       onClick: function onClick() {
@@ -1104,13 +1107,14 @@ function FibGrid(_ref7) {
       style: {
         padding: "8px 0",
         borderRadius: 7,
-        border: "1px solid " + cs.bd,
-        background: cs.bg,
+        border: "1px solid " + (isFlash ? "#ffffff" : cs.bd),
+        background: isFlash ? "#ffffff22" : cs.bg,
         color: cs.tx,
         fontSize: 12,
         fontWeight: 800,
         cursor: "pointer",
-        minHeight: 42
+        minHeight: 42,
+        transition: "background 0.1s,border 0.1s"
       }
     }, /*#__PURE__*/React.createElement("div", null, val), overlays.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
@@ -1487,28 +1491,19 @@ function ResultFlash(_ref11) {
 function AddTrackPanel(_ref12) {
   var onAdd = _ref12.onAdd,
     onClose = _ref12.onClose,
-    nextColor = _ref12.nextColor;
-  var _useState3 = (0, _react.useState)("fibonacci"),
-    _useState4 = _slicedToArray(_useState3, 2),
-    type = _useState4[0],
-    setType = _useState4[1];
-  var _useState5 = (0, _react.useState)(defaultFibCfg()),
-    _useState6 = _slicedToArray(_useState5, 2),
-    cfg = _useState6[0],
-    setCfg = _useState6[1];
-  function changeType(t) {
-    setType(t);
-    setCfg(t === "fibonacci" ? defaultFibCfg() : defaultSolCfg());
-  }
+    nextColor = _ref12.nextColor,
+    type = _ref12.type,
+    cfg = _ref12.cfg,
+    onTypeChange = _ref12.onTypeChange,
+    onCfgChange = _ref12.onCfgChange;
   function upCfg(k, v) {
-    setCfg(function (c) {
+    onCfgChange(function (c) {
       return _objectSpread(_objectSpread({}, c), {}, _defineProperty({}, k, v));
     });
   }
   function toggleArr(key, val, max) {
     var cur = cfg[key] || [];
     if (cur.includes(val)) {
-      if (cur.length === 1) return;
       upCfg(key, cur.filter(function (x) {
         return x !== val;
       }));
@@ -1557,7 +1552,7 @@ function AddTrackPanel(_ref12) {
     return /*#__PURE__*/React.createElement("button", {
       key: t,
       onClick: function onClick() {
-        return changeType(t);
+        return onTypeChange(t);
       },
       style: {
         flex: 1,
@@ -1650,7 +1645,7 @@ function AddTrackPanel(_ref12) {
       flexDirection: "column",
       gap: 10
     }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Dozens (1 or 2)"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Dozens (0, 1 or 2 \u2014 optional)"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
@@ -1674,7 +1669,7 @@ function AddTrackPanel(_ref12) {
         cursor: "pointer"
       }
     }, DZ_LABELS[i]);
-  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Columns (optional, 1 or 2)"), /*#__PURE__*/React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Columns (0, 1 or 2 \u2014 optional)"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
@@ -1698,7 +1693,13 @@ function AddTrackPanel(_ref12) {
         cursor: "pointer"
       }
     }, COL_LABELS[i]);
-  })))), type === "solution" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Entry Threshold (misses)"), /*#__PURE__*/React.createElement("div", {
+  })), (cfg.dozenTargets || []).length === 0 && (cfg.colTargets || []).length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "#f87171",
+      fontSize: 11,
+      marginTop: 4
+    }
+  }, "Select at least one dozen or column."))), type === "solution" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Entry Threshold (misses)"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -1743,7 +1744,11 @@ function AddTrackPanel(_ref12) {
     }
   }, "+"))), /*#__PURE__*/React.createElement("button", {
     onClick: function onClick() {
-      return onAdd(type, cfg);
+      if (type === "fibonacci" && (cfg.dozenTargets || []).length === 0 && (cfg.colTargets || []).length === 0) {
+        alert("Select at least one dozen or column.");
+        return;
+      }
+      onAdd(type, cfg);
     },
     style: {
       padding: "13px 0",
@@ -1765,10 +1770,10 @@ function CashOutModal(_ref15) {
     currentBankroll = _ref15.currentBankroll,
     onCashOut = _ref15.onCashOut,
     onClose = _ref15.onClose;
-  var _useState7 = (0, _react.useState)(Math.min(100, maxAmount)),
-    _useState8 = _slicedToArray(_useState7, 2),
-    amount = _useState8[0],
-    setAmount = _useState8[1];
+  var _useState3 = (0, _react.useState)(Math.min(100, maxAmount)),
+    _useState4 = _slicedToArray(_useState3, 2),
+    amount = _useState4[0],
+    setAmount = _useState4[1];
   var cur = getCur(currency);
   function handleCashOut() {
     if (amount > 0 && amount <= maxAmount) {
@@ -1898,26 +1903,26 @@ function CashOutModal(_ref15) {
 function OnboardingScreen(_ref16) {
   var onComplete = _ref16.onComplete,
     initialBankroll = _ref16.initialBankroll;
-  var _useState9 = (0, _react.useState)(0),
+  var _useState5 = (0, _react.useState)(0),
+    _useState6 = _slicedToArray(_useState5, 2),
+    step = _useState6[0],
+    setStep = _useState6[1];
+  var _useState7 = (0, _react.useState)("american"),
+    _useState8 = _slicedToArray(_useState7, 2),
+    roulette = _useState8[0],
+    setRoulette = _useState8[1];
+  var _useState9 = (0, _react.useState)(initialBankroll || 500),
     _useState0 = _slicedToArray(_useState9, 2),
-    step = _useState0[0],
-    setStep = _useState0[1];
-  var _useState1 = (0, _react.useState)("american"),
+    bankroll = _useState0[0],
+    setBankroll = _useState0[1];
+  var _useState1 = (0, _react.useState)(100),
     _useState10 = _slicedToArray(_useState1, 2),
-    roulette = _useState10[0],
-    setRoulette = _useState10[1];
-  var _useState11 = (0, _react.useState)(initialBankroll || 500),
+    buyIn = _useState10[0],
+    setBuyIn = _useState10[1];
+  var _useState11 = (0, _react.useState)("USD"),
     _useState12 = _slicedToArray(_useState11, 2),
-    bankroll = _useState12[0],
-    setBankroll = _useState12[1];
-  var _useState13 = (0, _react.useState)(100),
-    _useState14 = _slicedToArray(_useState13, 2),
-    buyIn = _useState14[0],
-    setBuyIn = _useState14[1];
-  var _useState15 = (0, _react.useState)("USD"),
-    _useState16 = _slicedToArray(_useState15, 2),
-    currency = _useState16[0],
-    setCurrency = _useState16[1];
+    currency = _useState12[0],
+    setCurrency = _useState12[1];
   var steps = ["Welcome", "Bankroll", "Buy In", "Currency"];
   function finish() {
     onComplete({
@@ -2239,10 +2244,10 @@ function BuyInModal(_ref21) {
     currentBankroll = _ref21.currentBankroll,
     onBuyIn = _ref21.onBuyIn,
     onClose = _ref21.onClose;
-  var _useState17 = (0, _react.useState)(defaultAmount || 100),
-    _useState18 = _slicedToArray(_useState17, 2),
-    amount = _useState18[0],
-    setAmount = _useState18[1];
+  var _useState13 = (0, _react.useState)(defaultAmount || 100),
+    _useState14 = _slicedToArray(_useState13, 2),
+    amount = _useState14[0],
+    setAmount = _useState14[1];
   function handleBuyIn() {
     if (amount > 0) {
       onBuyIn(amount);
@@ -2355,14 +2360,14 @@ function CurrencyModal(_ref22) {
     bankroll = _ref22.bankroll,
     onSave = _ref22.onSave,
     onClose = _ref22.onClose;
-  var _useState19 = (0, _react.useState)(current),
-    _useState20 = _slicedToArray(_useState19, 2),
-    selected = _useState20[0],
-    setSelected = _useState20[1];
-  var _useState21 = (0, _react.useState)("keep"),
-    _useState22 = _slicedToArray(_useState21, 2),
-    mode = _useState22[0],
-    setMode = _useState22[1]; // "convert" or "keep"
+  var _useState15 = (0, _react.useState)(current),
+    _useState16 = _slicedToArray(_useState15, 2),
+    selected = _useState16[0],
+    setSelected = _useState16[1];
+  var _useState17 = (0, _react.useState)("keep"),
+    _useState18 = _slicedToArray(_useState17, 2),
+    mode = _useState18[0],
+    setMode = _useState18[1]; // "convert" or "keep"
 
   function handleSave() {
     onSave(selected, mode);
@@ -2606,10 +2611,10 @@ function ChangelogModal(_ref25) {
 function HardResetModal(_ref26) {
   var onClose = _ref26.onClose,
     onExport = _ref26.onExport;
-  var _useState23 = (0, _react.useState)(0),
-    _useState24 = _slicedToArray(_useState23, 2),
-    step = _useState24[0],
-    setStep = _useState24[1]; // 0=warn, 1=confirm
+  var _useState19 = (0, _react.useState)(0),
+    _useState20 = _slicedToArray(_useState19, 2),
+    step = _useState20[0],
+    setStep = _useState20[1]; // 0=warn, 1=confirm
 
   function doExportFirst() {
     onExport();
@@ -3006,50 +3011,62 @@ function RouletteIcon(_ref27) {
 
 // ── Main App ──────────────────────────────────────────────────────────────────
 function App() {
-  var _useState25 = (0, _react.useState)(loadApp),
+  var _useState21 = (0, _react.useState)(loadApp),
+    _useState22 = _slicedToArray(_useState21, 2),
+    appState = _useState22[0],
+    setAppState = _useState22[1];
+  var _useState23 = (0, _react.useState)(0),
+    _useState24 = _slicedToArray(_useState23, 2),
+    tab = _useState24[0],
+    setTab = _useState24[1];
+  var _useState25 = (0, _react.useState)(false),
     _useState26 = _slicedToArray(_useState25, 2),
-    appState = _useState26[0],
-    setAppState = _useState26[1];
-  var _useState27 = (0, _react.useState)(0),
+    addOpen = _useState26[0],
+    setAddOpen = _useState26[1];
+  var _useState27 = (0, _react.useState)(null),
     _useState28 = _slicedToArray(_useState27, 2),
-    tab = _useState28[0],
-    setTab = _useState28[1];
-  var _useState29 = (0, _react.useState)(false),
+    selectedTrackId = _useState28[0],
+    setSelectedTrackId = _useState28[1];
+  var _useState29 = (0, _react.useState)(null),
     _useState30 = _slicedToArray(_useState29, 2),
-    addOpen = _useState30[0],
-    setAddOpen = _useState30[1];
+    result = _useState30[0],
+    setResult = _useState30[1];
   var _useState31 = (0, _react.useState)(null),
     _useState32 = _slicedToArray(_useState31, 2),
-    selectedTrackId = _useState32[0],
-    setSelectedTrackId = _useState32[1];
-  var _useState33 = (0, _react.useState)(null),
+    flashNum = _useState32[0],
+    setFlashNum = _useState32[1];
+  var _useState33 = (0, _react.useState)(false),
     _useState34 = _slicedToArray(_useState33, 2),
-    result = _useState34[0],
-    setResult = _useState34[1];
+    buyInOpen = _useState34[0],
+    setBuyInOpen = _useState34[1];
   var _useState35 = (0, _react.useState)(false),
     _useState36 = _slicedToArray(_useState35, 2),
-    buyInOpen = _useState36[0],
-    setBuyInOpen = _useState36[1];
+    currencyOpen = _useState36[0],
+    setCurrencyOpen = _useState36[1];
   var _useState37 = (0, _react.useState)(false),
     _useState38 = _slicedToArray(_useState37, 2),
-    currencyOpen = _useState38[0],
-    setCurrencyOpen = _useState38[1];
+    changelogOpen = _useState38[0],
+    setChangelogOpen = _useState38[1];
   var _useState39 = (0, _react.useState)(false),
     _useState40 = _slicedToArray(_useState39, 2),
-    changelogOpen = _useState40[0],
-    setChangelogOpen = _useState40[1];
+    editBankroll = _useState40[0],
+    setEditBankroll = _useState40[1];
   var _useState41 = (0, _react.useState)(false),
     _useState42 = _slicedToArray(_useState41, 2),
-    editBankroll = _useState42[0],
-    setEditBankroll = _useState42[1];
+    cashOutOpen = _useState42[0],
+    setCashOutOpen = _useState42[1];
   var _useState43 = (0, _react.useState)(false),
     _useState44 = _slicedToArray(_useState43, 2),
-    cashOutOpen = _useState44[0],
-    setCashOutOpen = _useState44[1];
-  var _useState45 = (0, _react.useState)(false),
+    hardResetOpen = _useState44[0],
+    setHardResetOpen = _useState44[1];
+  var _useState45 = (0, _react.useState)("fibonacci"),
     _useState46 = _slicedToArray(_useState45, 2),
-    hardResetOpen = _useState46[0],
-    setHardResetOpen = _useState46[1];
+    pendingTrackType = _useState46[0],
+    setPendingTrackType = _useState46[1];
+  var _useState47 = (0, _react.useState)(defaultFibCfg()),
+    _useState48 = _slicedToArray(_useState47, 2),
+    pendingTrackCfg = _useState48[0],
+    setPendingTrackCfg = _useState48[1];
   var sess = appState.currentSession;
   var settings = appState.settings || defaultSettings();
   var saved = appState.savedSessions || [];
@@ -3215,6 +3232,7 @@ function App() {
           if (cat !== "loss") {
             var wins = (dts.includes(dozenOf(val)) ? 1 : 0) + (cts.includes(colOf(val)) ? 1 : 0);
             var profit = wins * 3 * (row ? row.c : 1) - (row ? row.totalInvest : 0);
+            var spinDelta = wins * 3 * (row ? row.c : 1) - (row ? row.c : 1) * (dts.length + cts.length);
             t.pnl += profit;
             t.wins++;
             t.sequences++;
@@ -3226,7 +3244,7 @@ function App() {
               profit: profit,
               cat: cat
             });
-            totalDelta += profit * (t.config.unit || 1);
+            totalDelta += spinDelta * (t.config.unit || 1);
             trackResults.push({
               name: TRACK_ICONS[t.type] + " Fibonacci",
               color: t.color,
@@ -3311,6 +3329,15 @@ function App() {
       trackResults: trackResults,
       totalDelta: totalDelta
     });
+    // Visual flash
+    setFlashNum(val);
+    setTimeout(function () {
+      return setFlashNum(null);
+    }, 400);
+    // Haptic vibration
+    if (settings.vibration !== false && navigator.vibrate) {
+      navigator.vibrate(totalDelta > 0 ? [30, 20, 80] : totalDelta < 0 ? 40 : 20);
+    }
   }
   function doBuyIn(amount) {
     updSess(function (s) {
@@ -3356,6 +3383,8 @@ function App() {
       s.tracks.push(newTrack(type, nextColorIdx, config));
     });
     setAddOpen(false);
+    setPendingTrackType("fibonacci");
+    setPendingTrackCfg(defaultFibCfg());
   }
   function parkToggle(id) {
     updSess(function (s) {
@@ -3653,7 +3682,14 @@ function App() {
       onClose: function onClose() {
         return setAddOpen(false);
       },
-      nextColor: nextColorIdx
+      nextColor: nextColorIdx,
+      type: pendingTrackType,
+      cfg: pendingTrackCfg,
+      onTypeChange: function onTypeChange(t) {
+        setPendingTrackType(t);
+        setPendingTrackCfg(t === "fibonacci" ? defaultFibCfg() : defaultSolCfg());
+      },
+      onCfgChange: setPendingTrackCfg
     }), !primaryTrack && /*#__PURE__*/React.createElement("div", {
       style: {
         background: "#1e2d3d",
@@ -3839,7 +3875,8 @@ function App() {
       fibRow: row,
       trackOverlays: trackOverlays.filter(function (o) {
         return o.id !== primaryTrack.id;
-      })
+      }),
+      flashNum: flashNum
     }), primaryTrack.level >= primFibTbl.length - 1 && primFibTbl.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 8,
@@ -3957,7 +3994,8 @@ function App() {
       wheelNums: wheelNums,
       trackOverlays: trackOverlays.filter(function (o) {
         return o.id !== primaryTrack.id;
-      })
+      }),
+      flashNum: flashNum
     }))), primaryTrack && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
@@ -4330,7 +4368,8 @@ function App() {
       dozenTargets: primaryTrack ? primaryTrack.config.dozenTargets || [0] : [0],
       colTargets: primaryTrack ? primaryTrack.config.colTargets || [] : [],
       fibRow: primFibRow,
-      trackOverlays: trackOverlays
+      trackOverlays: trackOverlays,
+      flashNum: flashNum
     })), sess.spins.length > 0 && /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Lbl, null, "Recent Spins"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
@@ -4340,6 +4379,15 @@ function App() {
     }, _toConsumableArray(sess.spins).reverse().slice(0, 50).map(function (val, i) {
       var isZ = val === "0" || val === "00",
         r = !isZ && RED.has(+val);
+      var hitTracks = (trackOverlays || []).filter(function (o) {
+        if (isZ) return false;
+        if (o.type === "fibonacci") return (o.dozenTargets || []).includes(dozenOf(val)) || (o.colTargets || []).includes(colOf(val));
+        if (o.type === "solution") return (o.activeBets || []).some(function (b) {
+          return b.number === val;
+        });
+        return false;
+      });
+      var borderColor = i === 0 ? "#ffffff" : hitTracks.length > 0 ? hitTracks[0].color : isZ ? "#22c55e" : r ? "#ef4444" : "#1f2937";
       return /*#__PURE__*/React.createElement("div", {
         key: i,
         style: {
@@ -4347,15 +4395,34 @@ function App() {
           height: 30,
           borderRadius: 6,
           background: isZ ? "#166534" : r ? "#7f1d1d" : "#0d1117",
-          border: (i === 0 ? "2px solid #fff" : "1px solid ") + (isZ ? " #22c55e" : r ? " #ef4444" : " #1f2937"),
+          border: "2px solid " + borderColor,
           color: isZ ? "#bbf7d0" : r ? "#fecaca" : "#f1f5f9",
           fontSize: 10,
           fontWeight: 800,
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center"
+          justifyContent: "center",
+          position: "relative"
         }
-      }, val);
+      }, /*#__PURE__*/React.createElement("div", null, val), hitTracks.length > 1 && /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 1,
+          position: "absolute",
+          bottom: 1
+        }
+      }, hitTracks.slice(1).map(function (o, j) {
+        return /*#__PURE__*/React.createElement("div", {
+          key: j,
+          style: {
+            width: 4,
+            height: 4,
+            borderRadius: "50%",
+            background: o.color
+          }
+        });
+      })));
     }))));
   }
 
@@ -4697,10 +4764,10 @@ function App() {
 
   // ── Settings Page ───────────────────────────────────────────────────────────
   function SettingsPage() {
-    var _useState47 = (0, _react.useState)(settings.defaultBuyIn || 100),
-      _useState48 = _slicedToArray(_useState47, 2),
-      localBuyIn = _useState48[0],
-      setLocalBuyIn = _useState48[1];
+    var _useState49 = (0, _react.useState)(settings.defaultBuyIn || 100),
+      _useState50 = _slicedToArray(_useState49, 2),
+      localBuyIn = _useState50[0],
+      setLocalBuyIn = _useState50[1];
     function saveBuyIn() {
       updSettings(function (s) {
         s.defaultBuyIn = localBuyIn;
@@ -4820,7 +4887,38 @@ function App() {
         fontSize: 13,
         cursor: "pointer"
       }
-    }, "\uD83D\uDCCB Changelog"), /*#__PURE__*/React.createElement("button", {
+    }, "\uD83D\uDCCB Changelog"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "12px 16px",
+        borderRadius: 10,
+        border: "1px solid #2d4057",
+        background: "#0f1923"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        color: "#94a3b8"
+      }
+    }, "\uD83D\uDCF3 Vibration Feedback"), /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return updApp(function (s) {
+          s.settings.vibration = !s.settings.vibration;
+        });
+      },
+      style: {
+        padding: "6px 16px",
+        borderRadius: 8,
+        border: "none",
+        background: settings.vibration !== false ? "#16a34a" : "#374151",
+        color: "white",
+        fontSize: 12,
+        fontWeight: 700,
+        cursor: "pointer"
+      }
+    }, settings.vibration !== false ? "ON" : "OFF")), /*#__PURE__*/React.createElement("button", {
       onClick: function onClick() {
         if (window.confirm("Restart onboarding? Your current bankroll will be your new starting point.")) updApp(function (s) {
           var curBankroll = s.currentSession.bankrollCurrent;
@@ -4873,10 +4971,10 @@ function App() {
   // ── Bankroll Edit ───────────────────────────────────────────────────────────
   function BankrollEdit(_ref38) {
     var onClose = _ref38.onClose;
-    var _useState49 = (0, _react.useState)(sess.bankrollCurrent),
-      _useState50 = _slicedToArray(_useState49, 2),
-      val = _useState50[0],
-      setVal = _useState50[1];
+    var _useState51 = (0, _react.useState)(sess.bankrollCurrent),
+      _useState52 = _slicedToArray(_useState51, 2),
+      val = _useState52[0],
+      setVal = _useState52[1];
     function save() {
       updSess(function (s) {
         s.bankrollCurrent = val;
