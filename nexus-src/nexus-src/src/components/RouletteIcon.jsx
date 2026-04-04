@@ -1,0 +1,57 @@
+// -- Roulette Wheel SVG Icon --
+function RouletteIcon({size}) {
+  const s = size || 32;
+  return (
+    <svg width={s} height={s} viewBox="0 0 100 100" style={{flexShrink:0}}>
+      <circle cx="50" cy="50" r="48" fill="#0c1520"/>
+      <circle cx="50" cy="50" r="46" fill="none" stroke="#fbbf24" strokeWidth="1.5"/>
+      <path d="M50.166 12.000 A38 38 0 0 1 56.091 12.491" fill="none" stroke="#16a34a" strokeWidth="10"/>
+      <path d="M56.418 12.546 A38 38 0 0 1 62.182 14.005" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M62.495 14.113 A38 38 0 0 1 67.940 16.501" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M68.232 16.659 A38 38 0 0 1 73.209 19.911" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M73.471 20.115 A38 38 0 0 1 77.845 24.142" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M78.070 24.386 A38 38 0 0 1 81.721 29.077" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M81.903 29.355 A38 38 0 0 1 84.732 34.584" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M84.866 34.888 A38 38 0 0 1 86.796 40.511" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M86.878 40.832 A38 38 0 0 1 87.856 46.697" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M87.884 47.027 A38 38 0 0 1 87.884 52.973" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M87.856 53.303 A38 38 0 0 1 86.878 59.168" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M86.796 59.489 A38 38 0 0 1 84.866 65.112" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M84.732 65.416 A38 38 0 0 1 81.903 70.645" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M81.721 70.923 A38 38 0 0 1 78.070 75.614" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M77.845 75.858 A38 38 0 0 1 73.471 79.885" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M73.209 80.089 A38 38 0 0 1 68.232 83.341" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M67.940 83.499 A38 38 0 0 1 62.495 85.887" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M62.182 85.995 A38 38 0 0 1 56.418 87.454" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M56.091 87.509 A38 38 0 0 1 50.166 88.000" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M49.834 88.000 A38 38 0 0 1 43.909 87.509" fill="none" stroke="#16a34a" strokeWidth="10"/>
+      <path d="M43.582 87.454 A38 38 0 0 1 37.818 85.995" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M37.505 85.887 A38 38 0 0 1 32.060 83.499" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M31.768 83.341 A38 38 0 0 1 26.791 80.089" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M26.529 79.885 A38 38 0 0 1 22.155 75.858" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M21.930 75.614 A38 38 0 0 1 18.279 70.923" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M18.097 70.645 A38 38 0 0 1 15.268 65.416" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M15.134 65.112 A38 38 0 0 1 13.204 59.489" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M13.122 59.168 A38 38 0 0 1 12.144 53.303" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M12.116 52.973 A38 38 0 0 1 12.116 47.027" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M12.144 46.697 A38 38 0 0 1 13.122 40.832" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M13.204 40.511 A38 38 0 0 1 15.134 34.888" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M15.268 34.584 A38 38 0 0 1 18.097 29.355" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M18.279 29.077 A38 38 0 0 1 21.930 24.386" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M22.155 24.142 A38 38 0 0 1 26.529 20.115" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M26.791 19.911 A38 38 0 0 1 31.768 16.659" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M32.060 16.501 A38 38 0 0 1 37.505 14.113" fill="none" stroke="#374151" strokeWidth="10"/>
+      <path d="M37.818 14.005 A38 38 0 0 1 43.582 12.546" fill="none" stroke="#dc2626" strokeWidth="10"/>
+      <path d="M43.909 12.491 A38 38 0 0 1 49.834 12.000" fill="none" stroke="#374151" strokeWidth="10"/>
+      <circle cx="50" cy="50" r="33" fill="none" stroke="#fbbf24" strokeWidth="1"/>
+      <circle cx="50" cy="50" r="33" fill="#0c1520"/>
+      <circle cx="50" cy="50" r="6" fill="#fbbf24"/>
+      <circle cx="53.523" cy="7.145" r="4.5" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="1"/>
+    </svg>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SIMULATION ENGINE (inlined)
+// ═══════════════════════════════════════════════════════════════════════════════

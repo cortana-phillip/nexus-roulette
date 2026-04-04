@@ -9008,7 +9008,7 @@ function App() {
   }
 
   // -- Root --
-  var TABS = ["Tracker", "Full Table", "Spin Log", "Stats", "🔬 Sim", "Settings"];
+  var TABS = ["Tracker", "Full Table", "Spin Log", "Stats", "Settings"];
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
@@ -9220,10 +9220,7 @@ function App() {
         whiteSpace: "nowrap"
       }
     }, t);
-  })), tab === 0 && /*#__PURE__*/React.createElement(TrackerPage, null), tab === 1 && /*#__PURE__*/React.createElement(TablePage, null), tab === 2 && /*#__PURE__*/React.createElement(SpinPage, null), tab === 3 && /*#__PURE__*/React.createElement(StatsPage, null), tab === 4 && /*#__PURE__*/React.createElement(SimPage, {
-    currency: currency,
-    settings: settings
-  }), tab === 5 && /*#__PURE__*/React.createElement(SettingsPage, null)), result && /*#__PURE__*/React.createElement(ResultFlash, {
+  })), tab === 0 && /*#__PURE__*/React.createElement(TrackerPage, null), tab === 1 && /*#__PURE__*/React.createElement(TablePage, null), tab === 2 && /*#__PURE__*/React.createElement(SpinPage, null), tab === 3 && /*#__PURE__*/React.createElement(StatsPage, null), tab === 4 && /*#__PURE__*/React.createElement(SettingsPage, null)), result && /*#__PURE__*/React.createElement(ResultFlash, {
     result: result,
     onDismiss: function onDismiss() {
       return setResult(null);
