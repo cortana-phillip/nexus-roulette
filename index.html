@@ -296,10 +296,7 @@ c,!1,d,e);a[Ja]=b.current;sc(8===a.nodeType?a.parentNode:a);return new Xf(b)};Q.
 var d=null!=c&&c.hydratedSources||null,e=!1,f="",g=aj;null!==c&&void 0!==c&&(!0===c.unstable_strictMode&&(e=!0),void 0!==c.identifierPrefix&&(f=c.identifierPrefix),void 0!==c.onRecoverableError&&(g=c.onRecoverableError));b=Wi(b,null,a,1,null!=c?c:null,e,!1,f,g);a[Ja]=b.current;sc(a);if(d)for(a=0;a<d.length;a++)c=d[a],e=c._getVersion,e=e(c._source),null==b.mutableSourceEagerHydrationData?b.mutableSourceEagerHydrationData=[c,e]:b.mutableSourceEagerHydrationData.push(c,e);return new Ud(b)};Q.render=
 function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmountComponentAtNode=function(a){if(!Vd(a))throw Error(m(40));return a._reactRootContainer?(yb(function(){Wd(null,null,a,!1,function(){a._reactRootContainer=null;a[Ja]=null})}),!0):!1};Q.unstable_batchedUpdates=Tf;Q.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!Vd(c))throw Error(m(200));if(null==a||void 0===a._reactInternals)throw Error(m(38));return Wd(a,b,c,!1,d)};Q.version="18.3.1-next-f1338f8080-20240426"});
 })();
-</script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}(function(){
-  function require(m){if(m==='react')return window.React;if(m==='react-dom')return window.ReactDOM;return{};}
-  var module={exports:{}},exports=module.exports;
-  "use strict";
+</script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}(function(){function require(m){if(m==='react')return window.React;if(m==='react-dom')return window.ReactDOM;return{};}var module={exports:{}},exports=module.exports;"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -487,12 +484,12 @@ var CHANGELOG = [{
   v: "0.3.0",
   date: "Apr 2025",
   title: "Jackpot Mode",
-  changes: ["Fibonacci jackpot mode — dozen + column mix with 6× payout math", "Number color coding: Jackpot (gold), Win (green), Breakeven (lime), Partial Loss (orange), Total Loss (dark)", "ROI stepper with quick presets 5–30%", "Stop loss configuration per track"]
+  changes: ["Progression Bet jackpot mode — dozen + column mix with 6× payout math", "Number color coding: Jackpot (gold), Win (green), Breakeven (lime), Partial Loss (orange), Total Loss (dark)", "ROI stepper with quick presets 5–30%", "Stop loss configuration per track"]
 }, {
   v: "0.2.0",
   date: "Apr 2025",
   title: "Multi-Track",
-  changes: ["Multi-track session model — Active / Parked / Closed states", "Shared bankroll with per-track P&L tracking", "Add Track panel with Fibonacci and Solution types", "Unit size selection ($0.25 / $0.50 / $1.00)"]
+  changes: ["Multi-track session model — Active / Parked / Closed states", "Shared bankroll with per-track P&L tracking", "Add Track panel with Progression Bet and Solution types", "Unit size selection ($0.25 / $0.50 / $1.00)"]
 }, {
   v: "0.1.0",
   date: "Apr 2025",
@@ -606,6 +603,13 @@ function countDrought(spins, predicate) {
     count++;
   }
   return count;
+}
+function formatElapsed(ms) {
+  var s = Math.floor(ms / 1000);
+  var h = Math.floor(s / 3600),
+    m = Math.floor(s % 3600 / 60),
+    sec = s % 60;
+  return h > 0 ? "".concat(h, ":").concat(String(m).padStart(2, '0'), ":").concat(String(sec).padStart(2, '0')) : "".concat(m, ":").concat(String(sec).padStart(2, '0'));
 }
 function computeTable(subsets, payoutMult, roiPct, maxChips) {
   var r = roiPct / 100,
@@ -755,7 +759,9 @@ function newSession(roulette, bankroll) {
     droughts: initDroughts(roulette || "american"),
     tracks: [],
     totalCashOut: 0,
-    cashOuts: []
+    cashOuts: [],
+    sessionStartedAt: null,
+    sessionEndedAt: null
   };
 }
 function newTrack(type, colorIdx, config) {
@@ -814,6 +820,8 @@ function loadApp() {
       if (!d.currentSession.buyIns) d.currentSession.buyIns = [];
       if (!d.currentSession.totalCashOut) d.currentSession.totalCashOut = 0;
       if (!d.currentSession.cashOuts) d.currentSession.cashOuts = [];
+      if (d.currentSession.sessionStartedAt === undefined) d.currentSession.sessionStartedAt = null;
+      if (d.currentSession.sessionEndedAt === undefined) d.currentSession.sessionEndedAt = null;
       // Auto-recalibrate bankroll from track P&Ls to fix any drift
       var sess = d.currentSession;
       sess.bankrollCurrent = Math.round((sess.bankroll + (sess.totalBuyIn || 0) - (sess.totalCashOut || 0) + (sess.tracks || []).reduce(function (sum, t) {
@@ -1116,6 +1124,7 @@ function DCard(_ref6) {
 }
 function FibGrid(_ref7) {
   var onNumber = _ref7.onNumber,
+    onGhost = _ref7.onGhost,
     dozenTargets = _ref7.dozenTargets,
     colTargets = _ref7.colTargets,
     fibRow = _ref7.fibRow,
@@ -1128,6 +1137,7 @@ function FibGrid(_ref7) {
   });
   var dts = dozenTargets || [0],
     cts = colTargets || [];
+  var pressTimer = React.useRef(null);
   function numCell(val) {
     var isZ = val === "0" || val === "00";
     var cat = isZ ? "loss" : getCategory(val, dts, cts, fibRow);
@@ -1145,6 +1155,21 @@ function FibGrid(_ref7) {
       key: val,
       onClick: function onClick() {
         return onNumber(val);
+      },
+      onContextMenu: function onContextMenu(e) {
+        e.preventDefault();
+        if (onGhost) onGhost(val);
+      },
+      onTouchStart: function onTouchStart() {
+        if (onGhost) pressTimer.current = setTimeout(function () {
+          return onGhost(val);
+        }, 600);
+      },
+      onTouchEnd: function onTouchEnd() {
+        return clearTimeout(pressTimer.current);
+      },
+      onTouchMove: function onTouchMove() {
+        return clearTimeout(pressTimer.current);
       },
       style: {
         padding: "8px 0",
@@ -1645,7 +1670,7 @@ function AddTrackPanel(_ref12) {
       display: "flex",
       gap: 8
     }
-  }, [["fibonacci", "🎲 Fibonacci"], ["solution", "🎯 The Solution"]].map(function (_ref13) {
+  }, [["fibonacci", "🎲 Progression Bet"], ["solution", "🎯 The Solution"]].map(function (_ref13) {
     var _ref14 = _slicedToArray(_ref13, 2),
       t = _ref14[0],
       l = _ref14[1];
@@ -3151,38 +3176,50 @@ function App() {
     _useState40 = _slicedToArray(_useState39, 2),
     highlightTrackId = _useState40[0],
     setHighlightTrackId = _useState40[1];
-  var _useState41 = (0, _react.useState)(false),
+  var _useState41 = (0, _react.useState)(Date.now()),
     _useState42 = _slicedToArray(_useState41, 2),
-    buyInOpen = _useState42[0],
-    setBuyInOpen = _useState42[1];
+    nowTick = _useState42[0],
+    setNowTick = _useState42[1];
+  (0, _react.useEffect)(function () {
+    var interval = setInterval(function () {
+      return setNowTick(Date.now());
+    }, 1000);
+    return function () {
+      return clearInterval(interval);
+    };
+  }, []);
   var _useState43 = (0, _react.useState)(false),
     _useState44 = _slicedToArray(_useState43, 2),
-    currencyOpen = _useState44[0],
-    setCurrencyOpen = _useState44[1];
+    buyInOpen = _useState44[0],
+    setBuyInOpen = _useState44[1];
   var _useState45 = (0, _react.useState)(false),
     _useState46 = _slicedToArray(_useState45, 2),
-    changelogOpen = _useState46[0],
-    setChangelogOpen = _useState46[1];
+    currencyOpen = _useState46[0],
+    setCurrencyOpen = _useState46[1];
   var _useState47 = (0, _react.useState)(false),
     _useState48 = _slicedToArray(_useState47, 2),
-    editBankroll = _useState48[0],
-    setEditBankroll = _useState48[1];
+    changelogOpen = _useState48[0],
+    setChangelogOpen = _useState48[1];
   var _useState49 = (0, _react.useState)(false),
     _useState50 = _slicedToArray(_useState49, 2),
-    cashOutOpen = _useState50[0],
-    setCashOutOpen = _useState50[1];
+    editBankroll = _useState50[0],
+    setEditBankroll = _useState50[1];
   var _useState51 = (0, _react.useState)(false),
     _useState52 = _slicedToArray(_useState51, 2),
-    hardResetOpen = _useState52[0],
-    setHardResetOpen = _useState52[1];
-  var _useState53 = (0, _react.useState)("fibonacci"),
+    cashOutOpen = _useState52[0],
+    setCashOutOpen = _useState52[1];
+  var _useState53 = (0, _react.useState)(false),
     _useState54 = _slicedToArray(_useState53, 2),
-    pendingTrackType = _useState54[0],
-    setPendingTrackType = _useState54[1];
-  var _useState55 = (0, _react.useState)(defaultFibCfg()),
+    hardResetOpen = _useState54[0],
+    setHardResetOpen = _useState54[1];
+  var _useState55 = (0, _react.useState)("fibonacci"),
     _useState56 = _slicedToArray(_useState55, 2),
-    pendingTrackCfg = _useState56[0],
-    setPendingTrackCfg = _useState56[1];
+    pendingTrackType = _useState56[0],
+    setPendingTrackType = _useState56[1];
+  var _useState57 = (0, _react.useState)(defaultFibCfg()),
+    _useState58 = _slicedToArray(_useState57, 2),
+    pendingTrackCfg = _useState58[0],
+    setPendingTrackCfg = _useState58[1];
   var sess = appState.currentSession;
   var settings = appState.settings || defaultSettings();
   var saved = appState.savedSessions || [];
@@ -3346,7 +3383,15 @@ function App() {
   var pnlVal = sess.bankrollCurrent + totalCashedOut - totalInvested;
   var pnlColor = pnlVal > 0 ? "#4ade80" : pnlVal < 0 ? "#f87171" : "#e2e8f0";
   function tapNumber(val, fromTracker) {
-    if (fromTracker) setPrevSessState(JSON.parse(JSON.stringify(sess)));
+    if (fromTracker) {
+      setPrevSessState(JSON.parse(JSON.stringify(sess)));
+      // Auto-start session clock on first tracked spin
+      if (!sess.sessionStartedAt) {
+        updSess(function (s) {
+          s.sessionStartedAt = Date.now();
+        });
+      }
+    }
     var trackResults = [];
     var totalDelta = 0;
     updSess(function (s) {
@@ -3383,7 +3428,7 @@ function App() {
             });
             totalDelta += spinDelta * (t.config.unit || 1);
             trackResults.push({
-              name: TRACK_ICONS[t.type] + " Fibonacci",
+              name: TRACK_ICONS[t.type] + " Progression Bet",
               color: t.color,
               profit: profit,
               unit: t.config.unit || 1,
@@ -3405,7 +3450,7 @@ function App() {
               t.closedAtSpin = s.spins.length - 1;
             }
             trackResults.push({
-              name: TRACK_ICONS[t.type] + " Fibonacci",
+              name: TRACK_ICONS[t.type] + " Progression Bet",
               color: t.color,
               profit: -(row ? row.c : 1),
               unit: t.config.unit || 1,
@@ -3610,6 +3655,37 @@ function App() {
       if (idx >= 0) s.savedSessions[idx] = JSON.parse(JSON.stringify(s.currentSession));else s.savedSessions.push(JSON.parse(JSON.stringify(s.currentSession)));
     });
   }
+  function endSession() {
+    updApp(function (s) {
+      s.currentSession.sessionEndedAt = Date.now();
+      s.currentSession.modified = Date.now();
+      s.currentSession.metrics = computeMetrics(s.currentSession);
+      var idx = s.savedSessions.findIndex(function (x) {
+        return x.id === s.currentSession.id;
+      });
+      if (idx >= 0) s.savedSessions[idx] = JSON.parse(JSON.stringify(s.currentSession));else s.savedSessions.push(JSON.parse(JSON.stringify(s.currentSession)));
+      // Start fresh session
+      s.currentSession = newSession(s.currentSession.roulette, s.currentSession.bankrollCurrent);
+    });
+    setTab(0);
+  }
+  function ghostSpin(val) {
+    // Logs spin for drought tracking only — no progression, no bankroll effect
+    updSess(function (s) {
+      s.spins.push(val);
+      var nd = _objectSpread({}, s.droughts);
+      Object.keys(nd).forEach(function (k) {
+        return nd[k]++;
+      });
+      nd[val] = 0;
+      s.droughts = nd;
+    });
+    setFlashNum(val);
+    setTimeout(function () {
+      return setFlashNum(null);
+    }, 300);
+    if (settings.vibration !== false && navigator.vibrate) navigator.vibrate(15);
+  }
   function loadSession(id) {
     updApp(function (s) {
       var f = s.savedSessions.find(function (x) {
@@ -3729,7 +3805,80 @@ function App() {
         gap: 10,
         width: "100%"
       }
-    }, sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        background: "#0c1520",
+        borderRadius: 10,
+        padding: "8px 14px",
+        border: "1px solid #2d4057"
+      }
+    }, /*#__PURE__*/React.createElement("div", null, sess.sessionStartedAt ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 8,
+        height: 8,
+        borderRadius: "50%",
+        background: "#4ade80",
+        animation: "pulse 1.5s infinite"
+      }
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        color: "#94a3b8"
+      }
+    }, "Session Active"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 16,
+        fontWeight: 800,
+        color: "#4ade80",
+        fontVariantNumeric: "tabular-nums"
+      }
+    }, formatElapsed(nowTick - sess.sessionStartedAt))) : /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 8,
+        height: 8,
+        borderRadius: "50%",
+        background: "#fbbf24"
+      }
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        color: "#fbbf24"
+      }
+    }, "Catch-up Mode"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "#64748b"
+      }
+    }, "\u2014 spin any number to start session"))), sess.sessionStartedAt && /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        if (window.confirm("End session and save?")) endSession();
+      },
+      style: {
+        padding: "6px 12px",
+        borderRadius: 8,
+        border: "1px solid #7f1d1d",
+        background: "#200505",
+        color: "#f87171",
+        fontSize: 11,
+        fontWeight: 700,
+        cursor: "pointer"
+      }
+    }, "\u25A0 End Session")), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 4,
@@ -3874,7 +4023,7 @@ function App() {
           color: t.color,
           flex: 1
         }
-      }, TRACK_ICONS[t.type], " ", t.type === "fibonacci" ? "Fibonacci" : "Solution"), /*#__PURE__*/React.createElement("span", {
+      }, TRACK_ICONS[t.type], " ", t.type === "fibonacci" ? "Progression Bet" : "The Solution"), /*#__PURE__*/React.createElement("span", {
         style: {
           fontSize: 9,
           color: t.state === "active" ? "#4ade80" : t.state === "parked" ? "#fbbf24" : "#94a3b8",
@@ -4241,6 +4390,7 @@ function App() {
       onNumber: function onNumber(v) {
         return tapNumber(v, true);
       },
+      onGhost: ghostSpin,
       dozenTargets: dts,
       colTargets: cts,
       fibRow: row,
@@ -4248,7 +4398,14 @@ function App() {
         return o.id !== primaryTrack.id;
       }),
       flashNum: flashNum
-    }), primaryTrack.level >= primFibTbl.length - 1 && primFibTbl.length > 0 && /*#__PURE__*/React.createElement("div", {
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "center",
+        fontSize: 9,
+        color: "#374151",
+        marginTop: 4
+      }
+    }, "Long-press any number to log as ghost spin (no progression)"), primaryTrack.level >= primFibTbl.length - 1 && primFibTbl.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 8,
         background: "#7f1d1d",
@@ -4367,62 +4524,73 @@ function App() {
         return o.id !== primaryTrack.id;
       }),
       flashNum: flashNum
-    }))), primaryTrack && /*#__PURE__*/React.createElement("div", {
+    }))), nonClosedTracks.filter(function (t) {
+      return t.state === "active";
+    }).length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
-        gap: 10,
-        width: "100%"
+        flexDirection: "column",
+        gap: 6
       }
-    }, /*#__PURE__*/React.createElement("button", {
-      onClick: function onClick() {
-        return updSess(function (s) {
-          var t = s.tracks.find(function (x) {
-            return x.id === primaryTrack.id;
-          });
-          if (t) {
-            t.pnl -= primFibRow ? primFibRow.totalInvest : 0;
-            t.bets.push({
-              type: "abandon",
-              level: t.level
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: "#64748b",
+        textTransform: "uppercase",
+        letterSpacing: 1
+      }
+    }, "Abandon Progression"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        flexWrap: "wrap"
+      }
+    }, nonClosedTracks.filter(function (t) {
+      return t.state === "active";
+    }).map(function (t) {
+      var tbl = computeTableForTrack(t);
+      var row = tbl[Math.min(t.level, tbl.length - 1)];
+      return /*#__PURE__*/React.createElement("button", {
+        key: t.id,
+        onClick: function onClick() {
+          if (window.confirm("Abandon progression at level ".concat(t.level, "?"))) updSess(function (s) {
+            var tr = s.tracks.find(function (x) {
+              return x.id === t.id;
             });
-            t.level = 0;
-          }
-        });
-      },
-      style: {
-        flex: 1,
-        padding: 11,
-        borderRadius: 10,
-        border: "1px solid #2d4057",
-        background: "#1e2d3d",
-        color: "#94a3b8",
-        fontSize: 12,
-        cursor: "pointer"
-      }
-    }, "Abandon Run"), /*#__PURE__*/React.createElement("button", {
-      onClick: function onClick() {
-        return updSess(function (s) {
-          s.tracks.forEach(function (t) {
-            t.level = 0;
-            t.pnl = 0;
-            t.bets = [];
-            t.wins = 0;
-            t.sequences = 0;
+            if (tr) {
+              tr.pnl -= row ? row.totalInvest : 0;
+              tr.bets.push({
+                type: "abandon",
+                level: tr.level
+              });
+              tr.level = 0;
+            }
           });
-          s.bankrollCurrent = s.bankroll;
-        });
-      },
-      style: {
-        flex: 1,
-        padding: 11,
-        borderRadius: 10,
-        border: "1px solid #2d4057",
-        background: "#1e2d3d",
-        color: "#94a3b8",
-        fontSize: 12,
-        cursor: "pointer"
-      }
-    }, "Reset All")));
+        },
+        style: {
+          flex: 1,
+          padding: "8px 10px",
+          borderRadius: 9,
+          border: "1px solid " + (t.color + "66"),
+          background: "#0f1923",
+          color: t.color,
+          fontSize: 11,
+          fontWeight: 700,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 5
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: 8,
+          height: 8,
+          borderRadius: "50%",
+          background: t.color,
+          flexShrink: 0
+        }
+      }), TRACK_ICONS[t.type], " Lvl ", t.level);
+    }))));
   }
 
   // ── Full Table Page ─────────────────────────────────────────────────────────
@@ -4597,10 +4765,10 @@ function App() {
 
   // ── Spin Log Page ───────────────────────────────────────────────────────────
   function SpinPage() {
-    var _useState57 = (0, _react.useState)(false),
-      _useState58 = _slicedToArray(_useState57, 2),
-      showAll = _useState58[0],
-      setShowAll = _useState58[1];
+    var _useState59 = (0, _react.useState)(false),
+      _useState60 = _slicedToArray(_useState59, 2),
+      showAll = _useState60[0],
+      setShowAll = _useState60[1];
     var displaySpins = showAll ? _toConsumableArray(sess.spins).reverse() : _toConsumableArray(sess.spins).reverse().slice(0, 60);
     return /*#__PURE__*/React.createElement("div", {
       style: {
@@ -4782,7 +4950,49 @@ function App() {
         color: "#64748b",
         marginBottom: 12
       }
-    }, new Date(sess.created).toLocaleString(), " \xB7 ", sess.spins.length, " spins \xB7 ", sess.tracks.length, " tracks"), /*#__PURE__*/React.createElement("div", {
+    }, new Date(sess.created).toLocaleString(), " \xB7 ", sess.spins.length, " spins \xB7 ", sess.tracks.length, " tracks"), sess.sessionStartedAt && /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "#0c1520",
+        borderRadius: 9,
+        padding: "8px 12px",
+        border: "1px solid #2d4057",
+        marginBottom: 12,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: "#64748b"
+      }
+    }, "Session Time"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 14,
+        fontWeight: 800,
+        color: "#4ade80",
+        fontVariantNumeric: "tabular-nums"
+      }
+    }, formatElapsed((sess.sessionEndedAt || nowTick) - sess.sessionStartedAt)), function () {
+      var hrs = ((sess.sessionEndedAt || nowTick) - sess.sessionStartedAt) / 3600000;
+      var rate = hrs > 0.01 ? pnlVal / hrs : null;
+      return rate !== null ? /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "right"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 10,
+          color: "#64748b"
+        }
+      }, "$/hr"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 14,
+          fontWeight: 800,
+          color: rate >= 0 ? "#4ade80" : "#f87171"
+        }
+      }, rate >= 0 ? "+" : "-", cur.symbol, Math.abs(rate).toFixed(cur.dec))) : null;
+    }()), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
@@ -4896,7 +5106,7 @@ function App() {
       var activeInGroup = g.tracks.filter(function (t) {
         return t.state === "active";
       });
-      var typeLabel = g.type === "fibonacci" ? "🎲 Fibonacci" : "🎯 Solution";
+      var typeLabel = g.type === "fibonacci" ? "🎲 Progression Bet" : "🎯 Solution";
       var targetLabel = g.type === "fibonacci" && g.lastTargets ? (g.lastTargets.doz || []).map(function (d) {
         return DZ_LABELS[d];
       }).join("+") + (g.lastTargets.col && g.lastTargets.col.length > 0 ? " + " + g.lastTargets.col.map(function (c) {
@@ -5072,7 +5282,7 @@ function App() {
           fontSize: 10,
           color: "#64748b"
         }
-      }, new Date(s.modified).toLocaleString(), " \xB7 ", s.spins.length, " spins")), /*#__PURE__*/React.createElement("div", {
+      }, new Date(s.modified).toLocaleString(), " \xB7 ", s.spins.length, " spins", s.sessionStartedAt && s.sessionEndedAt && /*#__PURE__*/React.createElement("span", null, " \xB7 ", formatElapsed(s.sessionEndedAt - s.sessionStartedAt)))), /*#__PURE__*/React.createElement("div", {
         style: {
           fontSize: 13,
           fontWeight: 800,
@@ -5111,10 +5321,10 @@ function App() {
 
   // ── Settings Page ───────────────────────────────────────────────────────────
   function SettingsPage() {
-    var _useState59 = (0, _react.useState)(settings.defaultBuyIn || 100),
-      _useState60 = _slicedToArray(_useState59, 2),
-      localBuyIn = _useState60[0],
-      setLocalBuyIn = _useState60[1];
+    var _useState61 = (0, _react.useState)(settings.defaultBuyIn || 100),
+      _useState62 = _slicedToArray(_useState61, 2),
+      localBuyIn = _useState62[0],
+      setLocalBuyIn = _useState62[1];
     function saveBuyIn() {
       updSettings(function (s) {
         s.defaultBuyIn = localBuyIn;
@@ -5318,10 +5528,10 @@ function App() {
   // ── Bankroll Edit ───────────────────────────────────────────────────────────
   function BankrollEdit(_ref38) {
     var onClose = _ref38.onClose;
-    var _useState61 = (0, _react.useState)(sess.bankrollCurrent),
-      _useState62 = _slicedToArray(_useState61, 2),
-      val = _useState62[0],
-      setVal = _useState62[1];
+    var _useState63 = (0, _react.useState)(sess.bankrollCurrent),
+      _useState64 = _slicedToArray(_useState63, 2),
+      val = _useState64[0],
+      setVal = _useState64[1];
     function save() {
       updSess(function (s) {
         s.bankrollCurrent = val;
@@ -5570,8 +5780,4 @@ function App() {
     },
     onExport: exportJSON
   }));
-}
-  var App=module.exports['default']||module.exports;
-  class EB extends React.Component{constructor(p){super(p);this.state={e:null};}static getDerivedStateFromError(e){return{e:e};}render(){if(this.state.e)return React.createElement('pre',{style:{color:'#f87171',padding:'20px',fontSize:'11px',whiteSpace:'pre-wrap',background:'#0f1923',minHeight:'100vh',margin:0}},'Error: '+this.state.e.message+'\n\n'+this.state.e.stack);return this.props.children;}}
-  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(EB,null,React.createElement(App,null)));
-})();</script></body></html>
+}var App=module.exports['default']||module.exports;class EB extends React.Component{constructor(p){super(p);this.state={e:null};}static getDerivedStateFromError(e){return{e:e};}render(){if(this.state.e)return React.createElement('pre',{style:{color:'#f87171',padding:'20px',fontSize:'11px',whiteSpace:'pre-wrap',background:'#0f1923',minHeight:'100vh',margin:0}},'Error: '+this.state.e.message+'\n\n'+this.state.e.stack);return this.props.children;}}ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(EB,null,React.createElement(App,null)));})();</script></body></html>
