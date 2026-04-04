@@ -107,7 +107,8 @@ function defaultSimConfig() {
     sessions: 100,
     spinsPerSession: 500,
     roulette: "european",
-    strategies: [], // array of {type, config} same shape as live tracks
+    sessionBankroll: null, // null = unlimited; number = stop when bust
+    strategies: [],
   };
 }
 
@@ -143,19 +144,26 @@ function runSimulation(simCfg, onProgress, shouldStop) {
       wins: 0,
       losses: 0,
       stopLossHits: 0,
+      spinsActuallyBet: 0,
+      spinsPlayed: 0,
+      bankroll: simCfg.sessionBankroll||null,
+      busted: false,
       waitingForWin: strat.config.parkRules?.waitForWin || false,
       parkedAfterLoss: false,
       parkedAfterStopLoss: false,
-      activeSolBets: [],
       droughts: initDroughts(simCfg.roulette),
     }));
 
     let spinNum = 0;
     while(spinNum < simCfg.spinsPerSession){
       if(shouldStop && shouldStop()) break;
+      // Bankroll mode: stop if all strategies busted
+      if(simCfg.sessionBankroll && sState.every(st=>st.busted)) break;
+
       const val = spinWheel(simCfg.roulette);
       const bonus = {};
       spinNum++;
+      sState.forEach(st=>{ if(!st.busted) st.spinsPlayed++; });
 
       // Update droughts
       sState.forEach(st=>{
@@ -195,6 +203,7 @@ function runSimulation(simCfg, onProgress, shouldStop) {
           const isHit=hitCount>0;
           const payMult=evts.length>0?2:3;
           const row=tbl[Math.min(st.level,tbl.length-1)];
+          st.spinsActuallyBet=(st.spinsActuallyBet||0)+1;
 
           if(effectiveBetMode==="flat"){
             if(isHit){
@@ -239,23 +248,24 @@ function runSimulation(simCfg, onProgress, shouldStop) {
           const entry=cfg.entryThreshold||120;
           const inRange=wheelNums.filter(v=>v!=="0"&&v!=="00"&&(st.droughts[v]||0)>=entry);
 
+          // Check inRange FIRST -- if nothing in range, skip regardless of waiting state
+          if(inRange.length===0) return;
+
+          // Wait for win: observe a number in range hitting before we start betting
           if(rules.waitForWin && st.waitingForWin){
             if(inRange.some(n=>n===val)) st.waitingForWin=false;
-            return;
+            return; // don't bet on this spin, start next spin
           }
 
-          if(inRange.length===0) return;
           const targetNum=inRange.sort((a,b)=>(st.droughts[b]||0)-(st.droughts[a]||0))[0];
           const row=tbl[Math.min(st.level,tbl.length-1)];
+          st.spinsActuallyBet=(st.spinsActuallyBet||0)+1;
 
           if(val===targetNum){
-            const mult=bonus[val]||1;
             const profit=(row?row.profit:0)*(cfg.unit||1);
-            const bonusDelta=mult>1?(row?row.c:1)*(mult-35)*(cfg.unit||1):0;
-            st.pnl+=profit+bonusDelta;
+            st.pnl+=profit;
             st.wins++; st.sequences++; st.level=0;
             pushStreak(results[si],true);
-            if(rules.waitForWin) st.waitingForWin=false;
           } else {
             st.pnl-=(row?row.c:1)*(cfg.unit||1);
             st.losses++;
@@ -275,11 +285,20 @@ function runSimulation(simCfg, onProgress, shouldStop) {
 
     // Record session results
     results.forEach((r,i)=>{
-      r.sessions.push({pnl:sState[i].pnl, wins:sState[i].wins, losses:sState[i].losses, stopLossHits:sState[i].stopLossHits});
-      r.totalPnl+=sState[i].pnl;
-      r.totalWins+=sState[i].wins;
-      r.totalLosses+=sState[i].losses;
-      r.stopLossHits+=sState[i].stopLossHits;
+      const st=sState[i];
+      r.sessions.push({
+        pnl:st.pnl, wins:st.wins, losses:st.losses,
+        stopLossHits:st.stopLossHits,
+        spinsActuallyBet:st.spinsActuallyBet||0,
+        spinsPlayed:st.spinsPlayed||spinNum,
+        busted:st.busted||false,
+      });
+      r.totalPnl+=st.pnl;
+      r.totalWins+=st.wins;
+      r.totalLosses+=st.losses;
+      r.stopLossHits+=st.stopLossHits;
+      r.totalSpinsActuallyBet=(r.totalSpinsActuallyBet||0)+(st.spinsActuallyBet||0);
+      r.totalSpinsPlayed=(r.totalSpinsPlayed||0)+(st.spinsPlayed||spinNum);
     });
 
     if(onProgress) onProgress(s+1, results);
@@ -326,6 +345,12 @@ function computeSimStats(result) {
   const avgWinStreak = result.winStreaks.length ? result.winStreaks.reduce((a,b)=>a+b,0)/result.winStreaks.length : 0;
   const avgLossStreak = result.lossStreaks.length ? result.lossStreaks.reduce((a,b)=>a+b,0)/result.lossStreaks.length : 0;
 
+  const totalSpinsPlayed = result.totalSpinsPlayed||0;
+  const totalSpinsBet = result.totalSpinsActuallyBet||0;
+  const pctSpinsBet = totalSpinsPlayed>0 ? totalSpinsBet/totalSpinsPlayed*100 : 0;
+  const bustCount = sessions.filter(s=>s.busted).length;
+  const avgSpinsPlayed = sessions.reduce((a,s)=>a+(s.spinsPlayed||0),0)/n;
+
   return {
     totalPnl: result.totalPnl,
     avgPnlPerSession: result.totalPnl / n,
@@ -339,6 +364,9 @@ function computeSimStats(result) {
     lossStreakDist: streakDist(result.lossStreaks),
     stopLossHits: result.stopLossHits,
     stopLossRate: n > 0 ? result.stopLossHits/n : 0,
+    pctSpinsBet, totalSpinsBet, totalSpinsPlayed,
+    bustCount, bustRate: bustCount/n*100,
+    avgSpinsPlayed,
     sessionPnls: pnls,
   };
 }

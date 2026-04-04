@@ -156,17 +156,16 @@ function SimModePage({simCfg, setSimCfg, simRunning, setSimRunning, simPaused, s
             if(strat.type==="solution"){
               const entry=cfg.entryThreshold||120;
               const inRange=wheelNums.filter(v=>v!=="0"&&v!=="00"&&(st.droughts[v]||0)>=entry);
-              if(rules.waitForWin&&st.waitingForWin){if(inRange.some(n=>n===val))st.waitingForWin=false;return;}
+              // Check inRange FIRST
               if(!inRange.length)return;
+              if(rules.waitForWin&&st.waitingForWin){if(inRange.some(n=>n===val))st.waitingForWin=false;return;}
               const targetNum=inRange.sort((a,b)=>(st.droughts[b]||0)-(st.droughts[a]||0))[0];
               const row=tbl[Math.min(st.level,tbl.length-1)];
+              st.spinsActuallyBet=(st.spinsActuallyBet||0)+1;
               if(val===targetNum){
-                const mult=bonus[val]||1;
                 const profit=(row?row.profit:0)*(cfg.unit||1);
-                const bd=mult>1?(row?row.c:1)*(mult-35)*(cfg.unit||1):0;
-                st.pnl+=profit+bd;st.wins++;st.level=0;
+                st.pnl+=profit;st.wins++;st.level=0;
                 pushStreak(results[si],true);
-                if(rules.waitForWin)st.waitingForWin=false;
               } else {
                 st.pnl-=(row?row.c:1)*(cfg.unit||1);st.losses++;
                 if(st.level<tbl.length-1){st.level++;}
@@ -180,11 +179,18 @@ function SimModePage({simCfg, setSimCfg, simRunning, setSimRunning, simPaused, s
 
         simCfg.strategies.forEach((_,si)=>{
           const st=sState[si];
-          results[si].sessions.push({pnl:st.pnl,wins:st.wins,losses:st.losses,stopLossHits:st.stopLossHits});
+          results[si].sessions.push({
+            pnl:st.pnl,wins:st.wins,losses:st.losses,
+            stopLossHits:st.stopLossHits,
+            spinsActuallyBet:st.spinsActuallyBet||0,
+            spinsPlayed:spinNum,
+          });
           results[si].totalPnl+=st.pnl;
           results[si].totalWins+=st.wins;
           results[si].totalLosses+=st.losses;
           results[si].stopLossHits+=st.stopLossHits;
+          results[si].totalSpinsActuallyBet=(results[si].totalSpinsActuallyBet||0)+(st.spinsActuallyBet||0);
+          results[si].totalSpinsPlayed=(results[si].totalSpinsPlayed||0)+spinNum;
           results[si].pnlHistory.push(results[si].totalPnl);
         });
       }
@@ -260,6 +266,24 @@ function SimModePage({simCfg, setSimCfg, simRunning, setSimRunning, simPaused, s
                 <button key={v} onClick={()=>setSimCfg(c=>({...c,spinsPerSession:v}))} style={{flex:1,padding:"5px 0",borderRadius:7,border:"1px solid "+(simCfg.spinsPerSession===v?"#a78bfa":"#2d4057"),background:simCfg.spinsPerSession===v?"#2e1065":"#0f1923",color:simCfg.spinsPerSession===v?"#c4b5fd":"#64748b",fontSize:10,fontWeight:700,cursor:"pointer"}}>{v>=1000?v/1000+"K":v}</button>
               ))}
             </div>
+          </div>
+
+          {/* Bankroll Mode */}
+          <div style={{padding:"10px 12px",borderRadius:10,border:"1px solid "+(simCfg.sessionBankroll?"#f59e0b":"#2d4057"),background:simCfg.sessionBankroll?"#1c1000":"#0f1923"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:simCfg.sessionBankroll?8:0}}>
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:simCfg.sessionBankroll?"#fbbf24":"#94a3b8"}}>💰 Bankroll Mode</div>
+                <div style={{fontSize:9,color:"#64748b"}}>Stop session when bankroll can't cover next bet</div>
+              </div>
+              <button onClick={()=>setSimCfg(c=>({...c,sessionBankroll:c.sessionBankroll?null:200}))} style={{padding:"5px 14px",borderRadius:8,border:"none",background:simCfg.sessionBankroll?"#f59e0b":"#374151",color:simCfg.sessionBankroll?"#000":"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>{simCfg.sessionBankroll?"ON":"OFF"}</button>
+            </div>
+            {simCfg.sessionBankroll && (
+              <div style={{display:"flex",alignItems:"center",background:"#0f1923",borderRadius:8,border:"1px solid #2d4057",overflow:"hidden"}}>
+                <button onClick={()=>setSimCfg(c=>({...c,sessionBankroll:Math.max(25,c.sessionBankroll-25)}))} style={{padding:"7px 12px",background:"transparent",border:"none",color:"#f59e0b",fontSize:16,fontWeight:700,cursor:"pointer"}}>-</button>
+                <div style={{flex:1,textAlign:"center",fontSize:15,fontWeight:800,color:"#fbbf24"}}>${simCfg.sessionBankroll} bankroll</div>
+                <button onClick={()=>setSimCfg(c=>({...c,sessionBankroll:c.sessionBankroll+25}))} style={{padding:"7px 12px",background:"transparent",border:"none",color:"#f59e0b",fontSize:16,fontWeight:700,cursor:"pointer"}}>+</button>
+              </div>
+            )}
           </div>
 
         </div>
@@ -396,12 +420,16 @@ function SimModePage({simCfg, setSimCfg, simRunning, setSimRunning, simPaused, s
               <div style={{fontSize:10,color:"#64748b",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Streak Analysis</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
                 {[
-                  ["Longest Win Streak",stats.longestWinStreak,"#4ade80"],
-                  ["Longest Loss Streak",stats.longestLossStreak,"#f87171"],
+                  ["Longest Win",stats.longestWinStreak,"#4ade80"],
+                  ["Longest Loss",stats.longestLossStreak,"#f87171"],
                   ["Avg Win Streak",stats.avgWinStreak.toFixed(1),"#86efac"],
                   ["Avg Loss Streak",stats.avgLossStreak.toFixed(1),"#f97316"],
                   ["Stop Loss Hits",r.stopLossHits,"#fbbf24"],
-                  ["Stop Loss Rate",(stats.stopLossRate).toFixed(2)+"/sess","#fbbf24"],
+                  ["SL Rate",(stats.stopLossRate).toFixed(2)+"/sess","#fbbf24"],
+                  ["% Spins Bet",stats.pctSpinsBet.toFixed(1)+"%","#c4b5fd"],
+                  ["Avg Spins Played",Math.round(stats.avgSpinsPlayed).toLocaleString(),"#94a3b8"],
+                  ...(simCfg.sessionBankroll?[["Bust Rate",stats.bustRate.toFixed(1)+"%","#f87171"],["Busted",stats.bustCount+" sess","#f87171"]]:
+                  []),
                 ].map(([l,v,c])=>(
                   <div key={l} style={{background:"#0f1923",borderRadius:8,padding:"8px 8px",border:"1px solid #2d4057"}}>
                     <div style={{fontSize:8,color:"#64748b",marginBottom:2}}>{l}</div>

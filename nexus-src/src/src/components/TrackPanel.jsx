@@ -123,50 +123,76 @@ function AddTrackPanel({onAdd, onClose, nextColor, type, cfg, onTypeChange, onCf
       </div>
       {type==="fibonacci" && (
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          <div>
-            <Lbl>Even Money {(cfg.evenTargets||[]).length>0&&(cfg.betMode||"progression")!=="flat"?"(martingale -- ROI auto)":""}</Lbl>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:5}}>
-              {[
-                {key:"red",  label:"Red",   color:"#ef4444", pair:"black"},
-                {key:"black",label:"Black", color:"#94a3b8", pair:"red"},
-                {key:"odd",  label:"Odd",   color:"#a78bfa", pair:"even"},
-                {key:"even", label:"Even",  color:"#60a5fa", pair:"odd"},
-                {key:"high", label:"High",  color:"#fbbf24", pair:"low"},
-                {key:"low",  label:"Low",   color:"#86efac", pair:"high"},
-              ].map(em=>{
-                const evts=cfg.evenTargets||[];
-                const sel=evts.includes(em.key);
-                const isFlat=(cfg.betMode||"progression")==="flat";
-                const maxAllowed=isFlat?3:2;
-                // Can't pick both sides of same pair
-                const pairSel=evts.includes(em.pair);
-                const canAdd=!pairSel&&evts.length<maxAllowed;
-                return <button key={em.key} onClick={()=>{
-                  if(sel){upCfg("evenTargets",evts.filter(x=>x!==em.key));}
-                  else if(canAdd){upCfg("evenTargets",[...evts,em.key]);upCfg("dozenTargets",[]);upCfg("colTargets",[]);}
-                }} style={{padding:"8px 4px",borderRadius:8,border:"2px solid "+(sel?em.color:pairSel?"#1e2d3d":"#2d4057"),background:sel?"#0f1923":"transparent",color:sel?em.color:pairSel?"#1e3a1e":"#64748b",fontSize:12,fontWeight:700,cursor:pairSel&&!sel?"not-allowed":"pointer",opacity:pairSel&&!sel?0.3:1}}>{em.label}</button>;
-              })}
+          {/* When FTL or drought active: show type selector only */}
+          {(cfg.parkRules?.followTheLeader||cfg.parkRules?.droughtThreshold) ? (
+            <div>
+              <Lbl>Outside Bet Type <span style={{color:"#a78bfa",fontStyle:"normal"}}>(auto-picks best)</span></Lbl>
+              <div style={{display:"flex",gap:6,marginBottom:6}}>
+                {[["dozens","📊 Dozens"],["columns","📊 Columns"],["even","🎯 Even Money"]].map(([t,l])=>{
+                  const sel=cfg.ftlTargetType===t;
+                  return <button key={t} onClick={()=>upCfg("ftlTargetType",t)} style={{flex:1,padding:"8px 0",borderRadius:9,border:"2px solid "+(sel?"#a78bfa":"#2d4057"),background:sel?"#1a0a2e":"#0f1923",color:sel?"#c4b5fd":"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{l}</button>;
+                })}
+              </div>
+              {cfg.ftlTargetType && (cfg.ftlTargetType==="dozens"||cfg.ftlTargetType==="columns") && (
+                <div>
+                  <Lbl>How many at once</Lbl>
+                  <div style={{display:"flex",gap:6}}>
+                    {[1,2].map(n=>{
+                      const sel=(cfg.ftlCount||1)===n;
+                      return <button key={n} onClick={()=>upCfg("ftlCount",n)} style={{flex:1,padding:"7px 0",borderRadius:8,border:"2px solid "+(sel?"#a78bfa":"#2d4057"),background:sel?"#1a0a2e":"#0f1923",color:sel?"#c4b5fd":"#64748b",fontSize:12,fontWeight:700,cursor:"pointer"}}>{n} at a time</button>;
+                    })}
+                  </div>
+                </div>
+              )}
+              {!cfg.ftlTargetType && <div style={{color:"#f87171",fontSize:11}}>Select a bet type to continue.</div>}
             </div>
-            {(cfg.evenTargets||[]).length>0&&(cfg.betMode||"progression")==="flat"&&<div style={{fontSize:10,color:"#60a5fa",marginTop:3}}>Flat: up to 3 even money bets simultaneously.</div>}
-            {(cfg.evenTargets||[]).length>0&&(cfg.betMode||"progression")!=="flat"&&<div style={{fontSize:10,color:"#fbbf24",marginTop:3}}>⚡ Martingale doubling. Max 2 bets.</div>}
-          </div>
-          {(cfg.evenTargets||[]).length===0 && (
+          ) : (
             <>
               <div>
-                <Lbl>Dozens</Lbl>
-                <div style={{display:"flex",gap:8}}>
-                  {[0,1,2].map(i=>{const sel=(cfg.dozenTargets||[]).includes(i);return <button key={i} onClick={()=>{toggleArr("dozenTargets",i,2);upCfg("evenTargets",[]);}} style={{flex:1,padding:"8px 0",borderRadius:9,border:"2px solid "+(sel?DZ_BD[i]:"#2d4057"),background:sel?"#0f1923":"transparent",color:sel?DZ_TX[i]:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{DZ_LABELS[i]}</button>;})}
+                <Lbl>Even Money {(cfg.evenTargets||[]).length>0&&(cfg.betMode||"progression")!=="flat"?"(martingale -- ROI auto)":""}</Lbl>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:5}}>
+                  {[
+                    {key:"red",label:"Red",color:"#ef4444",pair:"black"},
+                    {key:"black",label:"Black",color:"#94a3b8",pair:"red"},
+                    {key:"odd",label:"Odd",color:"#a78bfa",pair:"even"},
+                    {key:"even",label:"Even",color:"#60a5fa",pair:"odd"},
+                    {key:"high",label:"High",color:"#fbbf24",pair:"low"},
+                    {key:"low",label:"Low",color:"#86efac",pair:"high"},
+                  ].map(em=>{
+                    const evts=cfg.evenTargets||[];
+                    const sel=evts.includes(em.key);
+                    const isFlat=(cfg.betMode||"progression")==="flat";
+                    const maxAllowed=isFlat?3:2;
+                    const pairSel=evts.includes(em.pair);
+                    const canAdd=!pairSel&&evts.length<maxAllowed;
+                    return <button key={em.key} onClick={()=>{
+                      if(sel){upCfg("evenTargets",evts.filter(x=>x!==em.key));}
+                      else if(canAdd){upCfg("evenTargets",[...evts,em.key]);upCfg("dozenTargets",[]);upCfg("colTargets",[]);}
+                    }} style={{padding:"8px 4px",borderRadius:8,border:"2px solid "+(sel?em.color:pairSel?"#1e2d3d":"#2d4057"),background:sel?"#0f1923":"transparent",color:sel?em.color:pairSel?"#1e3a1e":"#64748b",fontSize:12,fontWeight:700,cursor:pairSel&&!sel?"not-allowed":"pointer",opacity:pairSel&&!sel?0.3:1}}>{em.label}</button>;
+                  })}
                 </div>
+                {(cfg.evenTargets||[]).length>0&&(cfg.betMode||"progression")==="flat"&&<div style={{fontSize:10,color:"#60a5fa",marginTop:3}}>Flat: up to 3 even money bets simultaneously.</div>}
+                {(cfg.evenTargets||[]).length>0&&(cfg.betMode||"progression")!=="flat"&&<div style={{fontSize:10,color:"#fbbf24",marginTop:3}}>⚡ Martingale doubling. Max 2 bets.</div>}
               </div>
-              <div>
-                <Lbl>Columns</Lbl>
-                <div style={{display:"flex",gap:8}}>
-                  {[0,1,2].map(i=>{const sel=(cfg.colTargets||[]).includes(i);return <button key={i} onClick={()=>{toggleArr("colTargets",i,2);upCfg("evenTargets",[]);}} style={{flex:1,padding:"8px 0",borderRadius:9,border:"2px solid "+(sel?COL_BD[i]:"#2d4057"),background:sel?"#0f1923":"transparent",color:sel?COL_TX[i]:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{COL_LABELS[i]}</button>;})}
-                </div>
-                {(cfg.dozenTargets||[]).length===0&&(cfg.colTargets||[]).length===0&&(cfg.evenTargets||[]).length===0&&(
-                  <div style={{color:"#f87171",fontSize:11,marginTop:4}}>Select at least one target.</div>
-                )}
-              </div>
+              {(cfg.evenTargets||[]).length===0 && (
+                <>
+                  <div>
+                    <Lbl>Dozens</Lbl>
+                    <div style={{display:"flex",gap:8}}>
+                      {[0,1,2].map(i=>{const sel=(cfg.dozenTargets||[]).includes(i);return <button key={i} onClick={()=>{toggleArr("dozenTargets",i,2);upCfg("evenTargets",[]);}} style={{flex:1,padding:"8px 0",borderRadius:9,border:"2px solid "+(sel?DZ_BD[i]:"#2d4057"),background:sel?"#0f1923":"transparent",color:sel?DZ_TX[i]:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{DZ_LABELS[i]}</button>;})}
+                    </div>
+                  </div>
+                  <div>
+                    <Lbl>Columns</Lbl>
+                    <div style={{display:"flex",gap:8}}>
+                      {[0,1,2].map(i=>{const sel=(cfg.colTargets||[]).includes(i);return <button key={i} onClick={()=>{toggleArr("colTargets",i,2);upCfg("evenTargets",[]);}} style={{flex:1,padding:"8px 0",borderRadius:9,border:"2px solid "+(sel?COL_BD[i]:"#2d4057"),background:sel?"#0f1923":"transparent",color:sel?COL_TX[i]:"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{COL_LABELS[i]}</button>;})}
+                    </div>
+                    {(cfg.dozenTargets||[]).length===0&&(cfg.colTargets||[]).length===0&&(cfg.evenTargets||[]).length===0&&(
+                      <div style={{color:"#f87171",fontSize:11,marginTop:4}}>Select at least one target.</div>
+                    )}
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>

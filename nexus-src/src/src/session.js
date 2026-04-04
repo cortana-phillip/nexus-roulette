@@ -106,23 +106,34 @@ function resolveDynamicTargets(cfg, droughts) {
 function meetsThreshold(cfg, droughts) {
   const rules = cfg.parkRules||{};
   if(!rules.droughtThreshold) return true;
-  const evts=cfg.evenTargets||[], dts=cfg.dozenTargets||[], cts=cfg.colTargets||[];
-  const pairs = [["red","black"],["odd","even"],["high","low"]];
+  const type = cfg.ftlTargetType;
+  const t = rules.droughtThreshold;
 
-  if(evts.length>0) {
-    // Check at least one side of each used pair meets threshold
-    const usedPairs = pairs.filter(p=>evts.some(k=>p.includes(k)));
-    return usedPairs.some(([a,b])=>
-      Math.max(targetDrought(a,droughts),targetDrought(b,droughts)) >= rules.droughtThreshold
-    );
+  // For FTL/dynamic mode, check best available target of the configured type
+  if(rules.followTheLeader || type) {
+    if(type==="even") {
+      const pairs = [["red","black"],["odd","even"],["high","low"]];
+      const best = Math.max(...pairs.map(([a,b])=>Math.max(targetDrought(a,droughts),targetDrought(b,droughts))));
+      return best >= t;
+    }
+    if(type==="columns") return Math.max(...[0,1,2].map(c=>colDrought(c,droughts))) >= t;
+    // dozens (default)
+    return Math.max(...[0,1,2].map(d=>dozenDrought(d,droughts))) >= t;
   }
-  const allDroughts = [
-    ...[0,1,2].filter(d=>dts.length>0||cfg.parkRules?.followTheLeader).map(d=>dozenDrought(d,droughts)),
-    ...[0,1,2].filter(c=>cts.length>0||cfg.parkRules?.followTheLeader).map(c=>colDrought(c,droughts)),
-  ];
-  return allDroughts.length===0 || Math.max(...allDroughts) >= rules.droughtThreshold;
+
+  // Static target mode: check only configured targets
+  const evts=cfg.evenTargets||[], dts=cfg.dozenTargets||[], cts=cfg.colTargets||[];
+  if(evts.length>0) {
+    const pairs=[["red","black"],["odd","even"],["high","low"]];
+    const usedPairs=pairs.filter(p=>evts.some(k=>p.includes(k)));
+    return usedPairs.some(([a,b])=>Math.max(targetDrought(a,droughts),targetDrought(b,droughts))>=t);
+  }
+  const dzs = dts.map(d=>dozenDrought(d,droughts));
+  const cls = cts.map(c=>colDrought(c,droughts));
+  const all = [...dzs,...cls];
+  return all.length===0 || Math.max(...all) >= t;
 }
-function defaultFibCfg() { return{type:"fibonacci",unit:1,roi:15,betMode:"progression",dozenTargets:[],colTargets:[],evenTargets:[],stopLoss:200,parkRules:defaultParkRules()}; }
+function defaultFibCfg() { return{type:"fibonacci",unit:1,roi:15,betMode:"progression",dozenTargets:[],colTargets:[],evenTargets:[],stopLoss:200,parkRules:defaultParkRules(),ftlTargetType:null,ftlCount:1}; }
 function defaultSolCfg() { return{type:"solution",unit:1,roi:10,entryThreshold:120,stopLoss:200,activeBets:[],parkRules:defaultParkRules()}; }
 
 function computeMartingaleTable(maxChips) {
