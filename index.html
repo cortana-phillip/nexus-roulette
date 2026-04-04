@@ -3208,7 +3208,6 @@ function EditTrackCfg(_ref29) {
   }, "Cancel")));
 }
 function AddTrackPanel(_ref30) {
-  var _cfg$parkRules, _cfg$parkRules2;
   var onAdd = _ref30.onAdd,
     onClose = _ref30.onClose,
     nextColor = _ref30.nextColor,
@@ -3455,7 +3454,7 @@ function AddTrackPanel(_ref30) {
       flexDirection: "column",
       gap: 10
     }
-  }, (_cfg$parkRules = cfg.parkRules) !== null && _cfg$parkRules !== void 0 && _cfg$parkRules.followTheLeader || (_cfg$parkRules2 = cfg.parkRules) !== null && _cfg$parkRules2 !== void 0 && _cfg$parkRules2.droughtThreshold ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Outside Bet Type ", /*#__PURE__*/React.createElement("span", {
+  }, cfg.parkRules && (cfg.parkRules.followTheLeader || cfg.parkRules.droughtThreshold) ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Outside Bet Type ", /*#__PURE__*/React.createElement("span", {
     style: {
       color: "#a78bfa",
       fontStyle: "normal"
@@ -3466,11 +3465,11 @@ function AddTrackPanel(_ref30) {
       gap: 6,
       marginBottom: 6
     }
-  }, [["dozens", "📊 Dozens"], ["columns", "📊 Columns"], ["even", "🎯 Even Money"]].map(function (_ref33) {
+  }, (cfg.parkRules.followTheLeader ? [["dozens", "📊 Dozens"], ["columns", "📊 Columns"], ["even", "🎯 Even Money"]] : [["dozens", "📊 Set of 12"], ["even", "🎯 Even Money"]]).map(function (_ref33) {
     var _ref34 = _slicedToArray(_ref33, 2),
       t = _ref34[0],
       l = _ref34[1];
-    var sel = cfg.ftlTargetType === t;
+    var sel = cfg.ftlTargetType === t || t === "dozens" && cfg.ftlTargetType === "columns";
     return /*#__PURE__*/React.createElement("button", {
       key: t,
       onClick: function onClick() {
@@ -3488,7 +3487,7 @@ function AddTrackPanel(_ref30) {
         cursor: "pointer"
       }
     }, l);
-  })), cfg.ftlTargetType && (cfg.ftlTargetType === "dozens" || cfg.ftlTargetType === "columns") && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "How many at once"), /*#__PURE__*/React.createElement("div", {
+  })), cfg.parkRules.followTheLeader && (cfg.ftlTargetType === "dozens" || cfg.ftlTargetType === "columns") && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6
@@ -3512,12 +3511,12 @@ function AddTrackPanel(_ref30) {
         cursor: "pointer"
       }
     }, n, " at a time");
-  }))), !cfg.ftlTargetType && /*#__PURE__*/React.createElement("div", {
+  })), !cfg.ftlTargetType && /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f87171",
       fontSize: 11
     }
-  }, "Select a bet type to continue.")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Even Money ", (cfg.evenTargets || []).length > 0 && (cfg.betMode || "progression") !== "flat" ? "(martingale -- ROI auto)" : ""), /*#__PURE__*/React.createElement("div", {
+  }, "\u26A0 Select a bet type to continue.")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Even Money ", (cfg.evenTargets || []).length > 0 && (cfg.betMode || "progression") !== "flat" ? "(martingale -- ROI auto)" : ""), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr 1fr",
