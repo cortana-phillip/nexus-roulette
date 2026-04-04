@@ -5892,15 +5892,30 @@ function SimModePage(_ref53) {
       fontWeight: 700,
       cursor: "pointer"
     }
-  }, "-"), /*#__PURE__*/React.createElement("div", {
+  }, "-"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    inputMode: "numeric",
+    value: simCfg.sessionBankroll,
+    onChange: function onChange(e) {
+      var v = parseInt(e.target.value);
+      if (!isNaN(v) && v > 0) setSimCfg(function (c) {
+        return _objectSpread(_objectSpread({}, c), {}, {
+          sessionBankroll: v
+        });
+      });
+    },
     style: {
       flex: 1,
       textAlign: "center",
       fontSize: 15,
       fontWeight: 800,
-      color: "#fbbf24"
+      color: "#fbbf24",
+      background: "transparent",
+      border: "none",
+      outline: "none",
+      padding: "7px 0"
     }
-  }, "$", simCfg.sessionBankroll.toLocaleString()), /*#__PURE__*/React.createElement("button", {
+  }), /*#__PURE__*/React.createElement("button", {
     onClick: function onClick() {
       return setSimCfg(function (c) {
         return _objectSpread(_objectSpread({}, c), {}, {
