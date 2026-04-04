@@ -922,6 +922,12 @@ var DROUGHT_PRESETS = {
     orange: 20,
     red: 30
   },
+  set12: {
+    yellow: 4,
+    orange: 7,
+    red: 11
+  },
+  // dozens and columns alias to set12
   dozens: {
     yellow: 4,
     orange: 7,
@@ -1096,10 +1102,12 @@ function meetsThreshold(cfg, droughts) {
     if (type === "columns") return Math.max.apply(Math, _toConsumableArray([0, 1, 2].map(function (c) {
       return colDrought(c, droughts);
     }))) >= t;
-    // dozens (default)
+    // "dozens" or any set-of-12 type: check all dozens AND columns (functionally identical for drought)
     return Math.max.apply(Math, _toConsumableArray([0, 1, 2].map(function (d) {
       return dozenDrought(d, droughts);
-    }))) >= t;
+    })).concat(_toConsumableArray([0, 1, 2].map(function (c) {
+      return colDrought(c, droughts);
+    })))) >= t;
   }
 
   // Static target mode: check only configured targets
@@ -3724,7 +3732,7 @@ function ParkPlayRulesEditor(_ref35) {
   }
 
   // Determine preset type for drought thresholds
-  var presetType = cfg.ftlTargetType === "even" ? "even" : "dozens";
+  var presetType = cfg.ftlTargetType === "even" ? "even" : "set12";
   var presets = DROUGHT_PRESETS[presetType];
   var isDynamic = rules.followTheLeader || !!rules.droughtThreshold;
   var _useState5 = (0, _react.useState)(false),
@@ -3823,13 +3831,13 @@ function ParkPlayRulesEditor(_ref35) {
       textTransform: "uppercase",
       letterSpacing: 1
     }
-  }, "Outside Bet Type (auto picks best within type)"), /*#__PURE__*/React.createElement("div", {
+  }, rules.followTheLeader ? "Outside Bet Type (FTL picks best within type)" : "Outside Bet Type (drought scale)"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 5,
       marginBottom: 6
     }
-  }, [["dozens", "📊 Dozens"], ["columns", "📊 Columns"], ["even", "🎯 Even Money"]].map(function (_ref38) {
+  }, rules.followTheLeader ? [["dozens", "📊 Dozens"], ["columns", "📊 Columns"], ["even", "🎯 Even Money"]].map(function (_ref38) {
     var _ref39 = _slicedToArray(_ref38, 2),
       t = _ref39[0],
       l = _ref39[1];
@@ -3851,7 +3859,29 @@ function ParkPlayRulesEditor(_ref35) {
         cursor: "pointer"
       }
     }, l);
-  })), (cfg.ftlTargetType === "dozens" || cfg.ftlTargetType === "columns") && /*#__PURE__*/React.createElement("div", {
+  }) : [["set12", "📊 Set of 12"], ["even", "🎯 Even Money"]].map(function (_ref40) {
+    var _ref41 = _slicedToArray(_ref40, 2),
+      t = _ref41[0],
+      l = _ref41[1];
+    var sel = cfg.ftlTargetType === t || (cfg.ftlTargetType === "dozens" || cfg.ftlTargetType === "columns") && t === "set12";
+    return /*#__PURE__*/React.createElement("button", {
+      key: t,
+      onClick: function onClick() {
+        return upCfg("ftlTargetType", t === "set12" ? "dozens" : t);
+      },
+      style: {
+        flex: 1,
+        padding: "7px 0",
+        borderRadius: 8,
+        border: "2px solid " + (sel ? "#a78bfa" : "#2d4057"),
+        background: sel ? "#1a0a2e" : "#0f1923",
+        color: sel ? "#c4b5fd" : "#64748b",
+        fontSize: 11,
+        fontWeight: 700,
+        cursor: "pointer"
+      }
+    }, l);
+  })), rules.followTheLeader && (cfg.ftlTargetType === "dozens" || cfg.ftlTargetType === "columns") && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 5
@@ -3893,10 +3923,10 @@ function ParkPlayRulesEditor(_ref35) {
       gap: 5,
       marginBottom: 6
     }
-  }, [["🟡", (presets === null || presets === void 0 ? void 0 : presets.yellow) || 4], ["🟠", (presets === null || presets === void 0 ? void 0 : presets.orange) || 7], ["🔴", (presets === null || presets === void 0 ? void 0 : presets.red) || 11]].map(function (_ref40) {
-    var _ref41 = _slicedToArray(_ref40, 2),
-      icon = _ref41[0],
-      val = _ref41[1];
+  }, [["🟡", (presets === null || presets === void 0 ? void 0 : presets.yellow) || 4], ["🟠", (presets === null || presets === void 0 ? void 0 : presets.orange) || 7], ["🔴", (presets === null || presets === void 0 ? void 0 : presets.red) || 11]].map(function (_ref42) {
+    var _ref43 = _slicedToArray(_ref42, 2),
+      icon = _ref43[0],
+      val = _ref43[1];
     return /*#__PURE__*/React.createElement("button", {
       key: val,
       onClick: function onClick() {
@@ -4066,12 +4096,12 @@ function ParkPlayRulesEditor(_ref35) {
 
 // ===== components/modals.jsx =====
 // -- Modal Dialogs --
-function CashOutModal(_ref42) {
-  var maxAmount = _ref42.maxAmount,
-    currency = _ref42.currency,
-    currentBankroll = _ref42.currentBankroll,
-    onCashOut = _ref42.onCashOut,
-    onClose = _ref42.onClose;
+function CashOutModal(_ref44) {
+  var maxAmount = _ref44.maxAmount,
+    currency = _ref44.currency,
+    currentBankroll = _ref44.currentBankroll,
+    onCashOut = _ref44.onCashOut,
+    onClose = _ref44.onClose;
   var _useState7 = (0, _react.useState)(Math.min(100, maxAmount)),
     _useState8 = _slicedToArray(_useState7, 2),
     amount = _useState8[0],
@@ -4202,9 +4232,9 @@ function CashOutModal(_ref42) {
 }
 
 // -- Onboarding --
-function OnboardingScreen(_ref43) {
-  var onComplete = _ref43.onComplete,
-    initialBankroll = _ref43.initialBankroll;
+function OnboardingScreen(_ref45) {
+  var onComplete = _ref45.onComplete,
+    initialBankroll = _ref45.initialBankroll;
   var _useState9 = (0, _react.useState)(0),
     _useState0 = _slicedToArray(_useState9, 2),
     step = _useState0[0],
@@ -4324,11 +4354,11 @@ function OnboardingScreen(_ref43) {
       color: "#e2e8f0",
       textAlign: "center"
     }
-  }, "Which table are you playing?"), [["american", "🇺🇸 American", "Has 0 and 00"], ["european", "🇪🇺 European", "Has 0 only"]].map(function (_ref44) {
-    var _ref45 = _slicedToArray(_ref44, 3),
-      v = _ref45[0],
-      label = _ref45[1],
-      sub = _ref45[2];
+  }, "Which table are you playing?"), [["american", "🇺🇸 American", "Has 0 and 00"], ["european", "🇪🇺 European", "Has 0 only"]].map(function (_ref46) {
+    var _ref47 = _slicedToArray(_ref46, 3),
+      v = _ref47[0],
+      label = _ref47[1],
+      sub = _ref47[2];
     return /*#__PURE__*/React.createElement("button", {
       key: v,
       onClick: function onClick() {
@@ -4482,12 +4512,12 @@ function OnboardingScreen(_ref43) {
     val: tableMaxTotal,
     set: setTableMaxTotal,
     color: "#f87171"
-  }].map(function (_ref46) {
-    var label = _ref46.label,
-      key = _ref46.key,
-      val = _ref46.val,
-      set = _ref46.set,
-      color = _ref46.color;
+  }].map(function (_ref48) {
+    var label = _ref48.label,
+      key = _ref48.key,
+      val = _ref48.val,
+      set = _ref48.set,
+      color = _ref48.color;
     function dec() {
       if (key === "minBet") {
         if (val > 10) return set(val <= 100 ? val - 5 : val <= 1000 ? val - 25 : val - 1000);
@@ -4607,10 +4637,10 @@ function OnboardingScreen(_ref43) {
       flexDirection: "column",
       gap: 6
     }
-  }, Object.entries(CURRENCIES).map(function (_ref47) {
-    var _ref48 = _slicedToArray(_ref47, 2),
-      code = _ref48[0],
-      cur = _ref48[1];
+  }, Object.entries(CURRENCIES).map(function (_ref49) {
+    var _ref50 = _slicedToArray(_ref49, 2),
+      code = _ref50[0],
+      cur = _ref50[1];
     return /*#__PURE__*/React.createElement("button", {
       key: code,
       onClick: function onClick() {
@@ -4696,12 +4726,12 @@ function OnboardingScreen(_ref43) {
 }
 
 // -- Buy In Modal --
-function BuyInModal(_ref49) {
-  var defaultAmount = _ref49.defaultAmount,
-    currency = _ref49.currency,
-    currentBankroll = _ref49.currentBankroll,
-    onBuyIn = _ref49.onBuyIn,
-    onClose = _ref49.onClose;
+function BuyInModal(_ref51) {
+  var defaultAmount = _ref51.defaultAmount,
+    currency = _ref51.currency,
+    currentBankroll = _ref51.currentBankroll,
+    onBuyIn = _ref51.onBuyIn,
+    onClose = _ref51.onClose;
   var _useState23 = (0, _react.useState)(defaultAmount || 100),
     _useState24 = _slicedToArray(_useState23, 2),
     amount = _useState24[0],
@@ -4813,11 +4843,11 @@ function BuyInModal(_ref49) {
 }
 
 // -- Currency Change Modal --
-function CurrencyModal(_ref50) {
-  var current = _ref50.current,
-    bankroll = _ref50.bankroll,
-    onSave = _ref50.onSave,
-    onClose = _ref50.onClose;
+function CurrencyModal(_ref52) {
+  var current = _ref52.current,
+    bankroll = _ref52.bankroll,
+    onSave = _ref52.onSave,
+    onClose = _ref52.onClose;
   var _useState25 = (0, _react.useState)(current),
     _useState26 = _slicedToArray(_useState25, 2),
     selected = _useState26[0],
@@ -4866,10 +4896,10 @@ function CurrencyModal(_ref50) {
       gap: 5,
       marginBottom: 16
     }
-  }, Object.entries(CURRENCIES).map(function (_ref51) {
-    var _ref52 = _slicedToArray(_ref51, 2),
-      code = _ref52[0],
-      cur = _ref52[1];
+  }, Object.entries(CURRENCIES).map(function (_ref53) {
+    var _ref54 = _slicedToArray(_ref53, 2),
+      code = _ref54[0],
+      cur = _ref54[1];
     return /*#__PURE__*/React.createElement("button", {
       key: code,
       onClick: function onClick() {
@@ -4983,8 +5013,8 @@ function CurrencyModal(_ref50) {
 }
 
 // -- Changelog Modal --
-function ChangelogModal(_ref53) {
-  var onClose = _ref53.onClose;
+function ChangelogModal(_ref55) {
+  var onClose = _ref55.onClose;
   return /*#__PURE__*/React.createElement(Modal, {
     onClose: onClose
   }, /*#__PURE__*/React.createElement("div", {
@@ -5066,9 +5096,9 @@ function ChangelogModal(_ref53) {
     })));
   })));
 }
-function HardResetModal(_ref54) {
-  var onClose = _ref54.onClose,
-    onExport = _ref54.onExport;
+function HardResetModal(_ref56) {
+  var onClose = _ref56.onClose,
+    onExport = _ref56.onExport;
   var _useState29 = (0, _react.useState)(0),
     _useState30 = _slicedToArray(_useState29, 2),
     step = _useState30[0],
@@ -5231,12 +5261,12 @@ function HardResetModal(_ref54) {
 
 // ===== components/SimModePage.jsx =====
 // -- Simulation Mode UI --
-function StatContextBar(_ref55) {
-  var simResults = _ref55.simResults,
-    simCfg = _ref55.simCfg,
-    sess = _ref55.sess,
-    cur = _ref55.cur,
-    pnlVal = _ref55.pnlVal;
+function StatContextBar(_ref57) {
+  var simResults = _ref57.simResults,
+    simCfg = _ref57.simCfg,
+    sess = _ref57.sess,
+    cur = _ref57.cur,
+    pnlVal = _ref57.pnlVal;
   // Match live tracks to sim strategies by type+roi+stopLoss
   var liveTracks = sess.tracks.filter(function (t) {
     return t.state !== "closed";
@@ -5307,14 +5337,14 @@ function StatContextBar(_ref55) {
       letterSpacing: 1,
       marginBottom: 2
     }
-  }, "vs Simulation Benchmark"), bars.map(function (_ref56, i) {
-    var t = _ref56.t,
-      status = _ref56.status,
-      statusColor = _ref56.statusColor,
-      statusIcon = _ref56.statusIcon,
-      pctRank = _ref56.pctRank,
-      stats = _ref56.stats,
-      livePnl = _ref56.livePnl;
+  }, "vs Simulation Benchmark"), bars.map(function (_ref58, i) {
+    var t = _ref58.t,
+      status = _ref58.status,
+      statusColor = _ref58.statusColor,
+      statusIcon = _ref58.statusIcon,
+      pctRank = _ref58.pctRank,
+      stats = _ref58.stats,
+      livePnl = _ref58.livePnl;
     return /*#__PURE__*/React.createElement("div", {
       key: t.id,
       style: {
@@ -5363,22 +5393,22 @@ function StatContextBar(_ref55) {
 }
 
 // -- Simulation Mode Page --
-function SimModePage(_ref57) {
-  var simCfg = _ref57.simCfg,
-    setSimCfg = _ref57.setSimCfg,
-    simRunning = _ref57.simRunning,
-    setSimRunning = _ref57.setSimRunning,
-    simPaused = _ref57.simPaused,
-    setSimPaused = _ref57.setSimPaused,
-    simProgress = _ref57.simProgress,
-    setSimProgress = _ref57.setSimProgress,
-    simResults = _ref57.simResults,
-    setSimResults = _ref57.setSimResults,
-    simDone = _ref57.simDone,
-    setSimDone = _ref57.setSimDone,
-    simStopRef = _ref57.simStopRef,
-    currency = _ref57.currency,
-    cur = _ref57.cur;
+function SimModePage(_ref59) {
+  var simCfg = _ref59.simCfg,
+    setSimCfg = _ref59.setSimCfg,
+    simRunning = _ref59.simRunning,
+    setSimRunning = _ref59.setSimRunning,
+    simPaused = _ref59.simPaused,
+    setSimPaused = _ref59.setSimPaused,
+    simProgress = _ref59.simProgress,
+    setSimProgress = _ref59.setSimProgress,
+    simResults = _ref59.simResults,
+    setSimResults = _ref59.setSimResults,
+    simDone = _ref59.simDone,
+    setSimDone = _ref59.setSimDone,
+    simStopRef = _ref59.simStopRef,
+    currency = _ref59.currency,
+    cur = _ref59.cur;
   var _useState31 = (0, _react.useState)("setup"),
     _useState32 = _slicedToArray(_useState31, 2),
     view = _useState32[0],
@@ -5677,10 +5707,10 @@ function SimModePage(_ref57) {
       display: "flex",
       gap: 8
     }
-  }, [["european", "🇪🇺 European"], ["american", "🇺🇸 American"]].map(function (_ref58) {
-    var _ref59 = _slicedToArray(_ref58, 2),
-      v = _ref59[0],
-      l = _ref59[1];
+  }, [["european", "🇪🇺 European"], ["american", "🇺🇸 American"]].map(function (_ref60) {
+    var _ref61 = _slicedToArray(_ref60, 2),
+      v = _ref61[0],
+      l = _ref61[1];
     var sel = simCfg.roulette === v;
     return /*#__PURE__*/React.createElement("button", {
       key: v,
@@ -6400,11 +6430,11 @@ function SimModePage(_ref57) {
         gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr",
         gap: 4
       }
-    }, [["Min", stats.minPnl, "#f87171"], ["P25", stats.p25, "#f97316"], ["P50", stats.p50, "#fbbf24"], ["P75", stats.p75, "#86efac"], ["Max", stats.maxPnl, "#4ade80"]].map(function (_ref60) {
-      var _ref61 = _slicedToArray(_ref60, 3),
-        l = _ref61[0],
-        v = _ref61[1],
-        c = _ref61[2];
+    }, [["Min", stats.minPnl, "#f87171"], ["P25", stats.p25, "#f97316"], ["P50", stats.p50, "#fbbf24"], ["P75", stats.p75, "#86efac"], ["Max", stats.maxPnl, "#4ade80"]].map(function (_ref62) {
+      var _ref63 = _slicedToArray(_ref62, 3),
+        l = _ref63[0],
+        v = _ref63[1],
+        c = _ref63[2];
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -6444,11 +6474,11 @@ function SimModePage(_ref57) {
         gridTemplateColumns: "1fr 1fr",
         gap: 6
       }
-    }, [["Longest Win", stats.longestWinStreak, "#4ade80"], ["Longest Loss", stats.longestLossStreak, "#f87171"], ["Avg Win Streak", stats.avgWinStreak.toFixed(1), "#86efac"], ["Avg Loss Streak", stats.avgLossStreak.toFixed(1), "#f97316"], ["Stop Loss Hits", r.stopLossHits, "#fbbf24"], ["SL Rate", stats.stopLossRate.toFixed(2) + "/sess", "#fbbf24"], ["% Spins Bet", stats.pctSpinsBet.toFixed(1) + "%", "#c4b5fd"], ["Avg Spins Played", Math.round(stats.avgSpinsPlayed).toLocaleString(), "#94a3b8"]].concat(_toConsumableArray(simCfg.sessionBankroll ? [["Bust Rate", stats.bustRate.toFixed(1) + "%", "#f87171"], ["Busted", stats.bustCount + " sess", "#f87171"]] : [])).map(function (_ref62) {
-      var _ref63 = _slicedToArray(_ref62, 3),
-        l = _ref63[0],
-        v = _ref63[1],
-        c = _ref63[2];
+    }, [["Longest Win", stats.longestWinStreak, "#4ade80"], ["Longest Loss", stats.longestLossStreak, "#f87171"], ["Avg Win Streak", stats.avgWinStreak.toFixed(1), "#86efac"], ["Avg Loss Streak", stats.avgLossStreak.toFixed(1), "#f97316"], ["Stop Loss Hits", r.stopLossHits, "#fbbf24"], ["SL Rate", stats.stopLossRate.toFixed(2) + "/sess", "#fbbf24"], ["% Spins Bet", stats.pctSpinsBet.toFixed(1) + "%", "#c4b5fd"], ["Avg Spins Played", Math.round(stats.avgSpinsPlayed).toLocaleString(), "#94a3b8"]].concat(_toConsumableArray(simCfg.sessionBankroll ? [["Bust Rate", stats.bustRate.toFixed(1) + "%", "#f87171"], ["Busted", stats.bustCount + " sess", "#f87171"]] : [])).map(function (_ref64) {
+      var _ref65 = _slicedToArray(_ref64, 3),
+        l = _ref65[0],
+        v = _ref65[1],
+        c = _ref65[2];
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -6488,9 +6518,9 @@ function SimModePage(_ref57) {
         flexDirection: "column",
         gap: 2
       }
-    }, stats.winStreakDist.slice(0, 10).map(function (_ref64) {
-      var len = _ref64.len,
-        p = _ref64.pct;
+    }, stats.winStreakDist.slice(0, 10).map(function (_ref66) {
+      var len = _ref66.len,
+        p = _ref66.pct;
       return /*#__PURE__*/React.createElement("div", {
         key: len,
         style: {
@@ -6542,9 +6572,9 @@ function SimModePage(_ref57) {
         flexDirection: "column",
         gap: 2
       }
-    }, stats.lossStreakDist.slice(0, 10).map(function (_ref65) {
-      var len = _ref65.len,
-        p = _ref65.pct;
+    }, stats.lossStreakDist.slice(0, 10).map(function (_ref67) {
+      var len = _ref67.len,
+        p = _ref67.pct;
       return /*#__PURE__*/React.createElement("div", {
         key: len,
         style: {
@@ -6588,13 +6618,13 @@ function SimModePage(_ref57) {
 }
 
 // -- Sim Strategy Editor --
-function SimStratEditor(_ref66) {
-  var strat = _ref66.strat,
-    idx = _ref66.idx,
-    simCfg = _ref66.simCfg,
-    setSimCfg = _ref66.setSimCfg,
-    cur = _ref66.cur,
-    onClose = _ref66.onClose;
+function SimStratEditor(_ref68) {
+  var strat = _ref68.strat,
+    idx = _ref68.idx,
+    simCfg = _ref68.simCfg,
+    setSimCfg = _ref68.setSimCfg,
+    cur = _ref68.cur,
+    onClose = _ref68.onClose;
   var _useState35 = (0, _react.useState)(_objectSpread({}, strat.config)),
     _useState36 = _slicedToArray(_useState35, 2),
     cfg = _useState36[0],
@@ -6702,10 +6732,10 @@ function SimStratEditor(_ref66) {
       display: "flex",
       gap: 5
     }
-  }, [["flat", "Flat"], ["progression", "Progression"]].map(function (_ref67) {
-    var _ref68 = _slicedToArray(_ref67, 2),
-      m = _ref68[0],
-      l = _ref68[1];
+  }, [["flat", "Flat"], ["progression", "Progression"]].map(function (_ref69) {
+    var _ref70 = _slicedToArray(_ref69, 2),
+      m = _ref70[0],
+      l = _ref70[1];
     var sel = (cfg.betMode || "progression") === m;
     return /*#__PURE__*/React.createElement("button", {
       key: m,
@@ -7149,14 +7179,14 @@ function App() {
   if (!settings.onboarded) {
     return /*#__PURE__*/React.createElement(OnboardingScreen, {
       initialBankroll: settings._restartBankroll,
-      onComplete: function onComplete(_ref69) {
-        var roulette = _ref69.roulette,
-          bankroll = _ref69.bankroll,
-          defaultBuyIn = _ref69.defaultBuyIn,
-          curr = _ref69.currency,
-          tableMinBet = _ref69.tableMinBet,
-          tableMaxBet = _ref69.tableMaxBet,
-          tableMaxTotal = _ref69.tableMaxTotal;
+      onComplete: function onComplete(_ref71) {
+        var roulette = _ref71.roulette,
+          bankroll = _ref71.bankroll,
+          defaultBuyIn = _ref71.defaultBuyIn,
+          curr = _ref71.currency,
+          tableMinBet = _ref71.tableMinBet,
+          tableMaxBet = _ref71.tableMaxBet,
+          tableMaxTotal = _ref71.tableMaxTotal;
         updApp(function (s) {
           var prevBankroll = s.settings._restartBankroll;
           s.settings.onboarded = true;
@@ -8255,10 +8285,10 @@ function App() {
       l: "JP Profit",
       v: (outcomes.jackpot.profit * (primaryTrack.config.unit || 1) >= 0 ? "+" : "-") + cur.symbol + Math.abs(outcomes.jackpot.profit * (primaryTrack.config.unit || 1)).toFixed(cur.dec),
       c: outcomes.jackpot.profit >= 0 ? "#4ade80" : "#f87171"
-    }].map(function (_ref70) {
-      var l = _ref70.l,
-        v = _ref70.v,
-        c = _ref70.c;
+    }].map(function (_ref72) {
+      var l = _ref72.l,
+        v = _ref72.v,
+        c = _ref72.c;
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -8340,10 +8370,10 @@ function App() {
       l: "Partial Profit",
       v: outcomes ? signChips(outcomes.partial.profit, primaryTrack.config.unit || 1, currency) : "--",
       c: outcomes && outcomes.partial.profit >= 0 ? "#4ade80" : "#f97316"
-    }].map(function (_ref71) {
-      var l = _ref71.l,
-        v = _ref71.v,
-        c = _ref71.c;
+    }].map(function (_ref73) {
+      var l = _ref73.l,
+        v = _ref73.v,
+        c = _ref73.c;
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -8672,10 +8702,10 @@ function App() {
         flexDirection: "column",
         gap: 3
       }
-    }, legendRows.map(function (_ref72) {
-      var _ref73 = _slicedToArray(_ref72, 2),
-        abbr = _ref73[0],
-        desc = _ref73[1];
+    }, legendRows.map(function (_ref74) {
+      var _ref75 = _slicedToArray(_ref74, 2),
+        abbr = _ref75[0],
+        desc = _ref75[1];
       return /*#__PURE__*/React.createElement("div", {
         key: abbr,
         style: {
@@ -8998,10 +9028,10 @@ function App() {
       l: "Net P&L",
       v: (pnlVal >= 0 ? "+" : "-") + cur.symbol + Math.abs(pnlVal).toFixed(cur.dec),
       c: pnlColor
-    }].map(function (_ref74) {
-      var l = _ref74.l,
-        v = _ref74.v,
-        c = _ref74.c;
+    }].map(function (_ref76) {
+      var l = _ref76.l,
+        v = _ref76.v,
+        c = _ref76.c;
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -9146,11 +9176,11 @@ function App() {
           gap: 6,
           marginBottom: 8
         }
-      }, [["Wins", g.wins, "#4ade80"], ["Losses", g.losses, "#f87171"], ["Win Rate", winRate, "#86efac"]].map(function (_ref75) {
-        var _ref76 = _slicedToArray(_ref75, 3),
-          l = _ref76[0],
-          v = _ref76[1],
-          c = _ref76[2];
+      }, [["Wins", g.wins, "#4ade80"], ["Losses", g.losses, "#f87171"], ["Win Rate", winRate, "#86efac"]].map(function (_ref77) {
+        var _ref78 = _slicedToArray(_ref77, 3),
+          l = _ref78[0],
+          v = _ref78[1],
+          c = _ref78[2];
         return /*#__PURE__*/React.createElement("div", {
           key: l,
           style: {
@@ -9375,10 +9405,10 @@ function App() {
         display: "flex",
         gap: 8
       }
-    }, [["american", "🇺🇸 American (00)"], ["european", "🇪🇺 European"]].map(function (_ref77) {
-      var _ref78 = _slicedToArray(_ref77, 2),
-        v = _ref78[0],
-        label = _ref78[1];
+    }, [["american", "🇺🇸 American (00)"], ["european", "🇪🇺 European"]].map(function (_ref79) {
+      var _ref80 = _slicedToArray(_ref79, 2),
+        v = _ref80[0],
+        label = _ref80[1];
       return /*#__PURE__*/React.createElement("button", {
         key: v,
         onClick: function onClick() {
@@ -9468,10 +9498,10 @@ function App() {
       label: "Max Total (per spin)",
       key: "tableMaxTotal",
       color: "#f87171"
-    }].map(function (_ref79) {
-      var label = _ref79.label,
-        key = _ref79.key,
-        color = _ref79.color;
+    }].map(function (_ref81) {
+      var label = _ref81.label,
+        key = _ref81.key,
+        color = _ref81.color;
       var val = settings[key] || 1;
       function dec() {
         if (key === "tableMinBet") {
@@ -9650,8 +9680,8 @@ function App() {
   }
 
   // -- Bankroll Edit --
-  function BankrollEdit(_ref80) {
-    var onClose = _ref80.onClose;
+  function BankrollEdit(_ref82) {
+    var onClose = _ref82.onClose;
     var _useState97 = (0, _react.useState)(sess.bankrollCurrent),
       _useState98 = _slicedToArray(_useState97, 2),
       val = _useState98[0],
