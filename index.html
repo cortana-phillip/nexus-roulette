@@ -296,7 +296,7 @@ c,!1,d,e);a[Ja]=b.current;sc(8===a.nodeType?a.parentNode:a);return new Xf(b)};Q.
 var d=null!=c&&c.hydratedSources||null,e=!1,f="",g=aj;null!==c&&void 0!==c&&(!0===c.unstable_strictMode&&(e=!0),void 0!==c.identifierPrefix&&(f=c.identifierPrefix),void 0!==c.onRecoverableError&&(g=c.onRecoverableError));b=Wi(b,null,a,1,null!=c?c:null,e,!1,f,g);a[Ja]=b.current;sc(a);if(d)for(a=0;a<d.length;a++)c=d[a],e=c._getVersion,e=e(c._source),null==b.mutableSourceEagerHydrationData?b.mutableSourceEagerHydrationData=[c,e]:b.mutableSourceEagerHydrationData.push(c,e);return new Ud(b)};Q.render=
 function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmountComponentAtNode=function(a){if(!Vd(a))throw Error(m(40));return a._reactRootContainer?(yb(function(){Wd(null,null,a,!1,function(){a._reactRootContainer=null;a[Ja]=null})}),!0):!1};Q.unstable_batchedUpdates=Tf;Q.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!Vd(c))throw Error(m(200));if(null==a||void 0===a._reactInternals)throw Error(m(38));return Wd(a,b,c,!1,d)};Q.version="18.3.1-next-f1338f8080-20240426"});
 })();
-</script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}(function(){function require(m){if(m==='react')return window.React;if(m==='react-dom')return window.ReactDOM;return{};}var module={exports:{}},exports=module.exports;"use strict";
+</script><script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js");}(function(){function require(m){if(m==="react")return window.React;if(m==="react-dom")return window.ReactDOM;return{};}var module={exports:{}},exports=module.exports;"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -549,35 +549,40 @@ function initDroughts(r) {
   return d;
 }
 var TABLE_LIMIT_PRESETS = [{
-  label: "$10 min · $500 max",
-  minBet: 10,
-  maxBet: 500,
-  maxTotal: 10000
+  label: "$0.25 min (machine)",
+  minBet: 0.25,
+  maxBet: 100,
+  maxTotal: 500
 }, {
-  label: "$10 min · $2K max",
+  label: "$0.50 min (machine)",
+  minBet: 0.50,
+  maxBet: 100,
+  maxTotal: 500
+}, {
+  label: "$1 min",
+  minBet: 1,
+  maxBet: 500,
+  maxTotal: 5000
+}, {
+  label: "$10 min",
   minBet: 10,
   maxBet: 2000,
   maxTotal: 10000
 }, {
-  label: "$15 min · $2K max",
+  label: "$15 min",
   minBet: 15,
   maxBet: 2000,
   maxTotal: 10000
 }, {
-  label: "$25 min · $10K max",
+  label: "$25 min",
   minBet: 25,
   maxBet: 10000,
   maxTotal: 10000
 }, {
-  label: "High Roller $100+",
+  label: "$100 min (high limit)",
   minBet: 100,
   maxBet: 10000,
   maxTotal: 50000
-}, {
-  label: "No Limit",
-  minBet: 1,
-  maxBet: 999999,
-  maxTotal: 999999
 }];
 var EVEN_MONEY = [{
   key: "red",
@@ -2732,6 +2737,21 @@ function OnboardingScreen(_ref17) {
       val = _ref20.val,
       set = _ref20.set,
       color = _ref20.color;
+    function dec() {
+      if (key === "minBet") {
+        if (val > 10) return set(val <= 100 ? val - 5 : val <= 1000 ? val - 25 : val - 1000);
+        if (val > 1) return set(val - 1);
+        if (val > 0.5) return set(0.5);
+        if (val > 0.25) return set(0.25);
+      } else {
+        set(Math.max(1, val <= 10 ? val - 1 : val <= 100 ? val - 5 : val <= 1000 ? val - 25 : val - 1000));
+      }
+    }
+    function inc() {
+      if (key === "minBet" && val < 1) return set(val === 0.25 ? 0.5 : 1);
+      set(val < 10 ? val + 1 : val < 100 ? val + 5 : val < 1000 ? val + 25 : val + 1000);
+    }
+    var disp = val < 1 ? "$".concat(val.toFixed(2)) : val >= 1000 ? "$".concat((val / 1000).toFixed(val % 1000 === 0 ? 0 : 1), "K") : "$".concat(val);
     return /*#__PURE__*/React.createElement("div", {
       key: key
     }, /*#__PURE__*/React.createElement("div", {
@@ -2752,11 +2772,7 @@ function OnboardingScreen(_ref17) {
         overflow: "hidden"
       }
     }, /*#__PURE__*/React.createElement("button", {
-      onClick: function onClick() {
-        return set(function (v) {
-          return Math.max(1, v <= 10 ? v - 1 : v <= 100 ? v - 5 : v <= 1000 ? v - 25 : v - 1000);
-        });
-      },
+      onClick: dec,
       style: {
         padding: "10px 16px",
         background: "transparent",
@@ -2774,12 +2790,8 @@ function OnboardingScreen(_ref17) {
         fontWeight: 800,
         color: color
       }
-    }, "$", val.toLocaleString()), /*#__PURE__*/React.createElement("button", {
-      onClick: function onClick() {
-        return set(function (v) {
-          return v < 10 ? v + 1 : v < 100 ? v + 5 : v < 1000 ? v + 25 : v + 1000;
-        });
-      },
+    }, disp), /*#__PURE__*/React.createElement("button", {
+      onClick: inc,
       style: {
         padding: "10px 16px",
         background: "transparent",
@@ -6161,6 +6173,36 @@ function App() {
       var label = _ref40.label,
         key = _ref40.key,
         color = _ref40.color;
+      var val = settings[key] || 1;
+      function dec() {
+        if (key === "tableMinBet") {
+          if (val > 10) return updApp(function (s) {
+            s.settings[key] = val <= 100 ? val - 5 : val <= 1000 ? val - 25 : val - 1000;
+          });
+          if (val > 1) return updApp(function (s) {
+            s.settings[key] = val - 1;
+          });
+          if (val > 0.5) return updApp(function (s) {
+            s.settings[key] = 0.5;
+          });
+          if (val > 0.25) return updApp(function (s) {
+            s.settings[key] = 0.25;
+          });
+        } else {
+          updApp(function (s) {
+            s.settings[key] = Math.max(1, val <= 10 ? val - 1 : val <= 100 ? val - 5 : val <= 1000 ? val - 25 : val - 1000);
+          });
+        }
+      }
+      function inc() {
+        if (key === "tableMinBet" && val < 1) return updApp(function (s) {
+          s.settings[key] = val === 0.25 ? 0.5 : 1;
+        });
+        updApp(function (s) {
+          s.settings[key] = val < 10 ? val + 1 : val < 100 ? val + 5 : val < 1000 ? val + 25 : val + 1000;
+        });
+      }
+      var displayVal = val < 1 ? "".concat(cur.symbol).concat(val.toFixed(2)) : val < 10 ? "".concat(cur.symbol).concat(val) : val >= 1000 ? "".concat(cur.symbol).concat((val / 1000).toFixed(val % 1000 === 0 ? 0 : 1), "K") : "".concat(cur.symbol).concat(val);
       return /*#__PURE__*/React.createElement("div", {
         key: key
       }, /*#__PURE__*/React.createElement("div", {
@@ -6181,12 +6223,7 @@ function App() {
           overflow: "hidden"
         }
       }, /*#__PURE__*/React.createElement("button", {
-        onClick: function onClick() {
-          return updApp(function (s) {
-            var v = s.settings[key] || 10;
-            s.settings[key] = Math.max(1, v <= 10 ? v - 1 : v <= 100 ? v - 5 : v <= 1000 ? v - 25 : v - 1000);
-          });
-        },
+        onClick: dec,
         style: {
           padding: "8px 14px",
           background: "transparent",
@@ -6204,13 +6241,8 @@ function App() {
           fontWeight: 800,
           color: color
         }
-      }, cur.symbol, (settings[key] || 10).toLocaleString()), /*#__PURE__*/React.createElement("button", {
-        onClick: function onClick() {
-          return updApp(function (s) {
-            var v = s.settings[key] || 10;
-            s.settings[key] = v < 10 ? v + 1 : v < 100 ? v + 5 : v < 1000 ? v + 25 : v + 1000;
-          });
-        },
+      }, displayVal), /*#__PURE__*/React.createElement("button", {
+        onClick: inc,
         style: {
           padding: "8px 14px",
           background: "transparent",
@@ -6573,4 +6605,4 @@ function App() {
     },
     onExport: exportJSON
   }));
-}var App=module.exports['default']||module.exports;class EB extends React.Component{constructor(p){super(p);this.state={e:null};}static getDerivedStateFromError(e){return{e:e};}render(){if(this.state.e)return React.createElement('pre',{style:{color:'#f87171',padding:'20px',fontSize:'11px',whiteSpace:'pre-wrap',background:'#0f1923',minHeight:'100vh',margin:0}},'Error: '+this.state.e.message+'\n\n'+this.state.e.stack);return this.props.children;}}ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(EB,null,React.createElement(App,null)));})();</script></body></html>
+}var App=module.exports["default"]||module.exports;class EB extends React.Component{constructor(p){super(p);this.state={e:null};}static getDerivedStateFromError(e){return{e:e};}render(){if(this.state.e)return React.createElement("pre",{style:{color:"#f87171",padding:"20px",fontSize:"11px",whiteSpace:"pre-wrap",background:"#0f1923",minHeight:"100vh",margin:0}},"Error: "+this.state.e.message+"\n\n"+this.state.e.stack);return this.props.children;}}ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(EB,null,React.createElement(App,null)));})();</script></body></html>
