@@ -93,6 +93,60 @@
             </div>
           </div>
         </Card>
+
+        <Card>
+          <Lbl>Google Drive Backup</Lbl>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            <div style={{padding:"10px 12px",borderRadius:10,border:"1px solid "+(getDriveToken()?"#4ade80":"#2d4057"),background:getDriveToken()?"#0a1f0a":"#0f1923"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:getDriveToken()?"#4ade80":"#94a3b8"}}>
+                    {driveSyncStatus==="restoring"?"☁️ Restoring...":getDriveToken()?"☁️ Connected":"☁️ Not Connected"}
+                  </div>
+                  <div style={{fontSize:10,color:"#64748b",marginTop:2}}>
+                    {getDriveToken()?"Auto-saves on every session save/end":"Sign in to enable cloud backup"}
+                  </div>
+                </div>
+                <button onClick={async()=>{
+                  if(getDriveToken()){
+                    driveSignOut();
+                    setDriveSyncStatus("disconnected");
+                  } else {
+                    try{
+                      await driveSignIn();
+                      setDriveSyncStatus("connected");
+                      // Auto-restore if local data looks empty/fresh
+                      const localSaved = appState.savedSessions || [];
+                      if(localSaved.length === 0) {
+                        setDriveSyncStatus("restoring");
+                        const data = await driveRestore();
+                        if(data && data.savedSessions && data.savedSessions.length > 0) {
+                          setAppState(data);
+                          saveApp(data);
+                          alert("Data restored from Google Drive!");
+                        }
+                        setDriveSyncStatus("connected");
+                      }
+                    }catch(e){alert("Sign in failed: "+e.message);}
+                  }
+                }} style={{padding:"7px 14px",borderRadius:8,border:"none",background:getDriveToken()?"#374151":"#16a34a",color:"white",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                  {getDriveToken()?"Disconnect":"Connect"}
+                </button>
+              </div>
+              {getDriveToken() && (
+                <button onClick={async()=>{
+                  setDriveSyncStatus("syncing");
+                  const ok = await driveSave(appState);
+                  setDriveSyncStatus(ok?"connected":"error");
+                  alert(ok?"Backup saved to Google Drive!":"Drive save failed — check connection.");
+                }} style={{width:"100%",marginTop:8,padding:"8px 0",borderRadius:8,border:"1px solid #22c55e",background:"transparent",color:"#4ade80",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                  ☁️ Backup Now
+                </button>
+              )}
+            </div>
+          </div>
+        </Card>
+
         <Card>
           <Lbl>Info</Lbl>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>

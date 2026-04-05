@@ -1,6 +1,7 @@
 // -- Main App Component --
 export default function App() {
   const [appState, setAppState] = useState(loadApp);
+  const [driveSyncStatus, setDriveSyncStatus] = useState(getDriveToken()?"connected":"disconnected");
   const [tab, setTab] = useState(0);
   const [appMode, setAppMode] = useState("live"); // "live" | "sim"
   const [simCfg, setSimCfg] = useState(defaultSimConfig);
@@ -24,6 +25,24 @@ export default function App() {
   useEffect(() => {
     const interval = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Restore from Google Drive if localStorage was cleared (e.g. after reset + reconnect)
+  useEffect(() => {
+    if(!getDriveToken()) return;
+    const hasLocal = !!localStorage.getItem(KEY);
+    if(hasLocal) return;
+    setDriveSyncStatus("restoring");
+    driveRestore().then(data => {
+      if(data && data.savedSessions) {
+        setAppState(data);
+        saveApp(data);
+        setDriveSyncStatus("connected");
+        alert("Data restored from Google Drive!");
+      } else {
+        setDriveSyncStatus("connected");
+      }
+    }).catch(()=>setDriveSyncStatus("connected"));
   }, []);
   const [buyInOpen, setBuyInOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
@@ -304,7 +323,17 @@ export default function App() {
   function updateTrackConfig(id, newCfg) {
     updSess(s=>{
       const t=s.tracks.find(x=>x.id===id);
-      if(t) t.config={...t.config,...newCfg};
+      if(!t) return;
+      // Check if anything actually changed
+      const changed = Object.keys(newCfg).some(k => JSON.stringify(newCfg[k]) !== JSON.stringify(t.config[k]));
+      if(!changed) return;
+      // Park the original track, create new variation as active
+      t.state = "parked";
+      const mergedCfg = {...t.config, ...newCfg, activeBets: []};
+      const colorIdx = s.tracks.length % TRACK_COLORS.length;
+      const nt = newTrack(t.type, colorIdx, mergedCfg);
+      nt.state = "active";
+      s.tracks.push(nt);
     });
     setEditTrackId(null);
   }
@@ -320,6 +349,15 @@ export default function App() {
   }
 
   function autoExport(allSessions) {
+    // Always save to Google Drive first if connected
+    if(getDriveToken()) {
+      const driveData = { ...appState, savedSessions: allSessions };
+      driveSave(driveData).then(ok=>{
+        setDriveSyncStatus(ok ? "connected" : "error");
+        if(!ok) setTimeout(()=>setDriveSyncStatus("connected"), 3000);
+      });
+    }
+    // Then attempt local download (user can cancel, won't affect cloud)
     try {
       const data = {
         exportedAt: new Date().toISOString(),

@@ -19,6 +19,8 @@ const FILES = [
   'engine.js',
   // Session factories — depends on engine
   'session.js',
+  // Google Drive sync
+  'drive-sync.js',
   // Simulation engine — depends on engine + constants
   'simulation.js',
   // Base UI — depends on constants
@@ -106,6 +108,7 @@ const html = `<!DOCTYPE html>
 <meta name="theme-color" content="#0f1923">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <title>Nexus Roulette Tracker</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
