@@ -332,12 +332,12 @@ if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}
   var module={exports:{}},exports=module.exports;
   "use strict";
 
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = App;
 var _react = require("react");
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
 function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -353,7 +353,11 @@ function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbol
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } // ===== constants.js =====
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i.return) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
+function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; } // ===== constants.js =====
 // -- Constants & Lookup Tables --
 // -- Constants --
 var RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
@@ -676,10 +680,7 @@ var EVEN_MONEY = [{
   pred: function pred(n) {
     return n >= 19;
   }
-},
-// ===== engine.js =====
-// -- Game Engine: Math, Droughts, Table Calculations --
-{
+}, {
   key: "low",
   label: "1-18",
   color: "#86efac",
@@ -687,6 +688,273 @@ var EVEN_MONEY = [{
     return n <= 18;
   }
 }];
+
+// Google Drive OAuth config
+var GDRIVE_CLIENT_ID = "951031370415-8r3icu8790rhoh9b7qq4vccjb7o7vtvg.apps.googleusercontent.com";
+var GDRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+var GDRIVE_BACKUP_FILENAME = "nexus-roulette-backup.json";
+
+// -- Google Drive Sync --
+var GDrive = {
+  _token: null,
+  _fileId: null,
+  getToken: function getToken() {
+    return this._token || localStorage.getItem("nexus_gdrive_token");
+  },
+  setToken: function setToken(t) {
+    this._token = t;
+    localStorage.setItem("nexus_gdrive_token", t);
+  },
+  clearToken: function clearToken() {
+    this._token = null;
+    localStorage.removeItem("nexus_gdrive_token");
+    localStorage.removeItem("nexus_gdrive_fileid");
+  },
+  authorize: function authorize() {
+    return _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee() {
+      return _regenerator().w(function (_context) {
+        while (1) switch (_context.n) {
+          case 0:
+            return _context.a(2, new Promise(function (resolve) {
+              var state = Math.random().toString(36).slice(2);
+              var redirect = location.origin + location.pathname;
+              var url = "https://accounts.google.com/o/oauth2/v2/auth?client_id=".concat(GDRIVE_CLIENT_ID, "&redirect_uri=").concat(encodeURIComponent(redirect), "&response_type=token&scope=").concat(encodeURIComponent(GDRIVE_SCOPE), "&state=").concat(state, "&prompt=consent");
+              var popup = window.open(url, "gdrive_auth", "width=500,height=600");
+              var timer = setInterval(function () {
+                try {
+                  if (popup.closed) {
+                    clearInterval(timer);
+                    resolve(null);
+                    return;
+                  }
+                  var hash = popup.location.hash;
+                  if (hash && hash.includes("access_token")) {
+                    var params = new URLSearchParams(hash.slice(1));
+                    var token = params.get("access_token");
+                    clearInterval(timer);
+                    popup.close();
+                    if (token) {
+                      GDrive.setToken(token);
+                      resolve(token);
+                    } else resolve(null);
+                  }
+                } catch (e) {}
+              }, 500);
+            }));
+        }
+      }, _callee);
+    }))();
+  },
+  request: function request(method, url, body, token) {
+    var _this = this;
+    return _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
+      var t, res, _t;
+      return _regenerator().w(function (_context2) {
+        while (1) switch (_context2.p = _context2.n) {
+          case 0:
+            t = token || _this.getToken();
+            if (t) {
+              _context2.n = 1;
+              break;
+            }
+            return _context2.a(2, null);
+          case 1:
+            _context2.p = 1;
+            _context2.n = 2;
+            return fetch(url, {
+              method: method,
+              headers: {
+                "Authorization": "Bearer " + t,
+                "Content-Type": "application/json"
+              },
+              body: body ? JSON.stringify(body) : undefined
+            });
+          case 2:
+            res = _context2.v;
+            if (!(res.status === 401)) {
+              _context2.n = 3;
+              break;
+            }
+            _this.clearToken();
+            return _context2.a(2, null);
+          case 3:
+            if (res.ok) {
+              _context2.n = 4;
+              break;
+            }
+            return _context2.a(2, null);
+          case 4:
+            return _context2.a(2, res.json());
+          case 5:
+            _context2.p = 5;
+            _t = _context2.v;
+            return _context2.a(2, null);
+        }
+      }, _callee2, null, [[1, 5]]);
+    }))();
+  },
+  findFile: function findFile(token) {
+    var _this2 = this;
+    return _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3() {
+      var cached, res;
+      return _regenerator().w(function (_context3) {
+        while (1) switch (_context3.n) {
+          case 0:
+            cached = localStorage.getItem("nexus_gdrive_fileid");
+            if (!cached) {
+              _context3.n = 1;
+              break;
+            }
+            return _context3.a(2, cached);
+          case 1:
+            _context3.n = 2;
+            return _this2.request("GET", "https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='".concat(GDRIVE_BACKUP_FILENAME, "'&fields=files(id,name)"), null, token);
+          case 2:
+            res = _context3.v;
+            if (!(res && res.files && res.files.length > 0)) {
+              _context3.n = 3;
+              break;
+            }
+            localStorage.setItem("nexus_gdrive_fileid", res.files[0].id);
+            return _context3.a(2, res.files[0].id);
+          case 3:
+            return _context3.a(2, null);
+        }
+      }, _callee3);
+    }))();
+  },
+  save: function save(data) {
+    var _this3 = this;
+    return _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4() {
+      var token, content, fileId, res, meta, _res, _t2;
+      return _regenerator().w(function (_context4) {
+        while (1) switch (_context4.p = _context4.n) {
+          case 0:
+            token = _this3.getToken();
+            if (token) {
+              _context4.n = 1;
+              break;
+            }
+            return _context4.a(2, false);
+          case 1:
+            _context4.p = 1;
+            content = JSON.stringify(data);
+            _context4.n = 2;
+            return _this3.findFile(token);
+          case 2:
+            fileId = _context4.v;
+            if (!fileId) {
+              _context4.n = 4;
+              break;
+            }
+            _context4.n = 3;
+            return fetch("https://www.googleapis.com/upload/drive/v3/files/".concat(fileId, "?uploadType=media"), {
+              method: "PATCH",
+              headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+              },
+              body: content
+            });
+          case 3:
+            res = _context4.v;
+            return _context4.a(2, res.ok);
+          case 4:
+            _context4.n = 5;
+            return _this3.request("POST", "https://www.googleapis.com/drive/v3/files", {
+              name: GDRIVE_BACKUP_FILENAME,
+              parents: ["appDataFolder"]
+            }, token);
+          case 5:
+            meta = _context4.v;
+            if (meta) {
+              _context4.n = 6;
+              break;
+            }
+            return _context4.a(2, false);
+          case 6:
+            localStorage.setItem("nexus_gdrive_fileid", meta.id);
+            _context4.n = 7;
+            return fetch("https://www.googleapis.com/upload/drive/v3/files/".concat(meta.id, "?uploadType=media"), {
+              method: "PATCH",
+              headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+              },
+              body: content
+            });
+          case 7:
+            _res = _context4.v;
+            return _context4.a(2, _res.ok);
+          case 8:
+            _context4.n = 10;
+            break;
+          case 9:
+            _context4.p = 9;
+            _t2 = _context4.v;
+            return _context4.a(2, false);
+          case 10:
+            return _context4.a(2);
+        }
+      }, _callee4, null, [[1, 9]]);
+    }))();
+  },
+  load: function load() {
+    var _this4 = this;
+    return _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee5() {
+      var token, fileId, res, _t3;
+      return _regenerator().w(function (_context5) {
+        while (1) switch (_context5.p = _context5.n) {
+          case 0:
+            token = _this4.getToken();
+            if (token) {
+              _context5.n = 1;
+              break;
+            }
+            return _context5.a(2, null);
+          case 1:
+            _context5.p = 1;
+            _context5.n = 2;
+            return _this4.findFile(token);
+          case 2:
+            fileId = _context5.v;
+            if (fileId) {
+              _context5.n = 3;
+              break;
+            }
+            return _context5.a(2, null);
+          case 3:
+            _context5.n = 4;
+            return fetch("https://www.googleapis.com/drive/v3/files/".concat(fileId, "?alt=media"), {
+              headers: {
+                "Authorization": "Bearer " + token
+              }
+            });
+          case 4:
+            res = _context5.v;
+            if (res.ok) {
+              _context5.n = 5;
+              break;
+            }
+            return _context5.a(2, null);
+          case 5:
+            _context5.n = 6;
+            return res.json();
+          case 6:
+            return _context5.a(2, _context5.v);
+          case 7:
+            _context5.p = 7;
+            _t3 = _context5.v;
+            return _context5.a(2, null);
+        }
+      }, _callee5, null, [[1, 7]]);
+    }))();
+  }
+};
+
+// ===== engine.js =====
+// -- Game Engine: Math, Droughts, Table Calculations --
+
 function countDrought(spins, predicate) {
   var count = 0;
   for (var i = spins.length - 1; i >= 0; i--) {
@@ -7304,79 +7572,83 @@ function App() {
     _useState46 = _slicedToArray(_useState45, 2),
     appState = _useState46[0],
     setAppState = _useState46[1];
-  var _useState47 = (0, _react.useState)(0),
+  var _useState47 = (0, _react.useState)(GDrive.getToken() ? "connected" : "disconnected"),
     _useState48 = _slicedToArray(_useState47, 2),
-    tab = _useState48[0],
-    setTab = _useState48[1];
-  var _useState49 = (0, _react.useState)("live"),
+    driveSyncStatus = _useState48[0],
+    setDriveSyncStatus = _useState48[1];
+  var _useState49 = (0, _react.useState)(0),
     _useState50 = _slicedToArray(_useState49, 2),
-    appMode = _useState50[0],
-    setAppMode = _useState50[1]; // "live" | "sim"
-  var _useState51 = (0, _react.useState)(defaultSimConfig),
+    tab = _useState50[0],
+    setTab = _useState50[1];
+  var _useState51 = (0, _react.useState)("live"),
     _useState52 = _slicedToArray(_useState51, 2),
-    simCfg = _useState52[0],
-    setSimCfg = _useState52[1];
-  var _useState53 = (0, _react.useState)(false),
+    appMode = _useState52[0],
+    setAppMode = _useState52[1]; // "live" | "sim"
+  var _useState53 = (0, _react.useState)(defaultSimConfig),
     _useState54 = _slicedToArray(_useState53, 2),
-    simRunning = _useState54[0],
-    setSimRunning = _useState54[1];
+    simCfg = _useState54[0],
+    setSimCfg = _useState54[1];
   var _useState55 = (0, _react.useState)(false),
     _useState56 = _slicedToArray(_useState55, 2),
-    simPaused = _useState56[0],
-    setSimPaused = _useState56[1];
-  var _useState57 = (0, _react.useState)(0),
+    simRunning = _useState56[0],
+    setSimRunning = _useState56[1];
+  var _useState57 = (0, _react.useState)(false),
     _useState58 = _slicedToArray(_useState57, 2),
-    simProgress = _useState58[0],
-    setSimProgress = _useState58[1]; // sessions completed
-  var _useState59 = (0, _react.useState)(null),
+    simPaused = _useState58[0],
+    setSimPaused = _useState58[1];
+  var _useState59 = (0, _react.useState)(0),
     _useState60 = _slicedToArray(_useState59, 2),
-    simResults = _useState60[0],
-    setSimResults = _useState60[1];
-  var _useState61 = (0, _react.useState)(false),
+    simProgress = _useState60[0],
+    setSimProgress = _useState60[1]; // sessions completed
+  var _useState61 = (0, _react.useState)(null),
     _useState62 = _slicedToArray(_useState61, 2),
-    simDone = _useState62[0],
-    setSimDone = _useState62[1];
-  var simStopRef = React.useRef(false);
+    simResults = _useState62[0],
+    setSimResults = _useState62[1];
   var _useState63 = (0, _react.useState)(false),
     _useState64 = _slicedToArray(_useState63, 2),
-    addOpen = _useState64[0],
-    setAddOpen = _useState64[1];
-  var _useState65 = (0, _react.useState)(null),
+    simDone = _useState64[0],
+    setSimDone = _useState64[1];
+  var simStopRef = React.useRef(false);
+  var _useState65 = (0, _react.useState)(false),
     _useState66 = _slicedToArray(_useState65, 2),
-    selectedTrackId = _useState66[0],
-    setSelectedTrackId = _useState66[1];
+    addOpen = _useState66[0],
+    setAddOpen = _useState66[1];
   var _useState67 = (0, _react.useState)(null),
     _useState68 = _slicedToArray(_useState67, 2),
-    result = _useState68[0],
-    setResult = _useState68[1];
+    selectedTrackId = _useState68[0],
+    setSelectedTrackId = _useState68[1];
   var _useState69 = (0, _react.useState)(null),
     _useState70 = _slicedToArray(_useState69, 2),
-    flashNum = _useState70[0],
-    setFlashNum = _useState70[1];
+    result = _useState70[0],
+    setResult = _useState70[1];
   var _useState71 = (0, _react.useState)(null),
     _useState72 = _slicedToArray(_useState71, 2),
-    prevSessState = _useState72[0],
-    setPrevSessState = _useState72[1];
+    flashNum = _useState72[0],
+    setFlashNum = _useState72[1];
   var _useState73 = (0, _react.useState)(null),
     _useState74 = _slicedToArray(_useState73, 2),
-    draggingId = _useState74[0],
-    setDraggingId = _useState74[1];
+    prevSessState = _useState74[0],
+    setPrevSessState = _useState74[1];
   var _useState75 = (0, _react.useState)(null),
     _useState76 = _slicedToArray(_useState75, 2),
-    dragOverId = _useState76[0],
-    setDragOverId = _useState76[1];
+    draggingId = _useState76[0],
+    setDraggingId = _useState76[1];
   var _useState77 = (0, _react.useState)(null),
     _useState78 = _slicedToArray(_useState77, 2),
-    highlightTrackId = _useState78[0],
-    setHighlightTrackId = _useState78[1];
+    dragOverId = _useState78[0],
+    setDragOverId = _useState78[1];
   var _useState79 = (0, _react.useState)(null),
     _useState80 = _slicedToArray(_useState79, 2),
-    editTrackId = _useState80[0],
-    setEditTrackId = _useState80[1];
-  var _useState81 = (0, _react.useState)(Date.now()),
+    highlightTrackId = _useState80[0],
+    setHighlightTrackId = _useState80[1];
+  var _useState81 = (0, _react.useState)(null),
     _useState82 = _slicedToArray(_useState81, 2),
-    nowTick = _useState82[0],
-    setNowTick = _useState82[1];
+    editTrackId = _useState82[0],
+    setEditTrackId = _useState82[1];
+  var _useState83 = (0, _react.useState)(Date.now()),
+    _useState84 = _slicedToArray(_useState83, 2),
+    nowTick = _useState84[0],
+    setNowTick = _useState84[1];
   (0, _react.useEffect)(function () {
     var interval = setInterval(function () {
       return setNowTick(Date.now());
@@ -7385,42 +7657,63 @@ function App() {
       return clearInterval(interval);
     };
   }, []);
-  var _useState83 = (0, _react.useState)(false),
-    _useState84 = _slicedToArray(_useState83, 2),
-    buyInOpen = _useState84[0],
-    setBuyInOpen = _useState84[1];
+
+  // Restore from Google Drive if localStorage was cleared
+  (0, _react.useEffect)(function () {
+    if (!GDrive.getToken()) return;
+    var hasLocal = !!localStorage.getItem(KEY);
+    if (hasLocal) return; // local data exists, no need to restore
+    setDriveSyncStatus("restoring");
+    GDrive.load().then(function (data) {
+      if (data && data.sessions && data.sessions.length > 0) {
+        updApp(function (s) {
+          s.savedSessions = data.sessions;
+        });
+        setDriveSyncStatus("restored");
+        setTimeout(function () {
+          return setDriveSyncStatus("connected");
+        }, 3000);
+      } else {
+        setDriveSyncStatus("connected");
+      }
+    });
+  }, []);
   var _useState85 = (0, _react.useState)(false),
     _useState86 = _slicedToArray(_useState85, 2),
-    adjustOpen = _useState86[0],
-    setAdjustOpen = _useState86[1];
+    buyInOpen = _useState86[0],
+    setBuyInOpen = _useState86[1];
   var _useState87 = (0, _react.useState)(false),
     _useState88 = _slicedToArray(_useState87, 2),
-    currencyOpen = _useState88[0],
-    setCurrencyOpen = _useState88[1];
+    adjustOpen = _useState88[0],
+    setAdjustOpen = _useState88[1];
   var _useState89 = (0, _react.useState)(false),
     _useState90 = _slicedToArray(_useState89, 2),
-    changelogOpen = _useState90[0],
-    setChangelogOpen = _useState90[1];
+    currencyOpen = _useState90[0],
+    setCurrencyOpen = _useState90[1];
   var _useState91 = (0, _react.useState)(false),
     _useState92 = _slicedToArray(_useState91, 2),
-    editBankroll = _useState92[0],
-    setEditBankroll = _useState92[1];
+    changelogOpen = _useState92[0],
+    setChangelogOpen = _useState92[1];
   var _useState93 = (0, _react.useState)(false),
     _useState94 = _slicedToArray(_useState93, 2),
-    cashOutOpen = _useState94[0],
-    setCashOutOpen = _useState94[1];
+    editBankroll = _useState94[0],
+    setEditBankroll = _useState94[1];
   var _useState95 = (0, _react.useState)(false),
     _useState96 = _slicedToArray(_useState95, 2),
-    hardResetOpen = _useState96[0],
-    setHardResetOpen = _useState96[1];
-  var _useState97 = (0, _react.useState)("fibonacci"),
+    cashOutOpen = _useState96[0],
+    setCashOutOpen = _useState96[1];
+  var _useState97 = (0, _react.useState)(false),
     _useState98 = _slicedToArray(_useState97, 2),
-    pendingTrackType = _useState98[0],
-    setPendingTrackType = _useState98[1];
-  var _useState99 = (0, _react.useState)(defaultFibCfg()),
+    hardResetOpen = _useState98[0],
+    setHardResetOpen = _useState98[1];
+  var _useState99 = (0, _react.useState)("fibonacci"),
     _useState100 = _slicedToArray(_useState99, 2),
-    pendingTrackCfg = _useState100[0],
-    setPendingTrackCfg = _useState100[1];
+    pendingTrackType = _useState100[0],
+    setPendingTrackType = _useState100[1];
+  var _useState101 = (0, _react.useState)(defaultFibCfg()),
+    _useState102 = _slicedToArray(_useState101, 2),
+    pendingTrackCfg = _useState102[0],
+    setPendingTrackCfg = _useState102[1];
   var sess = appState.currentSession;
   var settings = appState.settings || defaultSettings();
   var saved = appState.savedSessions || [];
@@ -7959,6 +8252,13 @@ function App() {
           }, 0)
         }
       };
+      // Auto-sync to Google Drive if connected
+      if (GDrive.getToken()) {
+        GDrive.save(data).then(function (ok) {
+          if (ok) setDriveSyncStatus("synced");else setDriveSyncStatus("error");
+        });
+      }
+      // Also save to Downloads
       var blob = new Blob([JSON.stringify(data, null, 2)], {
         type: "application/json"
       });
@@ -7970,7 +8270,7 @@ function App() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (e) {/* silently fail if download blocked */}
+    } catch (e) {}
   }
   function saveSession() {
     var allSessions;
@@ -9139,10 +9439,10 @@ function App() {
 
   // -- Spin Log Page --
   function SpinPage() {
-    var _useState101 = (0, _react.useState)(false),
-      _useState102 = _slicedToArray(_useState101, 2),
-      showAll = _useState102[0],
-      setShowAll = _useState102[1];
+    var _useState103 = (0, _react.useState)(false),
+      _useState104 = _slicedToArray(_useState103, 2),
+      showAll = _useState104[0],
+      setShowAll = _useState104[1];
     var displaySpins = showAll ? _toConsumableArray(sess.spins).reverse() : _toConsumableArray(sess.spins).reverse().slice(0, 60);
     return /*#__PURE__*/React.createElement("div", {
       style: {
@@ -9672,10 +9972,10 @@ function App() {
 
   // -- Settings Page --
   function SettingsPage() {
-    var _useState103 = (0, _react.useState)(settings.defaultBuyIn || 100),
-      _useState104 = _slicedToArray(_useState103, 2),
-      localBuyIn = _useState104[0],
-      setLocalBuyIn = _useState104[1];
+    var _useState105 = (0, _react.useState)(settings.defaultBuyIn || 100),
+      _useState106 = _slicedToArray(_useState105, 2),
+      localBuyIn = _useState106[0],
+      setLocalBuyIn = _useState106[1];
     function saveBuyIn() {
       updSettings(function (s) {
         s.defaultBuyIn = localBuyIn;
@@ -10028,10 +10328,10 @@ function App() {
   // -- Bankroll Edit --
   function BankrollEdit(_ref85) {
     var onClose = _ref85.onClose;
-    var _useState105 = (0, _react.useState)(sess.bankrollCurrent),
-      _useState106 = _slicedToArray(_useState105, 2),
-      val = _useState106[0],
-      setVal = _useState106[1];
+    var _useState107 = (0, _react.useState)(sess.bankrollCurrent),
+      _useState108 = _slicedToArray(_useState107, 2),
+      val = _useState108[0],
+      setVal = _useState108[1];
     function save() {
       updSess(function (s) {
         s.bankrollCurrent = val;
