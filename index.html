@@ -9568,7 +9568,13 @@ function App() {
     simStopRef: simStopRef,
     currency: currency,
     cur: cur
-  }), appMode === "live" && /*#__PURE__*/React.createElement("div", null, simDone && simResults && sess.tracks.length > 0 && /*#__PURE__*/React.createElement(StatContextBar, {
+  }), appMode === "live" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      minWidth: 0,
+      overflow: "hidden"
+    }
+  }, simDone && simResults && sess.tracks.length > 0 && /*#__PURE__*/React.createElement(StatContextBar, {
     simResults: simResults,
     simCfg: simCfg,
     sess: sess,

@@ -1183,7 +1183,7 @@ export default function App() {
         {appMode==="sim" && <SimModePage simCfg={simCfg} setSimCfg={setSimCfg} simRunning={simRunning} setSimRunning={setSimRunning} simPaused={simPaused} setSimPaused={setSimPaused} simProgress={simProgress} setSimProgress={setSimProgress} simResults={simResults} setSimResults={setSimResults} simDone={simDone} setSimDone={setSimDone} simStopRef={simStopRef} currency={currency} cur={cur}/>}
 
         {appMode==="live" && (
-          <div>
+          <div style={{width:"100%",minWidth:0,overflow:"hidden"}}>
             {/* Statistical context bar -- informed by sim results if available */}
             {simDone && simResults && sess.tracks.length>0 && (
               <StatContextBar simResults={simResults} simCfg={simCfg} sess={sess} cur={cur} pnlVal={pnlVal}/>

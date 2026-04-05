@@ -35,7 +35,7 @@
           )}
         </div>
         {sess.spins.length>0 && (
-          <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:2,WebkitOverflowScrolling:"touch"}}>
+          <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:2,WebkitOverflowScrolling:"touch",width:"100%",maxWidth:"100%",minWidth:0,boxSizing:"border-box"}}>
             {recentSpins.map((val,i)=>{
               const isZ=val==="0"||val==="00", r=!isZ&&RED.has(+val);
               const hitTracks=(trackOverlays||[]).filter(o=>{
