@@ -320,8 +320,17 @@ function HardResetModal({onClose, onExport}) {
   }
 
   function doReset() {
-    localStorage.removeItem("nexus-roulette-v1");
-    window.location.reload();
+    // Delete Drive backup if connected
+    if(getDriveToken()) {
+      driveDeleteBackup().finally(()=>{
+        driveSignOut();
+        localStorage.removeItem("nexus-roulette-v1");
+        window.location.reload();
+      });
+    } else {
+      localStorage.removeItem("nexus-roulette-v1");
+      window.location.reload();
+    }
   }
 
   return (
@@ -368,6 +377,47 @@ function HardResetModal({onClose, onExport}) {
           </button>
         </div>
       )}
+    </Modal>
+  );
+}
+
+// -- Adjustment Modal --
+function AdjustmentModal({currency, cur, currentBankroll, onAdjust, onClose}) {
+  const [amount, setAmount] = useState(5);
+  const [dir, setDir] = useState(-1); // -1 = deduct, +1 = add
+  const [note, setNote] = useState("");
+  const total = Math.round((currentBankroll + dir*amount)*100)/100;
+  return (
+    <Modal onClose={onClose}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <div>
+          <div style={{fontSize:17,fontWeight:800,color:"#e2e8f0"}}>⚖️ Manual Adjustment</div>
+          <div style={{fontSize:11,color:"#64748b",marginTop:2}}>Account for a deviation or mistake</div>
+        </div>
+        <button onClick={onClose} style={{background:"transparent",border:"none",color:"#64748b",fontSize:22,cursor:"pointer"}}>×</button>
+      </div>
+      <div style={{display:"flex",gap:6,marginBottom:12}}>
+        <button onClick={()=>setDir(-1)} style={{flex:1,padding:"10px 0",borderRadius:10,border:"2px solid "+(dir===-1?"#f87171":"#2d4057"),background:dir===-1?"#200505":"#0f1923",color:dir===-1?"#f87171":"#64748b",fontSize:13,fontWeight:700,cursor:"pointer"}}>- Deduct</button>
+        <button onClick={()=>setDir(1)} style={{flex:1,padding:"10px 0",borderRadius:10,border:"2px solid "+(dir===1?"#4ade80":"#2d4057"),background:dir===1?"#0a1f0a":"#0f1923",color:dir===1?"#4ade80":"#64748b",fontSize:13,fontWeight:700,cursor:"pointer"}}>+ Add</button>
+      </div>
+      <MoneyInput value={amount} onChange={setAmount} currCode={currency} label="Amount"/>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}}>
+        {[1,2,5,10,20,50].map(v=>(
+          <button key={v} onClick={()=>setAmount(v)} style={{flex:"1 0 28%",padding:"8px 0",borderRadius:9,border:"1px solid "+(amount===v?"#60a5fa":"#2d4057"),background:amount===v?"#0c1a2e":"#0f1923",color:amount===v?"#60a5fa":"#64748b",fontSize:12,fontWeight:700,cursor:"pointer"}}>{cur.symbol}{v}</button>
+        ))}
+      </div>
+      <div style={{marginTop:10}}>
+        <input placeholder="Note (e.g. left bet on table)" value={note} onChange={e=>setNote(e.target.value)} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:"1px solid #2d4057",background:"#0f1923",color:"#e2e8f0",fontSize:13,outline:"none"}}/>
+      </div>
+      <div style={{marginTop:10,background:"#0f1923",borderRadius:10,padding:"10px 14px",border:"1px solid #2d4057"}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
+          <span style={{color:"#64748b"}}>After adjustment:</span>
+          <span style={{color:total>=currentBankroll?"#4ade80":"#f87171",fontWeight:700}}>{cur.symbol}{total.toFixed(cur.dec)}</span>
+        </div>
+      </div>
+      <button onClick={()=>onAdjust(dir*amount, note||"Manual adjustment")} style={{width:"100%",marginTop:12,padding:"14px 0",borderRadius:12,border:"none",background:"#1d4ed8",color:"white",fontSize:15,fontWeight:800,cursor:"pointer"}}>
+        Apply Adjustment
+      </button>
     </Modal>
   );
 }

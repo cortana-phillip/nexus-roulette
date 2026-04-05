@@ -12,7 +12,7 @@
     const recentSpins = [...sess.spins].reverse().slice(0,30);
 
     return (
-      <div style={{display:"flex",flexDirection:"column",gap:10,width:"100%"}}>
+      <div style={{display:"flex",flexDirection:"column",width:"100%",gap:10,minWidth:0}}>
 
         {/* Session clock */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"#0c1520",borderRadius:10,padding:"8px 14px",border:"1px solid #2d4057"}}>
@@ -34,26 +34,6 @@
             <button onClick={()=>{if(window.confirm("End session and save?"))endSession();}} style={{padding:"6px 12px",borderRadius:8,border:"1px solid #7f1d1d",background:"#200505",color:"#f87171",fontSize:11,fontWeight:700,cursor:"pointer"}}>■ End Session</button>
           )}
         </div>
-        {sess.spins.length>0 && (
-          <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:2,WebkitOverflowScrolling:"touch"}}>
-            {recentSpins.map((val,i)=>{
-              const isZ=val==="0"||val==="00", r=!isZ&&RED.has(+val);
-              const hitTracks=(trackOverlays||[]).filter(o=>{
-                if(isZ)return false;
-                if(o.type==="fibonacci")return (o.dozenTargets||[]).includes(dozenOf(val))||(o.colTargets||[]).includes(colOf(val));
-                if(o.type==="solution")return (o.activeBets||[]).some(b=>b.number===val);
-                return false;
-              });
-              const borderColor=i===0?"#ffffff":hitTracks.length>0?hitTracks[0].color:isZ?"#22c55e":r?"#ef4444":"#374151";
-              return(
-                <div key={i} style={{flexShrink:0,width:28,height:28,borderRadius:6,background:isZ?"#166534":r?"#7f1d1d":"#0d1117",border:"2px solid "+borderColor,color:isZ?"#bbf7d0":r?"#fecaca":"#f1f5f9",fontSize:10,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  {val}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
         {/* Even money droughts */}
         {sess.spins.length>0 && (
           <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:3}}>
@@ -259,7 +239,7 @@
             </div>
           </div>
         )}
-        {/* Always-visible catch-up grid -- log spins any time */}
+        {/* Always-visible grid */}
         <Card>
           <Lbl>{sess.sessionStartedAt ? "Tap Winning Number" : "Catch-up -- Tap to Log Spin"}</Lbl>
           <FibGrid

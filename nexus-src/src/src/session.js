@@ -10,9 +10,19 @@ function newSession(roulette, bankroll) {
   };
 }
 
+function trackColorFromConfig(type, config, colorIdx) {
+  if(type==="fibonacci") {
+    const dts=config.dozenTargets||[], cts=config.colTargets||[], evts=config.evenTargets||[];
+    if(dts.length===1 && cts.length===0 && evts.length===0) return DZ_BD[dts[0]];
+    if(cts.length===1 && dts.length===0 && evts.length===0) return COL_BD[cts[0]];
+    if(dts.length===1 && cts.length===1) return DZ_BD[dts[0]]; // mix - use dozen color
+  }
+  return TRACK_COLORS[colorIdx%TRACK_COLORS.length];
+}
+
 function newTrack(type, colorIdx, config) {
   return {
-    id:uid(), type, color:TRACK_COLORS[colorIdx%TRACK_COLORS.length],
+    id:uid(), type, color:trackColorFromConfig(type, config, colorIdx),
     state:"active", config:{...config}, level:0, pnl:0, bets:[],
     createdAtSpin:0, closedAtSpin:null, wins:0, sequences:0,
   };
@@ -31,9 +41,11 @@ function defaultParkRules() {
 
 // Drought presets per bet type
 const DROUGHT_PRESETS = {
-  even:   { yellow:12, orange:20, red:30 },
-  dozens: { yellow:4,  orange:7,  red:11 },
-  cols:   { yellow:4,  orange:7,  red:11 },
+  even:  { yellow:12, orange:20, red:30 },
+  set12: { yellow:4,  orange:7,  red:11 },
+  // dozens and columns alias to set12
+  dozens: { yellow:4, orange:7, red:11 },
+  cols:   { yellow:4, orange:7, red:11 },
 };
 
 // Return drought for a given outside bet key using droughts map
@@ -117,8 +129,11 @@ function meetsThreshold(cfg, droughts) {
       return best >= t;
     }
     if(type==="columns") return Math.max(...[0,1,2].map(c=>colDrought(c,droughts))) >= t;
-    // dozens (default)
-    return Math.max(...[0,1,2].map(d=>dozenDrought(d,droughts))) >= t;
+    // "dozens" or any set-of-12 type: check all dozens AND columns (functionally identical for drought)
+    return Math.max(
+      ...[0,1,2].map(d=>dozenDrought(d,droughts)),
+      ...[0,1,2].map(c=>colDrought(c,droughts))
+    ) >= t;
   }
 
   // Static target mode: check only configured targets
@@ -133,7 +148,7 @@ function meetsThreshold(cfg, droughts) {
   const all = [...dzs,...cls];
   return all.length===0 || Math.max(...all) >= t;
 }
-function defaultFibCfg() { return{type:"fibonacci",unit:1,roi:15,betMode:"progression",dozenTargets:[],colTargets:[],evenTargets:[],stopLoss:200,parkRules:defaultParkRules(),ftlTargetType:null,ftlCount:1}; }
+function defaultFibCfg() { return{type:"fibonacci",unit:1,roi:15,betMode:"progression",dozenTargets:[],colTargets:[],evenTargets:[],stopLoss:200,parkRules:defaultParkRules(),ftlTargetType:null,ftlCount:1,startLevel:0}; }
 function defaultSolCfg() { return{type:"solution",unit:1,roi:10,entryThreshold:120,stopLoss:200,activeBets:[],parkRules:defaultParkRules()}; }
 
 function computeMartingaleTable(maxChips) {

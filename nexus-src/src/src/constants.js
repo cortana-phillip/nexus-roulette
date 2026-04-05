@@ -15,6 +15,19 @@ const KEY = "nexus-roulette-v1";
 const ROI_PRESETS = [5,10,15,20,25,30];
 const UNITS = [0.25, 0.50, 1.00];
 
+// Global haptic feedback helper
+function haptic(ms) { try{ if(navigator.vibrate) navigator.vibrate(ms||8); }catch(e){} }
+
+// Debounce guard for number taps - prevents double-tap
+const _lastTap = {t:0, v:null};
+function guardedTap(val, fn) {
+  const now = Date.now();
+  if(now - _lastTap.t < 350 && _lastTap.v === val) return; // same number within 350ms = ignore
+  _lastTap.t = now; _lastTap.v = val;
+  haptic(12);
+  fn(val);
+}
+
 const CURRENCIES = {
   USD:{ symbol:"$",  name:"US Dollar",        flag:"🇺🇸", rate:1,      dec:2 },
   EUR:{ symbol:"€",  name:"Euro",              flag:"🇪🇺", rate:0.92,   dec:2 },
@@ -165,3 +178,113 @@ const EVEN_MONEY = [
   {key:"odd",   label:"Odd",   color:"#a78bfa", pred: n=>n%2===1},
   {key:"even",  label:"Even",  color:"#60a5fa", pred: n=>n%2===0},
   {key:"high",  label:"19-36", color:"#fbbf24", pred: n=>n>=19},
+  {key:"low",   label:"1-18",  color:"#86efac", pred: n=>n<=18},
+];
+
+// Google Drive OAuth config
+const GDRIVE_CLIENT_ID = "951031370415-8r3icu8790rhoh9b7qq4vccjb7o7vtvg.apps.googleusercontent.com";
+const GDRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+const GDRIVE_BACKUP_FILENAME = "nexus-roulette-backup.json";
+
+// -- Google Drive Sync --
+const GDrive = {
+  _token: null,
+  _fileId: null,
+
+  getToken() { return this._token || localStorage.getItem("nexus_gdrive_token"); },
+  setToken(t) { this._token = t; localStorage.setItem("nexus_gdrive_token", t); },
+  clearToken() { this._token = null; localStorage.removeItem("nexus_gdrive_token"); localStorage.removeItem("nexus_gdrive_fileid"); },
+
+  async authorize() {
+    return new Promise((resolve) => {
+      const state = Math.random().toString(36).slice(2);
+      const redirect = location.origin + location.pathname;
+      const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GDRIVE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirect)}&response_type=token&scope=${encodeURIComponent(GDRIVE_SCOPE)}&state=${state}&prompt=consent`;
+      const popup = window.open(url, "gdrive_auth", "width=500,height=600");
+      const timer = setInterval(() => {
+        try {
+          if(popup.closed){ clearInterval(timer); resolve(null); return; }
+          const hash = popup.location.hash;
+          if(hash && hash.includes("access_token")) {
+            const params = new URLSearchParams(hash.slice(1));
+            const token = params.get("access_token");
+            clearInterval(timer);
+            popup.close();
+            if(token){ GDrive.setToken(token); resolve(token); }
+            else resolve(null);
+          }
+        } catch(e) {}
+      }, 500);
+    });
+  },
+
+  async request(method, url, body, token) {
+    const t = token || this.getToken();
+    if(!t) return null;
+    try {
+      const res = await fetch(url, {
+        method, headers: {"Authorization":"Bearer "+t, "Content-Type":"application/json"},
+        body: body ? JSON.stringify(body) : undefined
+      });
+      if(res.status===401){ this.clearToken(); return null; }
+      if(!res.ok) return null;
+      return res.json();
+    } catch(e){ return null; }
+  },
+
+  async findFile(token) {
+    const cached = localStorage.getItem("nexus_gdrive_fileid");
+    if(cached) return cached;
+    const res = await this.request("GET",
+      `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${GDRIVE_BACKUP_FILENAME}'&fields=files(id,name)`,
+      null, token);
+    if(res && res.files && res.files.length > 0) {
+      localStorage.setItem("nexus_gdrive_fileid", res.files[0].id);
+      return res.files[0].id;
+    }
+    return null;
+  },
+
+  async save(data) {
+    const token = this.getToken();
+    if(!token) return false;
+    try {
+      const content = JSON.stringify(data);
+      let fileId = await this.findFile(token);
+      if(fileId) {
+        // Update existing
+        const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+          method:"PATCH", headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+          body: content
+        });
+        return res.ok;
+      } else {
+        // Create new in appDataFolder
+        const meta = await this.request("POST",
+          "https://www.googleapis.com/drive/v3/files",
+          {name:GDRIVE_BACKUP_FILENAME, parents:["appDataFolder"]}, token);
+        if(!meta) return false;
+        localStorage.setItem("nexus_gdrive_fileid", meta.id);
+        const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${meta.id}?uploadType=media`, {
+          method:"PATCH", headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+          body: content
+        });
+        return res.ok;
+      }
+    } catch(e){ return false; }
+  },
+
+  async load() {
+    const token = this.getToken();
+    if(!token) return null;
+    try {
+      const fileId = await this.findFile(token);
+      if(!fileId) return null;
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+        headers:{"Authorization":"Bearer "+token}
+      });
+      if(!res.ok) return null;
+      return await res.json();
+    } catch(e){ return null; }
+  }
+};

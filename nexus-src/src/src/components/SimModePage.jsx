@@ -86,19 +86,23 @@ function SimModePage({simCfg, setSimCfg, simRunning, setSimRunning, simPaused, s
     const wheelNums=getWheelNums(simCfg.roulette);
 
     function runChunk(){
+      try {
       const CHUNK=10;
       for(let ci=0;ci<CHUNK&&sessionIdx<simCfg.sessions;ci++,sessionIdx++){
         if(simStopRef.current) break;
 
         const sState=simCfg.strategies.map((strat)=>({
           level:0,pnl:0,wins:0,losses:0,stopLossHits:0,
-          waitingForWin:strat.config.parkRules?.waitForWin||false,
+          spinsActuallyBet:0,
+          waitingForWin:!!(strat.config.parkRules&&strat.config.parkRules.waitForWin),
           parkedAfterLoss:false,
           droughts:initDroughts(simCfg.roulette),
         }));
 
+        let sessionSpins = 0;
         for(let sp=0;sp<simCfg.spinsPerSession;sp++){
           if(simStopRef.current) break;
+          sessionSpins++;
           const val=wheelNums[Math.floor(Math.random()*wheelNums.length)];
           const bonus={};
 
@@ -130,6 +134,7 @@ function SimModePage({simCfg, setSimCfg, simRunning, setSimRunning, simPaused, s
               }
               const payMult=evts.length>0?2:3;
               const row=tbl[Math.min(st.level,tbl.length-1)];
+              st.spinsActuallyBet=(st.spinsActuallyBet||0)+1;
 
               if(em==="flat"){
                 if(hitCount>0){st.pnl+=(hitCount*payMult-numTargets)*(cfg.unit||1);st.wins++;pushStreak(results[si],true);}
@@ -138,11 +143,8 @@ function SimModePage({simCfg, setSimCfg, simRunning, setSimRunning, simPaused, s
                 const cat=isZ?"loss":getCategory(val,dts,cts,row,evts);
                 if(cat!=="loss"){
                   const sd=hitCount*payMult*(row?row.c:1)-(row?row.c:1)*numTargets;
-                  const mult=bonus[val]||1;
-                  const bd=mult>1?(row?row.c:1)*(mult-35)*(cfg.unit||1):0;
-                  st.pnl+=sd*(cfg.unit||1)+bd;st.wins++;st.level=0;
+                  st.pnl+=sd*(cfg.unit||1);st.wins++;st.level=0;
                   pushStreak(results[si],true);
-                  if(rules.waitForWin)st.waitingForWin=false;
                 } else {
                   st.pnl-=(row?row.c:1)*numTargets*(cfg.unit||1);st.losses++;
                   if(st.level<tbl.length-1){st.level++;}
@@ -156,7 +158,6 @@ function SimModePage({simCfg, setSimCfg, simRunning, setSimRunning, simPaused, s
             if(strat.type==="solution"){
               const entry=cfg.entryThreshold||120;
               const inRange=wheelNums.filter(v=>v!=="0"&&v!=="00"&&(st.droughts[v]||0)>=entry);
-              // Check inRange FIRST
               if(!inRange.length)return;
               if(rules.waitForWin&&st.waitingForWin){if(inRange.some(n=>n===val))st.waitingForWin=false;return;}
               const targetNum=inRange.sort((a,b)=>(st.droughts[b]||0)-(st.droughts[a]||0))[0];
@@ -183,14 +184,14 @@ function SimModePage({simCfg, setSimCfg, simRunning, setSimRunning, simPaused, s
             pnl:st.pnl,wins:st.wins,losses:st.losses,
             stopLossHits:st.stopLossHits,
             spinsActuallyBet:st.spinsActuallyBet||0,
-            spinsPlayed:spinNum,
+            spinsPlayed:sessionSpins,
           });
           results[si].totalPnl+=st.pnl;
           results[si].totalWins+=st.wins;
           results[si].totalLosses+=st.losses;
           results[si].stopLossHits+=st.stopLossHits;
           results[si].totalSpinsActuallyBet=(results[si].totalSpinsActuallyBet||0)+(st.spinsActuallyBet||0);
-          results[si].totalSpinsPlayed=(results[si].totalSpinsPlayed||0)+spinNum;
+          results[si].totalSpinsPlayed=(results[si].totalSpinsPlayed||0)+sessionSpins;
           results[si].pnlHistory.push(results[si].totalPnl);
         });
       }
@@ -214,6 +215,11 @@ function SimModePage({simCfg, setSimCfg, simRunning, setSimRunning, simPaused, s
         if('Notification' in window&&Notification.permission==='granted'){
           new Notification('Nexus Roulette Simulation Complete!',{body:`${simCfg.sessions} sessions done. Tap to see results.`,icon:'./icon.svg'});
         }
+      }
+      } catch(err) {
+        console.error('Sim error:', err);
+        setSimRunning(false);
+        alert('Simulation error: '+err.message);
       }
     }
     setTimeout(runChunk,50);
@@ -278,10 +284,23 @@ function SimModePage({simCfg, setSimCfg, simRunning, setSimRunning, simPaused, s
               <button onClick={()=>setSimCfg(c=>({...c,sessionBankroll:c.sessionBankroll?null:200}))} style={{padding:"5px 14px",borderRadius:8,border:"none",background:simCfg.sessionBankroll?"#f59e0b":"#374151",color:simCfg.sessionBankroll?"#000":"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>{simCfg.sessionBankroll?"ON":"OFF"}</button>
             </div>
             {simCfg.sessionBankroll && (
-              <div style={{display:"flex",alignItems:"center",background:"#0f1923",borderRadius:8,border:"1px solid #2d4057",overflow:"hidden"}}>
-                <button onClick={()=>setSimCfg(c=>({...c,sessionBankroll:Math.max(25,c.sessionBankroll-25)}))} style={{padding:"7px 12px",background:"transparent",border:"none",color:"#f59e0b",fontSize:16,fontWeight:700,cursor:"pointer"}}>-</button>
-                <div style={{flex:1,textAlign:"center",fontSize:15,fontWeight:800,color:"#fbbf24"}}>${simCfg.sessionBankroll} bankroll</div>
-                <button onClick={()=>setSimCfg(c=>({...c,sessionBankroll:c.sessionBankroll+25}))} style={{padding:"7px 12px",background:"transparent",border:"none",color:"#f59e0b",fontSize:16,fontWeight:700,cursor:"pointer"}}>+</button>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <div style={{display:"flex",alignItems:"center",background:"#0f1923",borderRadius:8,border:"1px solid #2d4057",overflow:"hidden"}}>
+                  <button onClick={()=>setSimCfg(c=>({...c,sessionBankroll:Math.max(25,c.sessionBankroll<100?c.sessionBankroll-25:c.sessionBankroll<1000?c.sessionBankroll-100:c.sessionBankroll<10000?c.sessionBankroll-500:c.sessionBankroll-5000)}))} style={{padding:"7px 12px",background:"transparent",border:"none",color:"#f59e0b",fontSize:16,fontWeight:700,cursor:"pointer"}}>-</button>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={simCfg.sessionBankroll}
+                    onChange={e=>{const v=parseInt(e.target.value);if(!isNaN(v)&&v>0)setSimCfg(c=>({...c,sessionBankroll:v}));}}
+                    style={{flex:1,textAlign:"center",fontSize:15,fontWeight:800,color:"#fbbf24",background:"transparent",border:"none",outline:"none",padding:"7px 0"}}
+                  />
+                  <button onClick={()=>setSimCfg(c=>({...c,sessionBankroll:c.sessionBankroll<100?c.sessionBankroll+25:c.sessionBankroll<1000?c.sessionBankroll+100:c.sessionBankroll<10000?c.sessionBankroll+500:c.sessionBankroll+5000}))} style={{padding:"7px 12px",background:"transparent",border:"none",color:"#f59e0b",fontSize:16,fontWeight:700,cursor:"pointer"}}>+</button>
+                </div>
+                <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                  {[100,200,500,1000,2000,5000,10000,30000].map(v=>(
+                    <button key={v} onClick={()=>setSimCfg(c=>({...c,sessionBankroll:v}))} style={{flex:"1 0 22%",padding:"5px 0",borderRadius:7,border:"1px solid "+(simCfg.sessionBankroll===v?"#f59e0b":"#2d4057"),background:simCfg.sessionBankroll===v?"#1c1000":"#0f1923",color:simCfg.sessionBankroll===v?"#fbbf24":"#64748b",fontSize:10,fontWeight:700,cursor:"pointer"}}>${v>=1000?v/1000+"K":v}</button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -294,27 +313,30 @@ function SimModePage({simCfg, setSimCfg, simRunning, setSimRunning, simPaused, s
         <Lbl>{"Strategies to Benchmark ("+simCfg.strategies.length+")"}</Lbl>
         {simCfg.strategies.map((strat,i)=>(
           <div key={i} style={{background:"#0f1923",borderRadius:10,padding:"10px 12px",border:"1px solid #2d4057",marginBottom:8}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-              <div style={{fontSize:12,fontWeight:700,color:TRACK_COLORS[i%TRACK_COLORS.length]}}>{strat.label}</div>
-              <div style={{display:"flex",gap:5}}>
-                <button onClick={()=>setEditStratIdx(editStratIdx===i?null:i)} style={{padding:"3px 8px",borderRadius:6,border:"1px solid #1e3a5f",background:"transparent",color:"#60a5fa",fontSize:9,cursor:"pointer"}}>✏️</button>
-                <button onClick={()=>removeStrategy(i)} style={{padding:"3px 8px",borderRadius:6,border:"1px solid #7f1d1d",background:"transparent",color:"#f87171",fontSize:9,cursor:"pointer"}}>×</button>
-              </div>
-            </div>
-            <div style={{fontSize:10,color:"#64748b"}}>
-              {strat.type==="fibonacci"
-                ?`${strat.config.betMode||"progression"} · ${(strat.config.evenTargets||[]).length>0?(strat.config.evenTargets).join("+"):((strat.config.dozenTargets||[]).map(d=>DZ_LABELS[d]).join("+")||"--")+(strat.config.colTargets?.length>0?" + "+(strat.config.colTargets.map(c=>COL_LABELS[c]).join("+")):"")}`
-                :`Solution · entry ${strat.config.entryThreshold}`
-              } · ROI {strat.config.roi}% · stop ${cur.symbol}{strat.config.stopLoss}
-            </div>
-            {editStratIdx===i && (
+            {editStratIdx===i ? (
               <SimStratEditor strat={strat} idx={i} simCfg={simCfg} setSimCfg={setSimCfg} cur={cur} onClose={()=>setEditStratIdx(null)}/>
+            ) : (
+              <>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <div style={{fontSize:12,fontWeight:700,color:TRACK_COLORS[i%TRACK_COLORS.length]}}>{strat.label}</div>
+                  <div style={{display:"flex",gap:5}}>
+                    <button onClick={()=>setEditStratIdx(i)} style={{padding:"3px 8px",borderRadius:6,border:"1px solid #1e3a5f",background:"transparent",color:"#60a5fa",fontSize:9,cursor:"pointer"}}>✏️ Edit</button>
+                    <button onClick={()=>removeStrategy(i)} style={{padding:"3px 8px",borderRadius:6,border:"1px solid #7f1d1d",background:"transparent",color:"#f87171",fontSize:9,cursor:"pointer"}}>×</button>
+                  </div>
+                </div>
+                <div style={{fontSize:10,color:"#64748b"}}>
+                  {strat.type==="fibonacci"
+                    ?`${strat.config.betMode||"progression"} · ${(strat.config.evenTargets||[]).length>0?(strat.config.evenTargets).join("+"):((strat.config.dozenTargets||[]).map(d=>DZ_LABELS[d]).join("+")||"--")+(strat.config.colTargets&&strat.config.colTargets.length>0?" + "+(strat.config.colTargets.map(c=>COL_LABELS[c]).join("+")):"")}`
+                    :`Solution · entry ${strat.config.entryThreshold}`
+                  } · ROI {strat.config.roi}% · stop {cur.symbol}{strat.config.stopLoss}
+                </div>
+              </>
             )}
           </div>
         ))}
         <div style={{display:"flex",gap:8,marginTop:4}}>
-          <button onClick={()=>addStrategy("fibonacci")} style={{flex:1,padding:"9px 0",borderRadius:10,border:"2px dashed #2d4057",background:"transparent",color:"#64748b",fontSize:12,cursor:"pointer"}}>+ Progression Bet</button>
-          <button onClick={()=>addStrategy("solution")} style={{flex:1,padding:"9px 0",borderRadius:10,border:"2px dashed #2d4057",background:"transparent",color:"#64748b",fontSize:12,cursor:"pointer"}}>+ The Solution</button>
+          <button onClick={()=>{addStrategy("fibonacci");setEditStratIdx(simCfg.strategies.length);}} style={{flex:1,padding:"9px 0",borderRadius:10,border:"2px dashed #2d4057",background:"transparent",color:"#64748b",fontSize:12,cursor:"pointer"}}>+ Progression Bet</button>
+          <button onClick={()=>{addStrategy("solution");setEditStratIdx(simCfg.strategies.length);}} style={{flex:1,padding:"9px 0",borderRadius:10,border:"2px dashed #2d4057",background:"transparent",color:"#64748b",fontSize:12,cursor:"pointer"}}>+ The Solution</button>
         </div>
       </Card>
 
@@ -522,6 +544,27 @@ function SimStratEditor({strat, idx, simCfg, setSimCfg, cur, onClose}) {
               })}
             </div>
           </div>
+          {cfg.parkRules && (cfg.parkRules.followTheLeader || cfg.parkRules.droughtThreshold) ? (
+            <div>
+              <Lbl>Outside Bet Type <span style={{color:"#a78bfa"}}>(auto-picks best)</span></Lbl>
+              <div style={{display:"flex",gap:5,marginBottom:6}}>
+                {(cfg.parkRules.followTheLeader
+                  ? [["dozens","📊 Dozens"],["columns","📊 Columns"],["even","🎯 Even Money"]]
+                  : [["dozens","📊 Set of 12"],["even","🎯 Even Money"]]
+                ).map(([t,l])=>{
+                  const sel=cfg.ftlTargetType===t||(t==="dozens"&&cfg.ftlTargetType==="columns");
+                  return <button key={t} onClick={()=>upCfg("ftlTargetType",t)} style={{flex:1,padding:"7px 0",borderRadius:8,border:"2px solid "+(sel?"#a78bfa":"#2d4057"),background:sel?"#1a0a2e":"#0f1923",color:sel?"#c4b5fd":"#64748b",fontSize:10,fontWeight:700,cursor:"pointer"}}>{l}</button>;
+                })}
+              </div>
+              {cfg.parkRules.followTheLeader && (cfg.ftlTargetType==="dozens"||cfg.ftlTargetType==="columns") && (
+                <div style={{display:"flex",gap:5}}>
+                  {[1,2].map(n=>{const sel=(cfg.ftlCount||1)===n;return <button key={n} onClick={()=>upCfg("ftlCount",n)} style={{flex:1,padding:"6px 0",borderRadius:7,border:"2px solid "+(sel?"#a78bfa":"#2d4057"),background:sel?"#1a0a2e":"#0f1923",color:sel?"#c4b5fd":"#64748b",fontSize:10,fontWeight:700,cursor:"pointer"}}>{n} at a time</button>;})}
+                </div>
+              )}
+              {!cfg.ftlTargetType && <div style={{fontSize:10,color:"#f87171"}}>⚠ Select a bet type.</div>}
+            </div>
+          ) : (
+          <>
           <div>
             <Lbl>Even Money</Lbl>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4}}>
@@ -548,6 +591,8 @@ function SimStratEditor({strat, idx, simCfg, setSimCfg, cur, onClose}) {
                 </div>
               </div>
             </>
+          )}
+          </>
           )}
         </>
       )}

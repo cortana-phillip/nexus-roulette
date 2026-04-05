@@ -123,28 +123,24 @@ function AddTrackPanel({onAdd, onClose, nextColor, type, cfg, onTypeChange, onCf
       </div>
       {type==="fibonacci" && (
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {/* When FTL or drought active: show type selector only */}
-          {(cfg.parkRules?.followTheLeader||cfg.parkRules?.droughtThreshold) ? (
+          {(cfg.parkRules && (cfg.parkRules.followTheLeader || cfg.parkRules.droughtThreshold)) ? (
             <div>
               <Lbl>Outside Bet Type <span style={{color:"#a78bfa",fontStyle:"normal"}}>(auto-picks best)</span></Lbl>
               <div style={{display:"flex",gap:6,marginBottom:6}}>
-                {[["dozens","📊 Dozens"],["columns","📊 Columns"],["even","🎯 Even Money"]].map(([t,l])=>{
-                  const sel=cfg.ftlTargetType===t;
+                {(cfg.parkRules.followTheLeader
+                  ? [["dozens","📊 Dozens"],["columns","📊 Columns"],["even","🎯 Even Money"]]
+                  : [["dozens","📊 Set of 12"],["even","🎯 Even Money"]]
+                ).map(([t,l])=>{
+                  const sel=cfg.ftlTargetType===t||(t==="dozens"&&(cfg.ftlTargetType==="columns"));
                   return <button key={t} onClick={()=>upCfg("ftlTargetType",t)} style={{flex:1,padding:"8px 0",borderRadius:9,border:"2px solid "+(sel?"#a78bfa":"#2d4057"),background:sel?"#1a0a2e":"#0f1923",color:sel?"#c4b5fd":"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{l}</button>;
                 })}
               </div>
-              {cfg.ftlTargetType && (cfg.ftlTargetType==="dozens"||cfg.ftlTargetType==="columns") && (
-                <div>
-                  <Lbl>How many at once</Lbl>
-                  <div style={{display:"flex",gap:6}}>
-                    {[1,2].map(n=>{
-                      const sel=(cfg.ftlCount||1)===n;
-                      return <button key={n} onClick={()=>upCfg("ftlCount",n)} style={{flex:1,padding:"7px 0",borderRadius:8,border:"2px solid "+(sel?"#a78bfa":"#2d4057"),background:sel?"#1a0a2e":"#0f1923",color:sel?"#c4b5fd":"#64748b",fontSize:12,fontWeight:700,cursor:"pointer"}}>{n} at a time</button>;
-                    })}
-                  </div>
+              {cfg.parkRules.followTheLeader && (cfg.ftlTargetType==="dozens"||cfg.ftlTargetType==="columns") && (
+                <div style={{display:"flex",gap:6}}>
+                  {[1,2].map(n=>{const sel=(cfg.ftlCount||1)===n;return <button key={n} onClick={()=>upCfg("ftlCount",n)} style={{flex:1,padding:"7px 0",borderRadius:8,border:"2px solid "+(sel?"#a78bfa":"#2d4057"),background:sel?"#1a0a2e":"#0f1923",color:sel?"#c4b5fd":"#64748b",fontSize:12,fontWeight:700,cursor:"pointer"}}>{n} at a time</button>;})}
                 </div>
               )}
-              {!cfg.ftlTargetType && <div style={{color:"#f87171",fontSize:11}}>Select a bet type to continue.</div>}
+              {!cfg.ftlTargetType && <div style={{color:"#f87171",fontSize:11}}>⚠ Select a bet type to continue.</div>}
             </div>
           ) : (
             <>
@@ -207,9 +203,22 @@ function AddTrackPanel({onAdd, onClose, nextColor, type, cfg, onTypeChange, onCf
           </div>
         </div>
       )}
+      {type==="fibonacci" && (cfg.betMode||"progression")!=="flat" && (
+        <div>
+          <Lbl>Start at Level</Lbl>
+          <div style={{display:"flex",alignItems:"center",background:"#0f1923",borderRadius:10,border:"1px solid #2d4057",overflow:"hidden"}}>
+            <button onClick={()=>upCfg("startLevel",Math.max(0,(cfg.startLevel||0)-1))} style={{padding:"8px 16px",background:"transparent",border:"none",color:"#60a5fa",fontSize:20,fontWeight:700,cursor:"pointer"}}>-</button>
+            <div style={{flex:1,textAlign:"center",fontSize:16,fontWeight:800,color:(cfg.startLevel||0)>0?"#fbbf24":"#64748b"}}>
+              {(cfg.startLevel||0)===0?"Start (Level 1)":`Level ${(cfg.startLevel||0)+1}`}
+            </div>
+            <button onClick={()=>upCfg("startLevel",(cfg.startLevel||0)+1)} style={{padding:"8px 16px",background:"transparent",border:"none",color:"#60a5fa",fontSize:20,fontWeight:700,cursor:"pointer"}}>+</button>
+          </div>
+          {(cfg.startLevel||0)>0 && <div style={{fontSize:10,color:"#fbbf24",marginTop:3}}>⚠ Starts mid-progression — bankroll will not reflect prior losses at this level.</div>}
+        </div>
+      )}
       <ParkPlayRulesEditor cfg={cfg} upCfg={upCfg} type={type}/>
       <button onClick={()=>{
-        if(type==="fibonacci"&&(cfg.evenTargets||[]).length===0&&(cfg.dozenTargets||[]).length===0&&(cfg.colTargets||[]).length===0){alert("Select at least one target.");return;}
+        if(type==="fibonacci"&&!(cfg.parkRules&&(cfg.parkRules.followTheLeader||cfg.parkRules.droughtThreshold))&&(cfg.evenTargets||[]).length===0&&(cfg.dozenTargets||[]).length===0&&(cfg.colTargets||[]).length===0){alert("Select at least one target.");return;}
         onAdd(type,cfg);
       }} style={{padding:"13px 0",borderRadius:12,border:"none",background:"#16a34a",color:"white",fontSize:15,fontWeight:800,cursor:"pointer"}}>Add Track</button>
     </div>
@@ -221,71 +230,107 @@ function ParkPlayRulesEditor({cfg, upCfg, type}) {
   const rules = cfg.parkRules || defaultParkRules();
   function upRule(k,v){ upCfg("parkRules",{...rules,[k]:v}); }
 
-  const isEven = (cfg.evenTargets||[]).length > 0;
-  const isDozCol = !isEven && ((cfg.dozenTargets||[]).length>0||(cfg.colTargets||[]).length>0);
-  const presetType = isEven?"even":isDozCol?"dozens":"dozens";
+  // Determine preset type for drought thresholds
+  const presetType = cfg.ftlTargetType==="even" ? "even" : "set12";
   const presets = DROUGHT_PRESETS[presetType];
+  const isDynamic = rules.followTheLeader || !!rules.droughtThreshold;
   const [open, setOpen] = useState(false);
 
+  const activeSummary = [
+    rules.followTheLeader&&"FTL",
+    rules.droughtThreshold&&`D≥${rules.droughtThreshold}`,
+    rules.waitForWin&&"WaitWin",
+    rules.parkAfterStopLoss&&"ParkSL",
+    rules.parkAfterLoss&&"ParkL",
+  ].filter(Boolean).join(" · ")||"none";
+
   return (
-    <div style={{borderRadius:10,border:"1px solid #2d4057",overflow:"hidden"}}>
+    <div style={{borderRadius:10,border:"1px solid "+(isDynamic||rules.waitForWin||rules.parkAfterStopLoss||rules.parkAfterLoss?"#a78bfa":"#2d4057"),overflow:"hidden"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%",padding:"10px 14px",background:"#0f1923",border:"none",color:"#94a3b8",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <span>⚙️ Park / Play Rules</span>
-        <span style={{fontSize:10,color:
-          (rules.followTheLeader||rules.waitForWin||rules.parkAfterStopLoss||rules.parkAfterLoss||rules.droughtThreshold)
-          ?"#a78bfa":"#475569"
-        }}>
-          {[
-            rules.followTheLeader&&"FTL",
-            rules.waitForWin&&"Wait",
-            rules.droughtThreshold&&`D≥${rules.droughtThreshold}`,
-            rules.parkAfterStopLoss&&"ParkSL",
-            rules.parkAfterLoss&&"ParkL",
-          ].filter(Boolean).join(" · ")||"none"} {open?"▲":"▼"}
+        <span style={{fontSize:10,color:isDynamic||rules.waitForWin||rules.parkAfterStopLoss||rules.parkAfterLoss?"#a78bfa":"#475569"}}>
+          {activeSummary} {open?"▲":"▼"}
         </span>
       </button>
       {open && (
         <div style={{padding:"12px 14px",background:"#0c1520",display:"flex",flexDirection:"column",gap:8}}>
 
-          {/* Follow the Leader */}
-          {type==="fibonacci" && (
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",borderRadius:8,border:"1px solid "+(rules.followTheLeader?"#a78bfa":"#1e2d3d"),background:rules.followTheLeader?"#1a0a2e":"transparent"}}>
+          {type==="fibonacci" && (<>
+            {/* Follow the Leader + Wait for Drought — mutually exclusive */}
+            <div style={{display:"flex",gap:6}}>
+              {[["followTheLeader","Follow the Leader","Auto-switch to highest-drought target"],
+                ["droughtThreshold","Wait for Drought","Park until drought threshold met"]
+               ].map(([key,label,desc])=>{
+                const on = key==="droughtThreshold" ? !!rules.droughtThreshold : !!rules[key];
+                return (
+                  <button key={key} onClick={()=>{
+                    if(on) {
+                      // Turn off
+                      if(key==="droughtThreshold") upRule("droughtThreshold", null);
+                      else upRule(key, false);
+                    } else {
+                      // Turn on — turn the other one off, clear static targets
+                      if(key==="droughtThreshold"){
+                        upCfg("parkRules",{...rules, droughtThreshold:(presets?.yellow||4), followTheLeader:false});
+                      } else {
+                        upCfg("parkRules",{...rules, followTheLeader:true, droughtThreshold:null});
+                      }
+                      upCfg("dozenTargets",[]); upCfg("colTargets",[]); upCfg("evenTargets",[]);
+                    }
+                  }} style={{flex:1,padding:"8px 6px",borderRadius:8,border:"2px solid "+(on?"#a78bfa":"#2d4057"),background:on?"#1a0a2e":"#0f1923",cursor:"pointer",textAlign:"left"}}>
+                    <div style={{fontSize:10,fontWeight:700,color:on?"#c4b5fd":"#64748b"}}>{label}</div>
+                    <div style={{fontSize:8,color:"#475569",marginTop:2}}>{desc}</div>
+                    <div style={{fontSize:10,fontWeight:700,color:on?"#a78bfa":"#374151",marginTop:4}}>{on?"ON":"OFF"}</div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Type selector — shows when either FTL or drought is active */}
+            {isDynamic && (
               <div>
-                <div style={{fontSize:11,fontWeight:700,color:rules.followTheLeader?"#c4b5fd":"#94a3b8"}}>Follow the Leader</div>
-                <div style={{fontSize:9,color:"#475569"}}>Auto-switch to highest-drought target each spin</div>
-              </div>
-              <button onClick={()=>upRule("followTheLeader",!rules.followTheLeader)} style={{padding:"4px 12px",borderRadius:7,border:"none",background:rules.followTheLeader?"#7c3aed":"#374151",color:"white",fontSize:10,fontWeight:700,cursor:"pointer"}}>{rules.followTheLeader?"ON":"OFF"}</button>
-            </div>
-          )}
-
-          {/* Wait for Drought */}
-          {type==="fibonacci" && (
-            <div style={{borderRadius:8,border:"1px solid "+(rules.droughtThreshold?"#a78bfa":"#1e2d3d"),background:rules.droughtThreshold?"#1a0a2e":"transparent",overflow:"hidden"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px"}}>
-                <div>
-                  <div style={{fontSize:11,fontWeight:700,color:rules.droughtThreshold?"#c4b5fd":"#94a3b8"}}>Wait for Drought</div>
-                  <div style={{fontSize:9,color:"#475569"}}>Park until best target meets min drought</div>
+                <div style={{fontSize:9,color:"#64748b",marginBottom:5,textTransform:"uppercase",letterSpacing:1}}>
+                  {rules.followTheLeader ? "Outside Bet Type (FTL picks best within type)" : "Outside Bet Type (drought scale)"}
                 </div>
-                <button onClick={()=>upRule("droughtThreshold",rules.droughtThreshold?null:presets.yellow)} style={{padding:"4px 12px",borderRadius:7,border:"none",background:rules.droughtThreshold?"#7c3aed":"#374151",color:"white",fontSize:10,fontWeight:700,cursor:"pointer"}}>{rules.droughtThreshold?"ON":"OFF"}</button>
-              </div>
-              {rules.droughtThreshold && (
-                <div style={{padding:"0 10px 10px"}}>
-                  <div style={{display:"flex",gap:5,marginBottom:6}}>
-                    {[["yellow","🟡",presets.yellow],["orange","🟠",presets.orange],["red","🔴",presets.red]].map(([p,icon,val])=>(
-                      <button key={p} onClick={()=>{upRule("droughtThreshold",val);upRule("droughtPreset",p);}} style={{flex:1,padding:"5px 0",borderRadius:7,border:"2px solid "+(rules.droughtPreset===p||rules.droughtThreshold===val?p==="yellow"?"#fbbf24":p==="orange"?"#f97316":"#ef4444":"#2d4057"),background:"#0f1923",color:p==="yellow"?"#fbbf24":p==="orange"?"#f97316":"#ef4444",fontSize:10,fontWeight:700,cursor:"pointer"}}>{icon} {val}+</button>
-                    ))}
-                  </div>
-                  <div style={{display:"flex",alignItems:"center",background:"#0f1923",borderRadius:8,border:"1px solid #2d4057",overflow:"hidden"}}>
-                    <button onClick={()=>upRule("droughtThreshold",Math.max(1,rules.droughtThreshold-1))} style={{padding:"6px 12px",background:"transparent",border:"none",color:"#a78bfa",fontSize:16,cursor:"pointer"}}>-</button>
-                    <div style={{flex:1,textAlign:"center",fontSize:14,fontWeight:700,color:"#c4b5fd"}}>{rules.droughtThreshold} misses</div>
-                    <button onClick={()=>upRule("droughtThreshold",rules.droughtThreshold+1)} style={{padding:"6px 12px",background:"transparent",border:"none",color:"#a78bfa",fontSize:16,cursor:"pointer"}}>+</button>
-                  </div>
+                <div style={{display:"flex",gap:5,marginBottom:6}}>
+                  {rules.followTheLeader
+                    ? [["dozens","📊 Dozens"],["columns","📊 Columns"],["even","🎯 Even Money"]].map(([t,l])=>{
+                        const sel=cfg.ftlTargetType===t;
+                        return <button key={t} onClick={()=>upCfg("ftlTargetType",t)} style={{flex:1,padding:"7px 0",borderRadius:8,border:"2px solid "+(sel?"#a78bfa":"#2d4057"),background:sel?"#1a0a2e":"#0f1923",color:sel?"#c4b5fd":"#64748b",fontSize:10,fontWeight:700,cursor:"pointer"}}>{l}</button>;
+                      })
+                    : [["set12","📊 Set of 12"],["even","🎯 Even Money"]].map(([t,l])=>{
+                        const sel=cfg.ftlTargetType===t||((cfg.ftlTargetType==="dozens"||cfg.ftlTargetType==="columns")&&t==="set12");
+                        return <button key={t} onClick={()=>upCfg("ftlTargetType",t==="set12"?"dozens":t)} style={{flex:1,padding:"7px 0",borderRadius:8,border:"2px solid "+(sel?"#a78bfa":"#2d4057"),background:sel?"#1a0a2e":"#0f1923",color:sel?"#c4b5fd":"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>{l}</button>;
+                      })
+                  }
                 </div>
-              )}
-            </div>
-          )}
+                {rules.followTheLeader && (cfg.ftlTargetType==="dozens"||cfg.ftlTargetType==="columns") && (
+                  <div style={{display:"flex",gap:5}}>
+                    {[1,2].map(n=>{const sel=(cfg.ftlCount||1)===n;return <button key={n} onClick={()=>upCfg("ftlCount",n)} style={{flex:1,padding:"6px 0",borderRadius:7,border:"2px solid "+(sel?"#a78bfa":"#2d4057"),background:sel?"#1a0a2e":"#0f1923",color:sel?"#c4b5fd":"#64748b",fontSize:10,fontWeight:700,cursor:"pointer"}}>{n} at a time</button>;})}
+                  </div>
+                )}
+                {!cfg.ftlTargetType && <div style={{fontSize:10,color:"#f87171"}}>⚠ Select a bet type above to enable.</div>}
+              </div>
+            )}
 
-          {/* Wait for Win */}
+            {/* Drought threshold controls */}
+            {rules.droughtThreshold && (
+              <div style={{background:"#0f1923",borderRadius:8,padding:"8px 10px",border:"1px solid #2d4057"}}>
+                <div style={{display:"flex",gap:5,marginBottom:6}}>
+                  {[["🟡",(presets?.yellow||4)],["🟠",(presets?.orange||7)],["🔴",(presets?.red||11)]].map(([icon,val])=>(
+                    <button key={val} onClick={()=>upRule("droughtThreshold",val)} style={{flex:1,padding:"5px 0",borderRadius:7,border:"2px solid "+(rules.droughtThreshold===val?"#a78bfa":"#2d4057"),background:rules.droughtThreshold===val?"#1a0a2e":"transparent",color:"#c4b5fd",fontSize:10,fontWeight:700,cursor:"pointer"}}>{icon} {val}+</button>
+                  ))}
+                </div>
+                <div style={{display:"flex",alignItems:"center",background:"#0c1520",borderRadius:6,overflow:"hidden"}}>
+                  <button onClick={()=>upRule("droughtThreshold",Math.max(1,rules.droughtThreshold-1))} style={{padding:"5px 10px",background:"transparent",border:"none",color:"#a78bfa",fontSize:16,cursor:"pointer"}}>-</button>
+                  <div style={{flex:1,textAlign:"center",fontSize:13,fontWeight:700,color:"#c4b5fd"}}>{rules.droughtThreshold} misses min</div>
+                  <button onClick={()=>upRule("droughtThreshold",rules.droughtThreshold+1)} style={{padding:"5px 10px",background:"transparent",border:"none",color:"#a78bfa",fontSize:16,cursor:"pointer"}}>+</button>
+                </div>
+              </div>
+            )}
+          </>)}
+
+          {/* Wait for Win — Solution only */}
           {type==="solution" && (
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",borderRadius:8,border:"1px solid "+(rules.waitForWin?"#a78bfa":"#1e2d3d"),background:rules.waitForWin?"#1a0a2e":"transparent"}}>
               <div>

@@ -1,6 +1,7 @@
 // -- Main App Component --
 export default function App() {
   const [appState, setAppState] = useState(loadApp);
+  const [driveSyncStatus, setDriveSyncStatus] = useState(getDriveToken()?"connected":"disconnected");
   const [tab, setTab] = useState(0);
   const [appMode, setAppMode] = useState("live"); // "live" | "sim"
   const [simCfg, setSimCfg] = useState(defaultSimConfig);
@@ -25,7 +26,26 @@ export default function App() {
     const interval = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Restore from Google Drive if localStorage was cleared
+  useEffect(() => {
+    if(!getDriveToken()) return;
+    const hasLocal = !!localStorage.getItem(KEY);
+    if(hasLocal) return; // local data exists, no need to restore
+    setDriveSyncStatus("restoring");
+    driveRestore().then(data => {
+      if(data && data.savedSessions) {
+        setAppState(data);
+        saveApp(data);
+        setDriveSyncStatus("connected");
+        alert("Data restored from Google Drive!");
+      } else {
+        setDriveSyncStatus("connected");
+      }
+    }).catch(()=>setDriveSyncStatus("connected"));
+  }, []);
   const [buyInOpen, setBuyInOpen] = useState(false);
+  const [adjustOpen, setAdjustOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [editBankroll, setEditBankroll] = useState(false);
@@ -281,7 +301,16 @@ export default function App() {
     });
   }
 
-  function addTrack(type, config) { updSess(s=>{s.tracks.push(newTrack(type,nextColorIdx,config));}); setAddOpen(false); setPendingTrackType("fibonacci"); setPendingTrackCfg(defaultFibCfg()); }
+  function addTrack(type, config) {
+    updSess(s=>{
+      const t = newTrack(type, nextColorIdx, config);
+      t.level = config.startLevel||0;
+      s.tracks.push(t);
+    });
+    setAddOpen(false);
+    setPendingTrackType("fibonacci");
+    setPendingTrackCfg(defaultFibCfg());
+  }
   function undoLastSpin() {
     if(!prevSessState) return;
     if(!window.confirm("Undo last tracked spin? This reverses the bankroll and progression but session time continues.")) return;
@@ -338,6 +367,15 @@ export default function App() {
           netPnL: allSessions.reduce((a,s)=>a+(s.bankrollCurrent-s.bankroll),0)
         }
       };
+      // Auto-sync to Google Drive if connected
+      if(getDriveToken()) {
+        const driveData = { ...appState, savedSessions: allSessions };
+        driveSave(driveData).then(ok=>{
+          setDriveSyncStatus(ok ? "connected" : "error");
+          setTimeout(()=>setDriveSyncStatus("connected"), 2000);
+        });
+      }
+      // Also save to Downloads
       const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -345,7 +383,7 @@ export default function App() {
       a.download = "nexus-roulette-autosave-"+new Date().toISOString().slice(0,10)+".json";
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch(e) { /* silently fail if download blocked */ }
+    } catch(e) {}
   }
 
   function saveSession() {
@@ -488,19 +526,14 @@ export default function App() {
             <button onClick={()=>{if(window.confirm("End session and save?"))endSession();}} style={{padding:"6px 12px",borderRadius:8,border:"1px solid #7f1d1d",background:"#200505",color:"#f87171",fontSize:11,fontWeight:700,cursor:"pointer"}}>■ End Session</button>
           )}
         </div>
+        {/* Spin ticker -- last 8 spins, fixed width, scrollable */}
         {sess.spins.length>0 && (
-          <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:2,WebkitOverflowScrolling:"touch"}}>
-            {recentSpins.map((val,i)=>{
+          <div style={{display:"flex",gap:4,height:32,overflow:"hidden",width:"100%"}}>
+            {[...sess.spins].reverse().slice(0,8).map((val,i)=>{
               const isZ=val==="0"||val==="00", r=!isZ&&RED.has(+val);
-              const hitTracks=(trackOverlays||[]).filter(o=>{
-                if(isZ)return false;
-                if(o.type==="fibonacci")return (o.dozenTargets||[]).includes(dozenOf(val))||(o.colTargets||[]).includes(colOf(val));
-                if(o.type==="solution")return (o.activeBets||[]).some(b=>b.number===val);
-                return false;
-              });
-              const borderColor=i===0?"#ffffff":hitTracks.length>0?hitTracks[0].color:isZ?"#22c55e":r?"#ef4444":"#374151";
+              const borderColor=i===0?"#ffffff":isZ?"#22c55e":r?"#ef4444":"#374151";
               return(
-                <div key={i} style={{flexShrink:0,width:28,height:28,borderRadius:6,background:isZ?"#166534":r?"#7f1d1d":"#0d1117",border:"2px solid "+borderColor,color:isZ?"#bbf7d0":r?"#fecaca":"#f1f5f9",fontSize:10,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <div key={i} style={{flexShrink:0,width:32,height:32,borderRadius:6,background:isZ?"#166534":r?"#7f1d1d":"#0d1117",border:"2px solid "+borderColor,color:isZ?"#bbf7d0":r?"#fecaca":"#f1f5f9",fontSize:11,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>
                   {val}
                 </div>
               );
@@ -1029,6 +1062,47 @@ export default function App() {
         </Card>
 
         <Card>
+          <Lbl>Google Drive Backup</Lbl>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            <div style={{padding:"10px 12px",borderRadius:10,border:"1px solid "+(getDriveToken()?"#4ade80":"#2d4057"),background:getDriveToken()?"#0a1f0a":"#0f1923"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:getDriveToken()?"#4ade80":"#94a3b8"}}>
+                    {driveSyncStatus==="restoring"?"☁️ Restoring...":getDriveToken()?"☁️ Connected":"☁️ Not Connected"}
+                  </div>
+                  <div style={{fontSize:10,color:"#64748b",marginTop:2}}>
+                    {getDriveToken()?"Auto-saves on every session save/end":"Sign in to enable cloud backup"}
+                  </div>
+                </div>
+                <button onClick={async()=>{
+                  if(getDriveToken()){
+                    driveSignOut();
+                    setDriveSyncStatus("disconnected");
+                  } else {
+                    try{
+                      await driveSignIn();
+                      setDriveSyncStatus("connected");
+                    }catch(e){alert("Sign in failed: "+e.message);}
+                  }
+                }} style={{padding:"7px 14px",borderRadius:8,border:"none",background:getDriveToken()?"#374151":"#16a34a",color:"white",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                  {getDriveToken()?"Disconnect":"Connect"}
+                </button>
+              </div>
+              {getDriveToken() && (
+                <button onClick={async()=>{
+                  setDriveSyncStatus("syncing");
+                  const ok = await driveSave(appState);
+                  setDriveSyncStatus(ok?"connected":"error");
+                  alert(ok?"Backup saved to Google Drive!":"Drive save failed — check connection.");
+                }} style={{width:"100%",marginTop:8,padding:"8px 0",borderRadius:8,border:"1px solid #22c55e",background:"transparent",color:"#4ade80",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                  ☁️ Backup Now
+                </button>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        <Card>
           <Lbl>Info</Lbl>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             <button onClick={()=>setChangelogOpen(true)} style={{width:"100%",padding:"12px 0",borderRadius:10,border:"1px solid #2d4057",background:"#0f1923",color:"#94a3b8",fontSize:13,cursor:"pointer"}}>📋 Changelog</button>
@@ -1119,7 +1193,7 @@ export default function App() {
 
   return (
     <div style={{minHeight:"100vh",background:"#0f1923",color:"#e2e8f0",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
-      <div style={{width:"100%",maxWidth:460,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",gap:12,padding:"16px 14px 80px",boxSizing:"border-box"}}>
+      <div style={{width:"100%",maxWidth:460,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",gap:12,padding:"16px 14px 80px",boxSizing:"border-box",overflow:"hidden",minWidth:0}}>
 
         {/* Header */}
         <div style={{width:"100%",textAlign:"center"}}>
@@ -1144,6 +1218,7 @@ export default function App() {
               <div style={{display:"flex",gap:8,marginTop:8,justifyContent:"center"}}>
                 <button onClick={()=>setBuyInOpen(true)} style={{padding:"8px 20px",borderRadius:20,border:"none",background:"#16a34a",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>💰 Buy In</button>
                 <button onClick={()=>setCashOutOpen(true)} style={{padding:"8px 20px",borderRadius:20,border:"none",background:"#c2410c",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>💸 Cash Out</button>
+                <button onClick={()=>setAdjustOpen(true)} style={{padding:"8px 14px",borderRadius:20,border:"1px solid #475569",background:"transparent",color:"#94a3b8",fontSize:12,fontWeight:700,cursor:"pointer"}}>⚖️</button>
               </div>
             </div>
           )}
@@ -1175,6 +1250,7 @@ export default function App() {
       {result && <ResultFlash result={result} onDismiss={()=>setResult(null)}/>}
       {buyInOpen && <BuyInModal defaultAmount={settings.defaultBuyIn||100} currency={currency} currentBankroll={sess.bankrollCurrent} onBuyIn={doBuyIn} onClose={()=>setBuyInOpen(false)}/>}
       {cashOutOpen && <CashOutModal maxAmount={sess.bankrollCurrent} currency={currency} currentBankroll={sess.bankrollCurrent} onCashOut={doCashOut} onClose={()=>setCashOutOpen(false)}/>}
+      {adjustOpen && <AdjustmentModal currency={currency} cur={cur} currentBankroll={sess.bankrollCurrent} onAdjust={(amt,note)=>{updSess(s=>{s.bankrollCurrent=Math.round((s.bankrollCurrent+amt)*100)/100;if(!s.adjustments)s.adjustments=[];s.adjustments.push({amt,note,at:Date.now()});});setAdjustOpen(false);}} onClose={()=>setAdjustOpen(false)}/>}
       {currencyOpen && <CurrencyModal current={currency} bankroll={sess.bankrollCurrent} onSave={changeCurrency} onClose={()=>setCurrencyOpen(false)}/>}
       {changelogOpen && <ChangelogModal onClose={()=>setChangelogOpen(false)}/>}
       {editBankroll && <BankrollEdit onClose={()=>setEditBankroll(false)}/>}

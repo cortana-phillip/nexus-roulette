@@ -21,6 +21,7 @@ button:active{transform:scale(0.93);opacity:0.8;}
 </head>
 <body>
 <div id="root"></div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>/**
  * @license React
  * react.production.min.js
@@ -2365,8 +2366,335 @@ function range(a, b) {
   });
 }
 
-// ===== components/ui.jsx =====
+// ===== drive-sync.js =====
+// -- Google Drive Sync --
+var DRIVE_CLIENT_ID = "951031370415-8r3icu8790rhoh9b7qq4vccjb7o7vtvg.apps.googleusercontent.com";
+var DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+var BACKUP_FILENAME = "nexus-roulette-backup.json";
+
+// Token storage
+function getDriveToken() {
+  try {
+    return localStorage.getItem("nexus_drive_token");
+  } catch (e) {
+    return null;
+  }
+}
+function setDriveToken(t) {
+  try {
+    if (t) localStorage.setItem("nexus_drive_token", t);else localStorage.removeItem("nexus_drive_token");
+  } catch (e) {}
+}
+function getDriveConnected() {
+  return !!getDriveToken();
+}
+
+// OAuth2 PKCE flow
+function driveSignIn() {
+  return new Promise(function (resolve, reject) {
+    try {
+      var client = window.google.accounts.oauth2.initTokenClient({
+        client_id: DRIVE_CLIENT_ID,
+        scope: DRIVE_SCOPE,
+        callback: function callback(resp) {
+          if (resp.error) {
+            reject(new Error(resp.error));
+            return;
+          }
+          setDriveToken(resp.access_token);
+          resolve(resp.access_token);
+        }
+      });
+      client.requestAccessToken();
+    } catch (e) {
+      reject(new Error("Google sign-in failed: " + e.message));
+    }
+  });
+}
+function driveSignOut() {
+  var token = getDriveToken();
+  if (token && window.google && window.google.accounts) {
+    try {
+      window.google.accounts.oauth2.revoke(token, function () {});
+    } catch (e) {}
+  }
+  setDriveToken(null);
+}
+
+// Drive API helpers
+function driveRequest(_x, _x2, _x3, _x4) {
+  return _driveRequest.apply(this, arguments);
+}
+function _driveRequest() {
+  _driveRequest = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee8(method, url, body, token) {
+    var t, opts, resp;
+    return _regenerator().w(function (_context8) {
+      while (1) switch (_context8.n) {
+        case 0:
+          t = token || getDriveToken();
+          if (t) {
+            _context8.n = 1;
+            break;
+          }
+          throw new Error("Not signed in to Google Drive");
+        case 1:
+          opts = {
+            method: method,
+            headers: {
+              "Authorization": "Bearer " + t,
+              "Content-Type": "application/json"
+            }
+          };
+          if (body) opts.body = JSON.stringify(body);
+          _context8.n = 2;
+          return fetch(url, opts);
+        case 2:
+          resp = _context8.v;
+          if (!(resp.status === 401)) {
+            _context8.n = 3;
+            break;
+          }
+          setDriveToken(null);
+          throw new Error("Drive token expired — please reconnect");
+        case 3:
+          if (resp.ok) {
+            _context8.n = 4;
+            break;
+          }
+          throw new Error("Drive API error: " + resp.status);
+        case 4:
+          if (!(resp.status === 204)) {
+            _context8.n = 5;
+            break;
+          }
+          return _context8.a(2, null);
+        case 5:
+          return _context8.a(2, resp.json());
+      }
+    }, _callee8);
+  }));
+  return _driveRequest.apply(this, arguments);
+}
+function driveMultipartUpload(_x5, _x6, _x7, _x8) {
+  return _driveMultipartUpload.apply(this, arguments);
+} // Find backup file ID
+function _driveMultipartUpload() {
+  _driveMultipartUpload = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee9(filename, content, fileId, token) {
+    var t, metadata, boundary, body, url, resp;
+    return _regenerator().w(function (_context9) {
+      while (1) switch (_context9.n) {
+        case 0:
+          t = token || getDriveToken();
+          if (t) {
+            _context9.n = 1;
+            break;
+          }
+          throw new Error("Not signed in to Google Drive");
+        case 1:
+          metadata = {
+            name: filename,
+            parents: fileId ? undefined : ["appDataFolder"]
+          };
+          boundary = "nexus_boundary_" + Date.now();
+          body = ["--" + boundary, "Content-Type: application/json; charset=UTF-8", "", JSON.stringify(fileId ? {
+            name: filename
+          } : metadata), "--" + boundary, "Content-Type: application/json", "", content, "--" + boundary + "--"].join("\r\n");
+          url = fileId ? "https://www.googleapis.com/upload/drive/v3/files/".concat(fileId, "?uploadType=multipart") : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
+          _context9.n = 2;
+          return fetch(url, {
+            method: fileId ? "PATCH" : "POST",
+            headers: {
+              "Authorization": "Bearer " + t,
+              "Content-Type": "multipart/related; boundary=" + boundary
+            },
+            body: body
+          });
+        case 2:
+          resp = _context9.v;
+          if (!(resp.status === 401)) {
+            _context9.n = 3;
+            break;
+          }
+          setDriveToken(null);
+          throw new Error("Drive token expired");
+        case 3:
+          if (resp.ok) {
+            _context9.n = 4;
+            break;
+          }
+          throw new Error("Drive upload error: " + resp.status);
+        case 4:
+          return _context9.a(2, resp.json());
+      }
+    }, _callee9);
+  }));
+  return _driveMultipartUpload.apply(this, arguments);
+}
+function driveFindBackup() {
+  return _driveFindBackup.apply(this, arguments);
+} // Save to Drive
+function _driveFindBackup() {
+  _driveFindBackup = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee0() {
+    var data, _t5;
+    return _regenerator().w(function (_context0) {
+      while (1) switch (_context0.p = _context0.n) {
+        case 0:
+          _context0.p = 0;
+          _context0.n = 1;
+          return driveRequest("GET", "https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)&q=name='".concat(BACKUP_FILENAME, "'"));
+        case 1:
+          data = _context0.v;
+          return _context0.a(2, data.files && data.files.length > 0 ? data.files[0].id : null);
+        case 2:
+          _context0.p = 2;
+          _t5 = _context0.v;
+          return _context0.a(2, null);
+      }
+    }, _callee0, null, [[0, 2]]);
+  }));
+  return _driveFindBackup.apply(this, arguments);
+}
+function driveSave(_x9) {
+  return _driveSave.apply(this, arguments);
+} // Restore from Drive
+function _driveSave() {
+  _driveSave = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee1(appState) {
+    var token, content, existingId, _t6;
+    return _regenerator().w(function (_context1) {
+      while (1) switch (_context1.p = _context1.n) {
+        case 0:
+          _context1.p = 0;
+          token = getDriveToken();
+          if (token) {
+            _context1.n = 1;
+            break;
+          }
+          return _context1.a(2, false);
+        case 1:
+          content = JSON.stringify({
+            savedAt: new Date().toISOString(),
+            appState: appState
+          });
+          _context1.n = 2;
+          return driveFindBackup();
+        case 2:
+          existingId = _context1.v;
+          _context1.n = 3;
+          return driveMultipartUpload(BACKUP_FILENAME, content, existingId, token);
+        case 3:
+          return _context1.a(2, true);
+        case 4:
+          _context1.p = 4;
+          _t6 = _context1.v;
+          console.warn("Drive save failed:", _t6.message);
+          if (_t6.message.includes("token expired")) setDriveToken(null);
+          return _context1.a(2, false);
+      }
+    }, _callee1, null, [[0, 4]]);
+  }));
+  return _driveSave.apply(this, arguments);
+}
+function driveRestore() {
+  return _driveRestore.apply(this, arguments);
+} // Delete backup from Drive
+function _driveRestore() {
+  _driveRestore = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee10() {
+    var token, fileId, t, resp, data, _t7;
+    return _regenerator().w(function (_context10) {
+      while (1) switch (_context10.p = _context10.n) {
+        case 0:
+          _context10.p = 0;
+          token = getDriveToken();
+          if (token) {
+            _context10.n = 1;
+            break;
+          }
+          return _context10.a(2, null);
+        case 1:
+          _context10.n = 2;
+          return driveFindBackup();
+        case 2:
+          fileId = _context10.v;
+          if (fileId) {
+            _context10.n = 3;
+            break;
+          }
+          return _context10.a(2, null);
+        case 3:
+          t = getDriveToken();
+          _context10.n = 4;
+          return fetch("https://www.googleapis.com/drive/v3/files/".concat(fileId, "?alt=media"), {
+            headers: {
+              "Authorization": "Bearer " + t
+            }
+          });
+        case 4:
+          resp = _context10.v;
+          if (resp.ok) {
+            _context10.n = 5;
+            break;
+          }
+          return _context10.a(2, null);
+        case 5:
+          _context10.n = 6;
+          return resp.json();
+        case 6:
+          data = _context10.v;
+          return _context10.a(2, data.appState || null);
+        case 7:
+          _context10.p = 7;
+          _t7 = _context10.v;
+          console.warn("Drive restore failed:", _t7.message);
+          return _context10.a(2, null);
+      }
+    }, _callee10, null, [[0, 7]]);
+  }));
+  return _driveRestore.apply(this, arguments);
+}
+function driveDeleteBackup() {
+  return _driveDeleteBackup.apply(this, arguments);
+} // ===== components/ui.jsx =====
 // -- Base UI Components --
+function _driveDeleteBackup() {
+  _driveDeleteBackup = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee11() {
+    var token, fileId, _t8;
+    return _regenerator().w(function (_context11) {
+      while (1) switch (_context11.p = _context11.n) {
+        case 0:
+          _context11.p = 0;
+          token = getDriveToken();
+          if (token) {
+            _context11.n = 1;
+            break;
+          }
+          return _context11.a(2);
+        case 1:
+          _context11.n = 2;
+          return driveFindBackup();
+        case 2:
+          fileId = _context11.v;
+          if (fileId) {
+            _context11.n = 3;
+            break;
+          }
+          return _context11.a(2);
+        case 3:
+          _context11.n = 4;
+          return driveRequest("DELETE", "https://www.googleapis.com/drive/v3/files/".concat(fileId));
+        case 4:
+          _context11.n = 6;
+          break;
+        case 5:
+          _context11.p = 5;
+          _t8 = _context11.v;
+          console.warn("Drive delete failed:", _t8.message);
+        case 6:
+          return _context11.a(2);
+      }
+    }, _callee11, null, [[0, 5]]);
+  }));
+  return _driveDeleteBackup.apply(this, arguments);
+}
 function Card(_ref15) {
   var children = _ref15.children,
     style = _ref15.style;
@@ -5486,8 +5814,17 @@ function HardResetModal(_ref56) {
     setStep(1);
   }
   function doReset() {
-    localStorage.removeItem("nexus-roulette-v1");
-    window.location.reload();
+    // Delete Drive backup if connected
+    if (getDriveToken()) {
+      driveDeleteBackup().finally(function () {
+        driveSignOut();
+        localStorage.removeItem("nexus-roulette-v1");
+        window.location.reload();
+      });
+    } else {
+      localStorage.removeItem("nexus-roulette-v1");
+      window.location.reload();
+    }
   }
   return /*#__PURE__*/React.createElement(Modal, {
     onClose: onClose
@@ -7572,7 +7909,7 @@ function App() {
     _useState46 = _slicedToArray(_useState45, 2),
     appState = _useState46[0],
     setAppState = _useState46[1];
-  var _useState47 = (0, _react.useState)(GDrive.getToken() ? "connected" : "disconnected"),
+  var _useState47 = (0, _react.useState)(getDriveToken() ? "connected" : "disconnected"),
     _useState48 = _slicedToArray(_useState47, 2),
     driveSyncStatus = _useState48[0],
     setDriveSyncStatus = _useState48[1];
@@ -7660,22 +7997,21 @@ function App() {
 
   // Restore from Google Drive if localStorage was cleared
   (0, _react.useEffect)(function () {
-    if (!GDrive.getToken()) return;
+    if (!getDriveToken()) return;
     var hasLocal = !!localStorage.getItem(KEY);
     if (hasLocal) return; // local data exists, no need to restore
     setDriveSyncStatus("restoring");
-    GDrive.load().then(function (data) {
-      if (data && data.sessions && data.sessions.length > 0) {
-        updApp(function (s) {
-          s.savedSessions = data.sessions;
-        });
-        setDriveSyncStatus("restored");
-        setTimeout(function () {
-          return setDriveSyncStatus("connected");
-        }, 3000);
+    driveRestore().then(function (data) {
+      if (data && data.savedSessions) {
+        setAppState(data);
+        saveApp(data);
+        setDriveSyncStatus("connected");
+        alert("Data restored from Google Drive!");
       } else {
         setDriveSyncStatus("connected");
       }
+    }).catch(function () {
+      return setDriveSyncStatus("connected");
     });
   }, []);
   var _useState85 = (0, _react.useState)(false),
@@ -8253,9 +8589,15 @@ function App() {
         }
       };
       // Auto-sync to Google Drive if connected
-      if (GDrive.getToken()) {
-        GDrive.save(data).then(function (ok) {
-          if (ok) setDriveSyncStatus("synced");else setDriveSyncStatus("error");
+      if (getDriveToken()) {
+        var driveData = _objectSpread(_objectSpread({}, appState), {}, {
+          savedSessions: allSessions
+        });
+        driveSave(driveData).then(function (ok) {
+          setDriveSyncStatus(ok ? "connected" : "error");
+          setTimeout(function () {
+            return setDriveSyncStatus("connected");
+          }, 2000);
         });
       }
       // Also save to Downloads
@@ -10075,7 +10417,109 @@ function App() {
           color: sess.roulette === v ? "#60a5fa" : "#64748b"
         }
       }, label);
-    }))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Lbl, null, "Info"), /*#__PURE__*/React.createElement("div", {
+    }))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Lbl, null, "Google Drive Backup"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "10px 12px",
+        borderRadius: 10,
+        border: "1px solid " + (getDriveToken() ? "#4ade80" : "#2d4057"),
+        background: getDriveToken() ? "#0a1f0a" : "#0f1923"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: getDriveToken() ? "#4ade80" : "#94a3b8"
+      }
+    }, driveSyncStatus === "restoring" ? "☁️ Restoring..." : getDriveToken() ? "☁️ Connected" : "☁️ Not Connected"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: "#64748b",
+        marginTop: 2
+      }
+    }, getDriveToken() ? "Auto-saves on every session save/end" : "Sign in to enable cloud backup")), /*#__PURE__*/React.createElement("button", {
+      onClick: /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6() {
+        var _t4;
+        return _regenerator().w(function (_context6) {
+          while (1) switch (_context6.p = _context6.n) {
+            case 0:
+              if (!getDriveToken()) {
+                _context6.n = 1;
+                break;
+              }
+              driveSignOut();
+              setDriveSyncStatus("disconnected");
+              _context6.n = 4;
+              break;
+            case 1:
+              _context6.p = 1;
+              _context6.n = 2;
+              return driveSignIn();
+            case 2:
+              setDriveSyncStatus("connected");
+              _context6.n = 4;
+              break;
+            case 3:
+              _context6.p = 3;
+              _t4 = _context6.v;
+              alert("Sign in failed: " + _t4.message);
+            case 4:
+              return _context6.a(2);
+          }
+        }, _callee6, null, [[1, 3]]);
+      })),
+      style: {
+        padding: "7px 14px",
+        borderRadius: 8,
+        border: "none",
+        background: getDriveToken() ? "#374151" : "#16a34a",
+        color: "white",
+        fontSize: 11,
+        fontWeight: 700,
+        cursor: "pointer"
+      }
+    }, getDriveToken() ? "Disconnect" : "Connect")), getDriveToken() && /*#__PURE__*/React.createElement("button", {
+      onClick: /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7() {
+        var ok;
+        return _regenerator().w(function (_context7) {
+          while (1) switch (_context7.n) {
+            case 0:
+              setDriveSyncStatus("syncing");
+              _context7.n = 1;
+              return driveSave(appState);
+            case 1:
+              ok = _context7.v;
+              setDriveSyncStatus(ok ? "connected" : "error");
+              alert(ok ? "Backup saved to Google Drive!" : "Drive save failed — check connection.");
+            case 2:
+              return _context7.a(2);
+          }
+        }, _callee7);
+      })),
+      style: {
+        width: "100%",
+        marginTop: 8,
+        padding: "8px 0",
+        borderRadius: 8,
+        border: "1px solid #22c55e",
+        background: "transparent",
+        color: "#4ade80",
+        fontSize: 11,
+        fontWeight: 700,
+        cursor: "pointer"
+      }
+    }, "\u2601\uFE0F Backup Now")))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Lbl, null, "Info"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -10144,10 +10588,10 @@ function App() {
       label: "Max Total (per spin)",
       key: "tableMaxTotal",
       color: "#f87171"
-    }].map(function (_ref84) {
-      var label = _ref84.label,
-        key = _ref84.key,
-        color = _ref84.color;
+    }].map(function (_ref86) {
+      var label = _ref86.label,
+        key = _ref86.key,
+        color = _ref86.color;
       var val = settings[key] || 1;
       function dec() {
         if (key === "tableMinBet") {
@@ -10326,8 +10770,8 @@ function App() {
   }
 
   // -- Bankroll Edit --
-  function BankrollEdit(_ref85) {
-    var onClose = _ref85.onClose;
+  function BankrollEdit(_ref87) {
+    var onClose = _ref87.onClose;
     var _useState107 = (0, _react.useState)(sess.bankrollCurrent),
       _useState108 = _slicedToArray(_useState107, 2),
       val = _useState108[0],

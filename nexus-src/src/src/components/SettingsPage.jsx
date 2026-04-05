@@ -36,6 +36,26 @@
         </Card>
 
         <Card>
+          <Lbl>☁️ Google Drive Sync</Lbl>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:10,border:"1px solid "+(driveSyncStatus==="connected"||driveSyncStatus==="synced"?"#22c55e":"#2d4057"),background:"#0f1923"}}>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:driveSyncStatus==="connected"||driveSyncStatus==="synced"?"#4ade80":driveSyncStatus==="restoring"?"#fbbf24":"#94a3b8"}}>
+                  {driveSyncStatus==="synced"?"✅ Synced":driveSyncStatus==="connected"?"✅ Connected":driveSyncStatus==="restoring"?"⏳ Restoring...":driveSyncStatus==="restored"?"✅ Restored":"☁️ Not connected"}
+                </div>
+                <div style={{fontSize:10,color:"#64748b",marginTop:2}}>{driveSyncStatus==="disconnected"?"Backup sessions to Google Drive":"Auto-syncs on every save"}</div>
+              </div>
+              {driveSyncStatus==="disconnected"
+                ? <button onClick={async()=>{setDriveSyncStatus("connecting");const t=await GDrive.authorize();setDriveSyncStatus(t?"connected":"disconnected");}} style={{padding:"6px 14px",borderRadius:8,border:"none",background:"#1a73e8",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>Connect</button>
+                : <button onClick={()=>{GDrive.clearToken();setDriveSyncStatus("disconnected");}} style={{padding:"6px 14px",borderRadius:8,border:"1px solid #7f1d1d",background:"transparent",color:"#f87171",fontSize:12,cursor:"pointer"}}>Disconnect</button>
+              }
+            </div>
+            {(driveSyncStatus==="connected"||driveSyncStatus==="synced"||driveSyncStatus==="restored") && (
+              <button onClick={async()=>{const data=await GDrive.load();if(data&&data.sessions&&data.sessions.length>0){updApp(s=>{s.savedSessions=data.sessions;});alert("Restored "+data.sessions.length+" sessions from Drive.");}else alert("No backup found.");}} style={{padding:"10px 0",borderRadius:10,border:"1px solid #2d4057",background:"#0f1923",color:"#60a5fa",fontSize:12,fontWeight:700,cursor:"pointer"}}>📥 Restore from Drive</button>
+            )}
+          </div>
+        </Card>
+        <Card>
           <Lbl>Info</Lbl>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             <button onClick={()=>setChangelogOpen(true)} style={{width:"100%",padding:"12px 0",borderRadius:10,border:"1px solid #2d4057",background:"#0f1923",color:"#94a3b8",fontSize:13,cursor:"pointer"}}>📋 Changelog</button>

@@ -1,7 +1,7 @@
 // -- Base UI Components --
 function Card({children, style}) {
   return (
-    <div style={{background:"#1e2d3d",borderRadius:14,padding:"12px 14px",width:"100%",border:"1px solid #2d4057",...(style||{})}}>
+    <div style={{background:"#1e2d3d",borderRadius:14,padding:"12px 14px",width:"100%",border:"1px solid #2d4057",minWidth:0,overflow:"hidden",...(style||{})}}>
       {children}
     </div>
   );

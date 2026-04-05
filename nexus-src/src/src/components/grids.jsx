@@ -16,7 +16,7 @@ function FibGrid({onNumber, onGhost, dozenTargets, colTargets, fibRow, trackOver
     const isFlash = flashNum===val;
     return (
       <button key={val}
-        onClick={()=>onNumber(val)}
+        onClick={()=>guardedTap(val,onNumber)}
         onContextMenu={e=>{e.preventDefault();if(onGhost)onGhost(val);}}
         onTouchStart={()=>{if(onGhost)pressTimer.current=setTimeout(()=>onGhost(val),600);}}
         onTouchEnd={()=>clearTimeout(pressTimer.current)}
@@ -32,10 +32,10 @@ function FibGrid({onNumber, onGhost, dozenTargets, colTargets, fibRow, trackOver
     );
   }
   return (
-    <div style={{width:"100%"}}>
+    <div style={{width:"100%",minWidth:0,overflow:"hidden"}}>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,marginBottom:4}}>
         {["0","00"].map(v => (
-          <button key={v} onClick={()=>onNumber(v)} style={{padding:"11px 0",borderRadius:8,border:"1px solid #1f2937",background:"#1a0a0a",color:"#6b7280",fontSize:14,fontWeight:800,cursor:"pointer"}}>{v}</button>
+          <button key={v} onClick={()=>guardedTap(v,onNumber)} style={{padding:"11px 0",borderRadius:8,border:"1px solid #1f2937",background:"#1a0a0a",color:"#6b7280",fontSize:14,fontWeight:800,cursor:"pointer",width:"100%"}}>{v}</button>
         ))}
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4,marginBottom:2}}>
@@ -46,10 +46,10 @@ function FibGrid({onNumber, onGhost, dozenTargets, colTargets, fibRow, trackOver
       {[0,1,2].map(dz => {
         const act = dts.includes(dz);
         return (
-          <div key={dz} style={{borderRadius:8,marginBottom:4,border:"1px solid "+(act?DZ_BD[dz]:"#1a1a2e"),padding:act?"3px":"0"}}>
+          <div key={dz} style={{borderRadius:8,marginBottom:4,border:"1px solid "+(act?DZ_BD[dz]:"#1a1a2e"),padding:act?"3px":"0",minWidth:0}}>
             {act && <div style={{textAlign:"center",fontSize:8,color:DZ_BD[dz],fontWeight:700,textTransform:"uppercase",padding:"1px 0 2px"}}>{DZ_LABELS[dz]}</div>}
             {rows.slice(dz*4,dz*4+4).map(([a,b,c]) => (
-              <div key={a} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4,marginBottom:4}}>
+              <div key={a} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4,marginBottom:4,minWidth:0}}>
                 {[a,b,c].map(n => numCell(String(n)))}
               </div>
             ))}
@@ -78,7 +78,7 @@ function SolGrid({onNumber, droughts, entry, maxLvl, activeBets, wheelNums, trac
         {zeros.map(v => {
           const d=droughts[v]||0, cs=numDroughtStyle(d,entry,maxLvl,false);
           return (
-            <button key={v} onClick={()=>onNumber(v)} style={{padding:"9px 0",borderRadius:8,border:"1px solid "+cs.bd,background:cs.bg,color:cs.tx,fontSize:13,fontWeight:800,cursor:"pointer"}}>
+            <button key={v} onClick={()=>guardedTap(v,onNumber)} style={{padding:"9px 0",borderRadius:8,border:"1px solid "+cs.bd,background:cs.bg,color:cs.tx,fontSize:13,fontWeight:800,cursor:"pointer"}}>
               <div>{v}</div><div style={{fontSize:8}}>{d}</div>
             </button>
           );
@@ -91,7 +91,7 @@ function SolGrid({onNumber, droughts, entry, maxLvl, activeBets, wheelNums, trac
           const inR=d>=entry, ab=(activeBets||[]).find(b=>b.number===val);
           const overlays=(trackOverlays||[]).filter(o=>o.type==="solution"&&(o.activeBets||[]).some(b=>b.number===val));
           return (
-            <button key={val} onClick={()=>onNumber(val)} style={{padding:"7px 0",borderRadius:6,border:(inR||isAct?"2":"1")+"px solid "+cs.bd,background:cs.bg,color:cs.tx,fontSize:10,fontWeight:800,cursor:"pointer",position:"relative"}}>
+            <button key={val} onClick={()=>guardedTap(val,onNumber)} style={{padding:"7px 0",borderRadius:6,border:(inR||isAct?"2":"1")+"px solid "+cs.bd,background:cs.bg,color:cs.tx,fontSize:10,fontWeight:800,cursor:"pointer",position:"relative"}}>
               <div>{val}</div>
               <div style={{fontSize:7,color:isAct?"#4ade80":inR?"#fbbf24":"#1f2937"}}>{d}</div>
               {ab && <div style={{position:"absolute",top:1,right:1,fontSize:6,color:"#4ade80",fontWeight:900}}>L{ab.level+1}</div>}
