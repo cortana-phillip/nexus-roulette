@@ -8728,15 +8728,20 @@ function App() {
       reader.onload = function (ev) {
         try {
           var data = JSON.parse(ev.target.result);
-          var sessions = data.sessions || [];
+          // Handle all export formats:
+          // 1. autoExport: { sessions: [...] }
+          // 2. manual export: { sessions: [...] }
+          // 3. full appState: { savedSessions: [...] }
+          var sessions = data.sessions || data.savedSessions || [];
           if (!sessions.length) {
-            alert("No sessions found in file.");
+            alert("No sessions found in file.\n\nFile keys: " + Object.keys(data).join(", ") + "\n\nMake sure you're importing a nexus-roulette export file.");
             return;
           }
           var added = 0,
             skipped = 0;
           updApp(function (s) {
             sessions.forEach(function (sess) {
+              if (!sess.id) return; // skip malformed
               if (!s.savedSessions.find(function (x) {
                 return x.id === sess.id;
               })) {
@@ -8749,7 +8754,7 @@ function App() {
           });
           alert("Import complete!\n".concat(added, " sessions added").concat(skipped ? ", " + skipped + " already existed (skipped)" : "", "."));
         } catch (err) {
-          alert("Failed to parse file. Make sure it's a valid Nexus Roulette export.");
+          alert("Failed to parse file: " + err.message);
         }
       };
       reader.readAsText(file);
