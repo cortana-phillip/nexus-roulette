@@ -47,7 +47,7 @@ async function driveRequest(method, url, body, token) {
   if(body) opts.body = JSON.stringify(body);
   const resp = await fetch(url, opts);
   if(resp.status === 401) { setDriveToken(null); throw new Error("Drive token expired — please reconnect"); }
-  if(!resp.ok) throw new Error("Drive API error: "+resp.status);
+  if(!resp.ok) { const txt = await resp.text().catch(()=>""); throw new Error("Drive API "+resp.status+": "+txt.slice(0,200)); }
   if(resp.status === 204) return null;
   return resp.json();
 }
@@ -82,7 +82,7 @@ async function driveMultipartUpload(filename, content, fileId, token) {
     body,
   });
   if(resp.status === 401) { setDriveToken(null); throw new Error("Drive token expired"); }
-  if(!resp.ok) throw new Error("Drive upload error: "+resp.status);
+  if(!resp.ok) { const txt = await resp.text().catch(()=>""); throw new Error("Drive upload "+resp.status+": "+txt.slice(0,200)); }
   return resp.json();
 }
 
@@ -98,21 +98,15 @@ async function driveFindBackup() {
 
 // Save to Drive
 async function driveSave(appState) {
-  try {
-    const token = getDriveToken();
-    if(!token) return false;
-    const content = JSON.stringify({
-      savedAt: new Date().toISOString(),
-      appState,
-    });
-    const existingId = await driveFindBackup();
-    await driveMultipartUpload(BACKUP_FILENAME, content, existingId, token);
-    return true;
-  } catch(e) {
-    console.warn("Drive save failed:", e.message);
-    if(e.message.includes("token expired")) setDriveToken(null);
-    return false;
-  }
+  const token = getDriveToken();
+  if(!token) return false;
+  const content = JSON.stringify({
+    savedAt: new Date().toISOString(),
+    appState,
+  });
+  const existingId = await driveFindBackup();
+  await driveMultipartUpload(BACKUP_FILENAME, content, existingId, token);
+  return true;
 }
 
 // Restore from Drive

@@ -332,6 +332,9 @@ export default function App() {
       driveSave(driveData).then(ok=>{
         setDriveSyncStatus(ok ? "connected" : "error");
         if(!ok) setTimeout(()=>setDriveSyncStatus("connected"), 3000);
+      }).catch(()=>{
+        setDriveSyncStatus("error");
+        setTimeout(()=>setDriveSyncStatus("connected"), 3000);
       });
     }
     // Then attempt local download (user can cancel, won't affect cloud)
@@ -1124,9 +1127,15 @@ export default function App() {
               <div style={{display:"flex",gap:6,marginTop:8}}>
                 <button onClick={async()=>{
                   setDriveSyncStatus("syncing");
-                  const ok = await driveSave(appState);
-                  setDriveSyncStatus(ok?"connected":"error");
-                  alert(ok?"Backup saved to Google Drive!":"Drive save failed — check connection.");
+                  try{
+                    const ok = await driveSave(appState);
+                    setDriveSyncStatus(ok?"connected":"error");
+                    if(ok) alert("Backup saved to Google Drive!");
+                    else alert("Drive save failed — unknown error");
+                  }catch(e){
+                    setDriveSyncStatus("error");
+                    alert("Drive save failed:\n"+e.message);
+                  }
                 }} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #22c55e",background:"transparent",color:"#4ade80",fontSize:11,fontWeight:700,cursor:"pointer"}}>
                   ☁️ Backup Now
                 </button>

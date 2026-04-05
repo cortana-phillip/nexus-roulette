@@ -1099,7 +1099,7 @@ function driveRequest(_x, _x2, _x3, _x4) {
 }
 function _driveRequest() {
   _driveRequest = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4(method, url, body, token) {
-    var t, opts, resp;
+    var t, opts, resp, txt;
     return _regenerator().w(function (_context4) {
       while (1) switch (_context4.n) {
         case 0:
@@ -1130,17 +1130,23 @@ function _driveRequest() {
           throw new Error("Drive token expired — please reconnect");
         case 3:
           if (resp.ok) {
-            _context4.n = 4;
-            break;
-          }
-          throw new Error("Drive API error: " + resp.status);
-        case 4:
-          if (!(resp.status === 204)) {
             _context4.n = 5;
             break;
           }
-          return _context4.a(2, null);
+          _context4.n = 4;
+          return resp.text().catch(function () {
+            return "";
+          });
+        case 4:
+          txt = _context4.v;
+          throw new Error("Drive API " + resp.status + ": " + txt.slice(0, 200));
         case 5:
+          if (!(resp.status === 204)) {
+            _context4.n = 6;
+            break;
+          }
+          return _context4.a(2, null);
+        case 6:
           return _context4.a(2, resp.json());
       }
     }, _callee4);
@@ -1152,7 +1158,7 @@ function driveMultipartUpload(_x5, _x6, _x7, _x8) {
 } // Find backup file ID
 function _driveMultipartUpload() {
   _driveMultipartUpload = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee5(filename, content, fileId, token) {
-    var t, metadata, boundary, body, url, resp;
+    var t, metadata, boundary, body, url, resp, txt;
     return _regenerator().w(function (_context5) {
       while (1) switch (_context5.n) {
         case 0:
@@ -1191,11 +1197,17 @@ function _driveMultipartUpload() {
           throw new Error("Drive token expired");
         case 3:
           if (resp.ok) {
-            _context5.n = 4;
+            _context5.n = 5;
             break;
           }
-          throw new Error("Drive upload error: " + resp.status);
+          _context5.n = 4;
+          return resp.text().catch(function () {
+            return "";
+          });
         case 4:
+          txt = _context5.v;
+          throw new Error("Drive upload " + resp.status + ": " + txt.slice(0, 200));
+        case 5:
           return _context5.a(2, resp.json());
       }
     }, _callee5);
@@ -1207,7 +1219,7 @@ function driveFindBackup() {
 } // Save to Drive
 function _driveFindBackup() {
   _driveFindBackup = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6() {
-    var data, _t3;
+    var data, _t4;
     return _regenerator().w(function (_context6) {
       while (1) switch (_context6.p = _context6.n) {
         case 0:
@@ -1219,7 +1231,7 @@ function _driveFindBackup() {
           return _context6.a(2, data.files && data.files.length > 0 ? data.files[0].id : null);
         case 2:
           _context6.p = 2;
-          _t3 = _context6.v;
+          _t4 = _context6.v;
           return _context6.a(2, null);
       }
     }, _callee6, null, [[0, 2]]);
@@ -1231,11 +1243,10 @@ function driveSave(_x9) {
 } // Restore from Drive
 function _driveSave() {
   _driveSave = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7(appState) {
-    var token, content, existingId, _t4;
+    var token, content, existingId;
     return _regenerator().w(function (_context7) {
-      while (1) switch (_context7.p = _context7.n) {
+      while (1) switch (_context7.n) {
         case 0:
-          _context7.p = 0;
           token = getDriveToken();
           if (token) {
             _context7.n = 1;
@@ -1255,14 +1266,8 @@ function _driveSave() {
           return driveMultipartUpload(BACKUP_FILENAME, content, existingId, token);
         case 3:
           return _context7.a(2, true);
-        case 4:
-          _context7.p = 4;
-          _t4 = _context7.v;
-          console.warn("Drive save failed:", _t4.message);
-          if (_t4.message.includes("token expired")) setDriveToken(null);
-          return _context7.a(2, false);
       }
-    }, _callee7, null, [[0, 4]]);
+    }, _callee7);
   }));
   return _driveSave.apply(this, arguments);
 }
@@ -7227,6 +7232,11 @@ function App() {
         if (!ok) setTimeout(function () {
           return setDriveSyncStatus("connected");
         }, 3000);
+      }).catch(function () {
+        setDriveSyncStatus("error");
+        setTimeout(function () {
+          return setDriveSyncStatus("connected");
+        }, 3000);
       });
     }
     // Then attempt local download (user can cancel, won't affect cloud)
@@ -9344,21 +9354,29 @@ function App() {
       }
     }, /*#__PURE__*/React.createElement("button", {
       onClick: /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
-        var ok;
+        var ok, _t2;
         return _regenerator().w(function (_context2) {
-          while (1) switch (_context2.n) {
+          while (1) switch (_context2.p = _context2.n) {
             case 0:
               setDriveSyncStatus("syncing");
-              _context2.n = 1;
+              _context2.p = 1;
+              _context2.n = 2;
               return driveSave(appState);
-            case 1:
+            case 2:
               ok = _context2.v;
               setDriveSyncStatus(ok ? "connected" : "error");
-              alert(ok ? "Backup saved to Google Drive!" : "Drive save failed — check connection.");
-            case 2:
+              if (ok) alert("Backup saved to Google Drive!");else alert("Drive save failed — unknown error");
+              _context2.n = 4;
+              break;
+            case 3:
+              _context2.p = 3;
+              _t2 = _context2.v;
+              setDriveSyncStatus("error");
+              alert("Drive save failed:\n" + _t2.message);
+            case 4:
               return _context2.a(2);
           }
-        }, _callee2);
+        }, _callee2, null, [[1, 3]]);
       })),
       style: {
         flex: 1,
@@ -9373,7 +9391,7 @@ function App() {
       }
     }, "\u2601\uFE0F Backup Now"), /*#__PURE__*/React.createElement("button", {
       onClick: /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3() {
-        var data, _t2;
+        var data, _t3;
         return _regenerator().w(function (_context3) {
           while (1) switch (_context3.p = _context3.n) {
             case 0:
@@ -9402,9 +9420,9 @@ function App() {
               break;
             case 4:
               _context3.p = 4;
-              _t2 = _context3.v;
+              _t3 = _context3.v;
               setDriveSyncStatus("connected");
-              alert("Restore failed: " + _t2.message);
+              alert("Restore failed: " + _t3.message);
             case 5:
               return _context3.a(2);
           }
