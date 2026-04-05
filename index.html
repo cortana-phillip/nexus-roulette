@@ -8734,23 +8734,31 @@ function App() {
           // 3. full appState: { savedSessions: [...] }
           var sessions = data.sessions || data.savedSessions || [];
           if (!sessions.length) {
-            alert("No sessions found in file.\n\nFile keys: " + Object.keys(data).join(", ") + "\n\nMake sure you're importing a nexus-roulette export file.");
+            alert("No sessions found in file.\n\nFile keys: " + Object.keys(data).join(", "));
             return;
           }
           var added = 0,
             skipped = 0;
           updApp(function (s) {
-            sessions.forEach(function (sess) {
-              if (!sess.id) return; // skip malformed
-              if (!s.savedSessions.find(function (x) {
-                return x.id === sess.id;
-              })) {
-                s.savedSessions.push(sess);
-                added++;
-              } else {
-                skipped++;
-              }
-            });
+            // If completely empty, just load everything directly
+            if (s.savedSessions.length === 0) {
+              s.savedSessions = sessions.filter(function (sess) {
+                return sess.id;
+              });
+              added = s.savedSessions.length;
+            } else {
+              sessions.forEach(function (sess) {
+                if (!sess.id) return;
+                if (!s.savedSessions.find(function (x) {
+                  return x.id === sess.id;
+                })) {
+                  s.savedSessions.push(sess);
+                  added++;
+                } else {
+                  skipped++;
+                }
+              });
+            }
           });
           alert("Import complete!\n".concat(added, " sessions added").concat(skipped ? ", " + skipped + " already existed (skipped)" : "", "."));
         } catch (err) {
