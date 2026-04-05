@@ -21,7 +21,7 @@
               ? <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <div style={{width:8,height:8,borderRadius:"50%",background:"#4ade80",animation:"pulse 1.5s infinite"}}/>
                   <span style={{fontSize:12,color:"#94a3b8"}}>Session Active</span>
-                  <span style={{fontSize:16,fontWeight:800,color:"#4ade80",fontVariantNumeric:"tabular-nums"}}>{formatElapsed(nowTick - sess.sessionStartedAt)}</span>
+                  <SessionClock startedAt={sess.sessionStartedAt} style={{fontSize:16,fontWeight:800,color:"#4ade80",fontVariantNumeric:"tabular-nums"}}/>
                 </div>
               : <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <div style={{width:8,height:8,borderRadius:"50%",background:"#fbbf24"}}/>

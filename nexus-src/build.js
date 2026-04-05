@@ -129,7 +129,7 @@ if('serviceWorker' in navigator){
     regs.forEach(function(r){r.unregister(); needsReload = true;});
     caches.keys().then(function(keys){
       Promise.all(keys.map(function(k){return caches.delete(k);})).then(function(){
-        navigator.serviceWorker.register('sw.js?v=53');
+        navigator.serviceWorker.register('sw.js?v=54');
         if(needsReload && !window.__swReloaded){window.__swReloaded=true; setTimeout(function(){location.reload();},500);}
       });
     });

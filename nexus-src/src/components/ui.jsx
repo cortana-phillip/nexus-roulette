@@ -84,3 +84,15 @@ function DCard({label, range, drought, colorBd, colorTx}) {
     </div>
   );
 }
+
+// Self-contained clock that won't cause parent re-renders
+function SessionClock({startedAt, endedAt, style}) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if(endedAt) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [endedAt]);
+  const t = endedAt || now;
+  return React.createElement("span", {style}, formatElapsed(t - startedAt));
+}

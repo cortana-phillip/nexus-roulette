@@ -20,30 +20,7 @@ export default function App() {
   const [dragOverId, setDragOverId] = useState(null);
   const [highlightTrackId, setHighlightTrackId] = useState(null);
   const [editTrackId, setEditTrackId] = useState(null);
-  const [nowTick, setNowTick] = useState(Date.now());
 
-  useEffect(() => {
-    const interval = setInterval(() => setNowTick(Date.now()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Restore from Google Drive if localStorage was cleared (e.g. after reset + reconnect)
-  useEffect(() => {
-    if(!getDriveToken()) return;
-    const hasLocal = !!localStorage.getItem(KEY);
-    if(hasLocal) return;
-    setDriveSyncStatus("restoring");
-    driveRestore().then(data => {
-      if(data && data.savedSessions) {
-        setAppState(data);
-        saveApp(data);
-        setDriveSyncStatus("connected");
-        alert("Data restored from Google Drive!");
-      } else {
-        setDriveSyncStatus("connected");
-      }
-    }).catch(()=>setDriveSyncStatus("connected"));
-  }, []);
   const [buyInOpen, setBuyInOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
@@ -506,7 +483,7 @@ export default function App() {
               ? <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <div style={{width:8,height:8,borderRadius:"50%",background:"#4ade80",animation:"pulse 1.5s infinite"}}/>
                   <span style={{fontSize:12,color:"#94a3b8"}}>Session Active</span>
-                  <span style={{fontSize:16,fontWeight:800,color:"#4ade80",fontVariantNumeric:"tabular-nums"}}>{formatElapsed(nowTick - sess.sessionStartedAt)}</span>
+                  <SessionClock startedAt={sess.sessionStartedAt} style={{fontSize:16,fontWeight:800,color:"#4ade80",fontVariantNumeric:"tabular-nums"}}/>
                 </div>
               : <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <div style={{width:8,height:8,borderRadius:"50%",background:"#fbbf24"}}/>
@@ -895,9 +872,9 @@ export default function App() {
           {sess.sessionStartedAt && (
             <div style={{background:"#0c1520",borderRadius:9,padding:"8px 12px",border:"1px solid #2d4057",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <span style={{fontSize:11,color:"#64748b"}}>Session Time</span>
-              <span style={{fontSize:14,fontWeight:800,color:"#4ade80",fontVariantNumeric:"tabular-nums"}}>{formatElapsed((sess.sessionEndedAt||nowTick)-sess.sessionStartedAt)}</span>
+              <SessionClock startedAt={sess.sessionStartedAt} endedAt={sess.sessionEndedAt} style={{fontSize:14,fontWeight:800,color:"#4ade80",fontVariantNumeric:"tabular-nums"}}/>
               {(()=>{
-                const hrs=((sess.sessionEndedAt||nowTick)-sess.sessionStartedAt)/3600000;
+                const hrs=((sess.sessionEndedAt||Date.now())-sess.sessionStartedAt)/3600000;
                 const rate=hrs>0.01?pnlVal/hrs:null;
                 return rate!==null?(
                   <div style={{textAlign:"right"}}>
@@ -1137,17 +1114,6 @@ export default function App() {
                   try{
                     await driveSignIn();
                     setDriveSyncStatus("connected");
-                    const localSaved = appState.savedSessions || [];
-                    if(localSaved.length === 0) {
-                      setDriveSyncStatus("restoring");
-                      const data = await driveRestore();
-                      if(data && data.savedSessions && data.savedSessions.length > 0) {
-                        setAppState(data);
-                        saveApp(data);
-                        alert("Data restored from Google Drive!");
-                      }
-                      setDriveSyncStatus("connected");
-                    }
                   }catch(e){alert("Sign in failed: "+e.message);}
                 }
               }} style={{padding:"7px 14px",borderRadius:8,border:"none",background:getDriveToken()?"#374151":"#16a34a",color:"white",fontSize:11,fontWeight:700,cursor:"pointer"}}>
@@ -1155,14 +1121,34 @@ export default function App() {
               </button>
             </div>
             {getDriveToken() && (
-              <button onClick={async()=>{
-                setDriveSyncStatus("syncing");
-                const ok = await driveSave(appState);
-                setDriveSyncStatus(ok?"connected":"error");
-                alert(ok?"Backup saved to Google Drive!":"Drive save failed — check connection.");
-              }} style={{width:"100%",marginTop:8,padding:"8px 0",borderRadius:8,border:"1px solid #22c55e",background:"transparent",color:"#4ade80",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-                ☁️ Backup Now
-              </button>
+              <div style={{display:"flex",gap:6,marginTop:8}}>
+                <button onClick={async()=>{
+                  setDriveSyncStatus("syncing");
+                  const ok = await driveSave(appState);
+                  setDriveSyncStatus(ok?"connected":"error");
+                  alert(ok?"Backup saved to Google Drive!":"Drive save failed — check connection.");
+                }} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #22c55e",background:"transparent",color:"#4ade80",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                  ☁️ Backup Now
+                </button>
+                <button onClick={async()=>{
+                  if(!window.confirm("Restore from Google Drive? This will replace all local session data.")) return;
+                  setDriveSyncStatus("restoring");
+                  try{
+                    const data = await driveRestore();
+                    if(data && data.savedSessions && data.savedSessions.length > 0) {
+                      setAppState(data);
+                      saveApp(data);
+                      setDriveSyncStatus("connected");
+                      alert("Restored "+data.savedSessions.length+" sessions from Google Drive!");
+                    } else {
+                      setDriveSyncStatus("connected");
+                      alert("No backup found on Google Drive.");
+                    }
+                  }catch(e){setDriveSyncStatus("connected");alert("Restore failed: "+e.message);}
+                }} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #60a5fa",background:"transparent",color:"#60a5fa",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                  📥 Restore from Cloud
+                </button>
+              </div>
             )}
           </div>
         </Card>

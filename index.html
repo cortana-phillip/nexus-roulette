@@ -328,7 +328,7 @@ if('serviceWorker' in navigator){
     regs.forEach(function(r){r.unregister(); needsReload = true;});
     caches.keys().then(function(keys){
       Promise.all(keys.map(function(k){return caches.delete(k);})).then(function(){
-        navigator.serviceWorker.register('sw.js?v=53');
+        navigator.serviceWorker.register('sw.js?v=54');
         if(needsReload && !window.__swReloaded){window.__swReloaded=true; setTimeout(function(){location.reload();},500);}
       });
     });
@@ -1110,14 +1110,14 @@ function driveRequest(_x, _x2, _x3, _x4) {
   return _driveRequest.apply(this, arguments);
 }
 function _driveRequest() {
-  _driveRequest = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3(method, url, body, token) {
+  _driveRequest = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4(method, url, body, token) {
     var t, opts, resp;
-    return _regenerator().w(function (_context3) {
-      while (1) switch (_context3.n) {
+    return _regenerator().w(function (_context4) {
+      while (1) switch (_context4.n) {
         case 0:
           t = token || getDriveToken();
           if (t) {
-            _context3.n = 1;
+            _context4.n = 1;
             break;
           }
           throw new Error("Not signed in to Google Drive");
@@ -1130,32 +1130,32 @@ function _driveRequest() {
             }
           };
           if (body) opts.body = JSON.stringify(body);
-          _context3.n = 2;
+          _context4.n = 2;
           return fetch(url, opts);
         case 2:
-          resp = _context3.v;
+          resp = _context4.v;
           if (!(resp.status === 401)) {
-            _context3.n = 3;
+            _context4.n = 3;
             break;
           }
           setDriveToken(null);
           throw new Error("Drive token expired — please reconnect");
         case 3:
           if (resp.ok) {
-            _context3.n = 4;
+            _context4.n = 4;
             break;
           }
           throw new Error("Drive API error: " + resp.status);
         case 4:
           if (!(resp.status === 204)) {
-            _context3.n = 5;
+            _context4.n = 5;
             break;
           }
-          return _context3.a(2, null);
+          return _context4.a(2, null);
         case 5:
-          return _context3.a(2, resp.json());
+          return _context4.a(2, resp.json());
       }
-    }, _callee3);
+    }, _callee4);
   }));
   return _driveRequest.apply(this, arguments);
 }
@@ -1163,14 +1163,14 @@ function driveMultipartUpload(_x5, _x6, _x7, _x8) {
   return _driveMultipartUpload.apply(this, arguments);
 } // Find backup file ID
 function _driveMultipartUpload() {
-  _driveMultipartUpload = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4(filename, content, fileId, token) {
+  _driveMultipartUpload = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee5(filename, content, fileId, token) {
     var t, metadata, boundary, body, url, resp;
-    return _regenerator().w(function (_context4) {
-      while (1) switch (_context4.n) {
+    return _regenerator().w(function (_context5) {
+      while (1) switch (_context5.n) {
         case 0:
           t = token || getDriveToken();
           if (t) {
-            _context4.n = 1;
+            _context5.n = 1;
             break;
           }
           throw new Error("Not signed in to Google Drive");
@@ -1184,7 +1184,7 @@ function _driveMultipartUpload() {
             name: filename
           } : metadata), "--" + boundary, "Content-Type: application/json", "", content, "--" + boundary + "--"].join("\r\n");
           url = fileId ? "https://www.googleapis.com/upload/drive/v3/files/".concat(fileId, "?uploadType=multipart") : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
-          _context4.n = 2;
+          _context5.n = 2;
           return fetch(url, {
             method: fileId ? "PATCH" : "POST",
             headers: {
@@ -1194,23 +1194,23 @@ function _driveMultipartUpload() {
             body: body
           });
         case 2:
-          resp = _context4.v;
+          resp = _context5.v;
           if (!(resp.status === 401)) {
-            _context4.n = 3;
+            _context5.n = 3;
             break;
           }
           setDriveToken(null);
           throw new Error("Drive token expired");
         case 3:
           if (resp.ok) {
-            _context4.n = 4;
+            _context5.n = 4;
             break;
           }
           throw new Error("Drive upload error: " + resp.status);
         case 4:
-          return _context4.a(2, resp.json());
+          return _context5.a(2, resp.json());
       }
-    }, _callee4);
+    }, _callee5);
   }));
   return _driveMultipartUpload.apply(this, arguments);
 }
@@ -1218,23 +1218,23 @@ function driveFindBackup() {
   return _driveFindBackup.apply(this, arguments);
 } // Save to Drive
 function _driveFindBackup() {
-  _driveFindBackup = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee5() {
-    var data, _t2;
-    return _regenerator().w(function (_context5) {
-      while (1) switch (_context5.p = _context5.n) {
+  _driveFindBackup = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6() {
+    var data, _t3;
+    return _regenerator().w(function (_context6) {
+      while (1) switch (_context6.p = _context6.n) {
         case 0:
-          _context5.p = 0;
-          _context5.n = 1;
+          _context6.p = 0;
+          _context6.n = 1;
           return driveRequest("GET", "https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)&q=name='".concat(BACKUP_FILENAME, "'"));
         case 1:
-          data = _context5.v;
-          return _context5.a(2, data.files && data.files.length > 0 ? data.files[0].id : null);
+          data = _context6.v;
+          return _context6.a(2, data.files && data.files.length > 0 ? data.files[0].id : null);
         case 2:
-          _context5.p = 2;
-          _t2 = _context5.v;
-          return _context5.a(2, null);
+          _context6.p = 2;
+          _t3 = _context6.v;
+          return _context6.a(2, null);
       }
-    }, _callee5, null, [[0, 2]]);
+    }, _callee6, null, [[0, 2]]);
   }));
   return _driveFindBackup.apply(this, arguments);
 }
@@ -1242,48 +1242,8 @@ function driveSave(_x9) {
   return _driveSave.apply(this, arguments);
 } // Restore from Drive
 function _driveSave() {
-  _driveSave = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6(appState) {
-    var token, content, existingId, _t3;
-    return _regenerator().w(function (_context6) {
-      while (1) switch (_context6.p = _context6.n) {
-        case 0:
-          _context6.p = 0;
-          token = getDriveToken();
-          if (token) {
-            _context6.n = 1;
-            break;
-          }
-          return _context6.a(2, false);
-        case 1:
-          content = JSON.stringify({
-            savedAt: new Date().toISOString(),
-            appState: appState
-          });
-          _context6.n = 2;
-          return driveFindBackup();
-        case 2:
-          existingId = _context6.v;
-          _context6.n = 3;
-          return driveMultipartUpload(BACKUP_FILENAME, content, existingId, token);
-        case 3:
-          return _context6.a(2, true);
-        case 4:
-          _context6.p = 4;
-          _t3 = _context6.v;
-          console.warn("Drive save failed:", _t3.message);
-          if (_t3.message.includes("token expired")) setDriveToken(null);
-          return _context6.a(2, false);
-      }
-    }, _callee6, null, [[0, 4]]);
-  }));
-  return _driveSave.apply(this, arguments);
-}
-function driveRestore() {
-  return _driveRestore.apply(this, arguments);
-} // Delete backup from Drive
-function _driveRestore() {
-  _driveRestore = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7() {
-    var token, fileId, t, resp, data, _t4;
+  _driveSave = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7(appState) {
+    var token, content, existingId, _t4;
     return _regenerator().w(function (_context7) {
       while (1) switch (_context7.p = _context7.n) {
         case 0:
@@ -1293,55 +1253,37 @@ function _driveRestore() {
             _context7.n = 1;
             break;
           }
-          return _context7.a(2, null);
+          return _context7.a(2, false);
         case 1:
+          content = JSON.stringify({
+            savedAt: new Date().toISOString(),
+            appState: appState
+          });
           _context7.n = 2;
           return driveFindBackup();
         case 2:
-          fileId = _context7.v;
-          if (fileId) {
-            _context7.n = 3;
-            break;
-          }
-          return _context7.a(2, null);
+          existingId = _context7.v;
+          _context7.n = 3;
+          return driveMultipartUpload(BACKUP_FILENAME, content, existingId, token);
         case 3:
-          t = getDriveToken();
-          _context7.n = 4;
-          return fetch("https://www.googleapis.com/drive/v3/files/".concat(fileId, "?alt=media"), {
-            headers: {
-              "Authorization": "Bearer " + t
-            }
-          });
+          return _context7.a(2, true);
         case 4:
-          resp = _context7.v;
-          if (resp.ok) {
-            _context7.n = 5;
-            break;
-          }
-          return _context7.a(2, null);
-        case 5:
-          _context7.n = 6;
-          return resp.json();
-        case 6:
-          data = _context7.v;
-          return _context7.a(2, data.appState || null);
-        case 7:
-          _context7.p = 7;
+          _context7.p = 4;
           _t4 = _context7.v;
-          console.warn("Drive restore failed:", _t4.message);
-          return _context7.a(2, null);
+          console.warn("Drive save failed:", _t4.message);
+          if (_t4.message.includes("token expired")) setDriveToken(null);
+          return _context7.a(2, false);
       }
-    }, _callee7, null, [[0, 7]]);
+    }, _callee7, null, [[0, 4]]);
   }));
-  return _driveRestore.apply(this, arguments);
+  return _driveSave.apply(this, arguments);
 }
-function driveDeleteBackup() {
-  return _driveDeleteBackup.apply(this, arguments);
-} // ===== simulation.js =====
-// -- Simulation Engine --
-function _driveDeleteBackup() {
-  _driveDeleteBackup = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee8() {
-    var token, fileId, _t5;
+function driveRestore() {
+  return _driveRestore.apply(this, arguments);
+} // Delete backup from Drive
+function _driveRestore() {
+  _driveRestore = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee8() {
+    var token, fileId, t, resp, data, _t5;
     return _regenerator().w(function (_context8) {
       while (1) switch (_context8.p = _context8.n) {
         case 0:
@@ -1351,7 +1293,7 @@ function _driveDeleteBackup() {
             _context8.n = 1;
             break;
           }
-          return _context8.a(2);
+          return _context8.a(2, null);
         case 1:
           _context8.n = 2;
           return driveFindBackup();
@@ -1361,21 +1303,79 @@ function _driveDeleteBackup() {
             _context8.n = 3;
             break;
           }
-          return _context8.a(2);
+          return _context8.a(2, null);
         case 3:
+          t = getDriveToken();
           _context8.n = 4;
+          return fetch("https://www.googleapis.com/drive/v3/files/".concat(fileId, "?alt=media"), {
+            headers: {
+              "Authorization": "Bearer " + t
+            }
+          });
+        case 4:
+          resp = _context8.v;
+          if (resp.ok) {
+            _context8.n = 5;
+            break;
+          }
+          return _context8.a(2, null);
+        case 5:
+          _context8.n = 6;
+          return resp.json();
+        case 6:
+          data = _context8.v;
+          return _context8.a(2, data.appState || null);
+        case 7:
+          _context8.p = 7;
+          _t5 = _context8.v;
+          console.warn("Drive restore failed:", _t5.message);
+          return _context8.a(2, null);
+      }
+    }, _callee8, null, [[0, 7]]);
+  }));
+  return _driveRestore.apply(this, arguments);
+}
+function driveDeleteBackup() {
+  return _driveDeleteBackup.apply(this, arguments);
+} // ===== simulation.js =====
+// -- Simulation Engine --
+function _driveDeleteBackup() {
+  _driveDeleteBackup = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee9() {
+    var token, fileId, _t6;
+    return _regenerator().w(function (_context9) {
+      while (1) switch (_context9.p = _context9.n) {
+        case 0:
+          _context9.p = 0;
+          token = getDriveToken();
+          if (token) {
+            _context9.n = 1;
+            break;
+          }
+          return _context9.a(2);
+        case 1:
+          _context9.n = 2;
+          return driveFindBackup();
+        case 2:
+          fileId = _context9.v;
+          if (fileId) {
+            _context9.n = 3;
+            break;
+          }
+          return _context9.a(2);
+        case 3:
+          _context9.n = 4;
           return driveRequest("DELETE", "https://www.googleapis.com/drive/v3/files/".concat(fileId));
         case 4:
-          _context8.n = 6;
+          _context9.n = 6;
           break;
         case 5:
-          _context8.p = 5;
-          _t5 = _context8.v;
-          console.warn("Drive delete failed:", _t5.message);
+          _context9.p = 5;
+          _t6 = _context9.v;
+          console.warn("Drive delete failed:", _t6.message);
         case 6:
-          return _context8.a(2);
+          return _context9.a(2);
       }
-    }, _callee8, null, [[0, 5]]);
+    }, _callee9, null, [[0, 5]]);
   }));
   return _driveDeleteBackup.apply(this, arguments);
 }
@@ -2398,10 +2398,34 @@ function DCard(_ref14) {
   }, bd.t));
 }
 
+// Self-contained clock that won't cause parent re-renders
+function SessionClock(_ref15) {
+  var startedAt = _ref15.startedAt,
+    endedAt = _ref15.endedAt,
+    style = _ref15.style;
+  var _useState3 = (0, _react.useState)(Date.now()),
+    _useState4 = _slicedToArray(_useState3, 2),
+    now = _useState4[0],
+    setNow = _useState4[1];
+  (0, _react.useEffect)(function () {
+    if (endedAt) return;
+    var id = setInterval(function () {
+      return setNow(Date.now());
+    }, 1000);
+    return function () {
+      return clearInterval(id);
+    };
+  }, [endedAt]);
+  var t = endedAt || now;
+  return React.createElement("span", {
+    style: style
+  }, formatElapsed(t - startedAt));
+}
+
 // ===== components/RouletteIcon.jsx =====
 // -- Roulette Wheel SVG Icon --
-function RouletteIcon(_ref15) {
-  var size = _ref15.size;
+function RouletteIcon(_ref16) {
+  var size = _ref16.size;
   var s = size || 32;
   return /*#__PURE__*/React.createElement("svg", {
     width: s,
@@ -2645,14 +2669,14 @@ function RouletteIcon(_ref15) {
 
 // ===== components/grids.jsx =====
 // -- Number Grids --
-function FibGrid(_ref16) {
-  var onNumber = _ref16.onNumber,
-    onGhost = _ref16.onGhost,
-    dozenTargets = _ref16.dozenTargets,
-    colTargets = _ref16.colTargets,
-    fibRow = _ref16.fibRow,
-    trackOverlays = _ref16.trackOverlays,
-    flashNum = _ref16.flashNum;
+function FibGrid(_ref17) {
+  var onNumber = _ref17.onNumber,
+    onGhost = _ref17.onGhost,
+    dozenTargets = _ref17.dozenTargets,
+    colTargets = _ref17.colTargets,
+    fibRow = _ref17.fibRow,
+    trackOverlays = _ref17.trackOverlays,
+    flashNum = _ref17.flashNum;
   var rows = Array.from({
     length: 12
   }, function (_, r) {
@@ -2790,11 +2814,11 @@ function FibGrid(_ref16) {
         textTransform: "uppercase",
         padding: "1px 0 2px"
       }
-    }, DZ_LABELS[dz]), rows.slice(dz * 4, dz * 4 + 4).map(function (_ref17) {
-      var _ref18 = _slicedToArray(_ref17, 3),
-        a = _ref18[0],
-        b = _ref18[1],
-        c = _ref18[2];
+    }, DZ_LABELS[dz]), rows.slice(dz * 4, dz * 4 + 4).map(function (_ref18) {
+      var _ref19 = _slicedToArray(_ref18, 3),
+        a = _ref19[0],
+        b = _ref19[1],
+        c = _ref19[2];
       return /*#__PURE__*/React.createElement("div", {
         key: a,
         style: {
@@ -2814,11 +2838,11 @@ function FibGrid(_ref16) {
       flexWrap: "wrap",
       marginTop: 4
     }
-  }, [["jackpot", "#fbbf24", "Jackpot"], ["win", "#4ade80", "Win"], ["breakeven", "#a3e635", "Breakeven"], ["partial-loss", "#f97316", "Partial Loss"], ["loss", "#374151", "Total Loss"]].map(function (_ref19) {
-    var _ref20 = _slicedToArray(_ref19, 3),
-      c = _ref20[0],
-      col = _ref20[1],
-      l = _ref20[2];
+  }, [["jackpot", "#fbbf24", "Jackpot"], ["win", "#4ade80", "Win"], ["breakeven", "#a3e635", "Breakeven"], ["partial-loss", "#f97316", "Partial Loss"], ["loss", "#374151", "Total Loss"]].map(function (_ref20) {
+    var _ref21 = _slicedToArray(_ref20, 3),
+      c = _ref21[0],
+      col = _ref21[1],
+      l = _ref21[2];
     return /*#__PURE__*/React.createElement("div", {
       key: c,
       style: {
@@ -2841,14 +2865,14 @@ function FibGrid(_ref16) {
     }, l));
   })));
 }
-function SolGrid(_ref21) {
-  var onNumber = _ref21.onNumber,
-    droughts = _ref21.droughts,
-    entry = _ref21.entry,
-    maxLvl = _ref21.maxLvl,
-    activeBets = _ref21.activeBets,
-    wheelNums = _ref21.wheelNums,
-    trackOverlays = _ref21.trackOverlays;
+function SolGrid(_ref22) {
+  var onNumber = _ref22.onNumber,
+    droughts = _ref22.droughts,
+    entry = _ref22.entry,
+    maxLvl = _ref22.maxLvl,
+    activeBets = _ref22.activeBets,
+    wheelNums = _ref22.wheelNums,
+    trackOverlays = _ref22.trackOverlays;
   var activeSet = new Set((activeBets || []).map(function (b) {
     return b.number;
   }));
@@ -2964,9 +2988,9 @@ function SolGrid(_ref21) {
 
 // ===== components/ResultFlash.jsx =====
 // -- Result Flash Overlay --
-function ResultFlash(_ref22) {
-  var result = _ref22.result,
-    onDismiss = _ref22.onDismiss;
+function ResultFlash(_ref23) {
+  var result = _ref23.result,
+    onDismiss = _ref23.onDismiss;
   (0, _react.useEffect)(function () {
     var t = setTimeout(onDismiss, 3000);
     return function () {
@@ -3084,18 +3108,18 @@ function ResultFlash(_ref22) {
 
 // ===== components/TrackPanel.jsx =====
 // -- Track Config Panels (Edit + Add) --
-function EditTrackCfg(_ref23) {
-  var track = _ref23.track,
-    currency = _ref23.currency,
-    tableMinBet = _ref23.tableMinBet,
-    onSave = _ref23.onSave,
-    onCancel = _ref23.onCancel;
+function EditTrackCfg(_ref24) {
+  var track = _ref24.track,
+    currency = _ref24.currency,
+    tableMinBet = _ref24.tableMinBet,
+    onSave = _ref24.onSave,
+    onCancel = _ref24.onCancel;
   var cur = getCur(currency || "USD");
   var tMin = tableMinBet || 1;
-  var _useState3 = (0, _react.useState)(_objectSpread({}, track.config)),
-    _useState4 = _slicedToArray(_useState3, 2),
-    cfg = _useState4[0],
-    setCfg = _useState4[1];
+  var _useState5 = (0, _react.useState)(_objectSpread({}, track.config)),
+    _useState6 = _slicedToArray(_useState5, 2),
+    cfg = _useState6[0],
+    setCfg = _useState6[1];
   function upCfg(k, v) {
     setCfg(function (c) {
       return _objectSpread(_objectSpread({}, c), {}, _defineProperty({}, k, v));
@@ -3290,17 +3314,17 @@ function EditTrackCfg(_ref23) {
     }
   }, "Cancel")));
 }
-function AddTrackPanel(_ref24) {
-  var onAdd = _ref24.onAdd,
-    onClose = _ref24.onClose,
-    nextColor = _ref24.nextColor,
-    type = _ref24.type,
-    cfg = _ref24.cfg,
-    onTypeChange = _ref24.onTypeChange,
-    onCfgChange = _ref24.onCfgChange,
-    closedTracks = _ref24.closedTracks,
-    currency = _ref24.currency,
-    tableMinBet = _ref24.tableMinBet;
+function AddTrackPanel(_ref25) {
+  var onAdd = _ref25.onAdd,
+    onClose = _ref25.onClose,
+    nextColor = _ref25.nextColor,
+    type = _ref25.type,
+    cfg = _ref25.cfg,
+    onTypeChange = _ref25.onTypeChange,
+    onCfgChange = _ref25.onCfgChange,
+    closedTracks = _ref25.closedTracks,
+    currency = _ref25.currency,
+    tableMinBet = _ref25.tableMinBet;
   var cur = getCur(currency || "USD");
   var tMin = tableMinBet || 1;
   function upCfg(k, v) {
@@ -3409,10 +3433,10 @@ function AddTrackPanel(_ref24) {
       display: "flex",
       gap: 8
     }
-  }, [["flat", "➡️ Flat"], ["fibonacci", "📈 Progression Bet"], ["solution", "🎯 The Solution"]].map(function (_ref25) {
-    var _ref26 = _slicedToArray(_ref25, 2),
-      m = _ref26[0],
-      l = _ref26[1];
+  }, [["flat", "➡️ Flat"], ["fibonacci", "📈 Progression Bet"], ["solution", "🎯 The Solution"]].map(function (_ref26) {
+    var _ref27 = _slicedToArray(_ref26, 2),
+      m = _ref27[0],
+      l = _ref27[1];
     var isSel = m === "solution" ? type === "solution" : type === "fibonacci" && m === "flat" === ((cfg.betMode || "progression") === "flat");
     return /*#__PURE__*/React.createElement("button", {
       key: m,
@@ -3742,16 +3766,16 @@ function AddTrackPanel(_ref24) {
 
 // ===== components/modals.jsx =====
 // -- Modal Dialogs --
-function CashOutModal(_ref27) {
-  var maxAmount = _ref27.maxAmount,
-    currency = _ref27.currency,
-    currentBankroll = _ref27.currentBankroll,
-    onCashOut = _ref27.onCashOut,
-    onClose = _ref27.onClose;
-  var _useState5 = (0, _react.useState)(Math.min(100, maxAmount)),
-    _useState6 = _slicedToArray(_useState5, 2),
-    amount = _useState6[0],
-    setAmount = _useState6[1];
+function CashOutModal(_ref28) {
+  var maxAmount = _ref28.maxAmount,
+    currency = _ref28.currency,
+    currentBankroll = _ref28.currentBankroll,
+    onCashOut = _ref28.onCashOut,
+    onClose = _ref28.onClose;
+  var _useState7 = (0, _react.useState)(Math.min(100, maxAmount)),
+    _useState8 = _slicedToArray(_useState7, 2),
+    amount = _useState8[0],
+    setAmount = _useState8[1];
   var cur = getCur(currency);
   function handleCashOut() {
     if (amount > 0 && amount <= maxAmount) {
@@ -3878,41 +3902,41 @@ function CashOutModal(_ref27) {
 }
 
 // -- Onboarding --
-function OnboardingScreen(_ref28) {
-  var onComplete = _ref28.onComplete,
-    initialBankroll = _ref28.initialBankroll;
-  var _useState7 = (0, _react.useState)(0),
-    _useState8 = _slicedToArray(_useState7, 2),
-    step = _useState8[0],
-    setStep = _useState8[1];
-  var _useState9 = (0, _react.useState)("american"),
+function OnboardingScreen(_ref29) {
+  var onComplete = _ref29.onComplete,
+    initialBankroll = _ref29.initialBankroll;
+  var _useState9 = (0, _react.useState)(0),
     _useState0 = _slicedToArray(_useState9, 2),
-    roulette = _useState0[0],
-    setRoulette = _useState0[1];
-  var _useState1 = (0, _react.useState)(initialBankroll || 500),
+    step = _useState0[0],
+    setStep = _useState0[1];
+  var _useState1 = (0, _react.useState)("american"),
     _useState10 = _slicedToArray(_useState1, 2),
-    bankroll = _useState10[0],
-    setBankroll = _useState10[1];
-  var _useState11 = (0, _react.useState)(100),
+    roulette = _useState10[0],
+    setRoulette = _useState10[1];
+  var _useState11 = (0, _react.useState)(initialBankroll || 500),
     _useState12 = _slicedToArray(_useState11, 2),
-    buyIn = _useState12[0],
-    setBuyIn = _useState12[1];
-  var _useState13 = (0, _react.useState)("USD"),
+    bankroll = _useState12[0],
+    setBankroll = _useState12[1];
+  var _useState13 = (0, _react.useState)(100),
     _useState14 = _slicedToArray(_useState13, 2),
-    currency = _useState14[0],
-    setCurrency = _useState14[1];
-  var _useState15 = (0, _react.useState)(10),
+    buyIn = _useState14[0],
+    setBuyIn = _useState14[1];
+  var _useState15 = (0, _react.useState)("USD"),
     _useState16 = _slicedToArray(_useState15, 2),
-    tableMinBet = _useState16[0],
-    setTableMinBet = _useState16[1];
-  var _useState17 = (0, _react.useState)(500),
+    currency = _useState16[0],
+    setCurrency = _useState16[1];
+  var _useState17 = (0, _react.useState)(10),
     _useState18 = _slicedToArray(_useState17, 2),
-    tableMaxBet = _useState18[0],
-    setTableMaxBet = _useState18[1];
-  var _useState19 = (0, _react.useState)(5000),
+    tableMinBet = _useState18[0],
+    setTableMinBet = _useState18[1];
+  var _useState19 = (0, _react.useState)(500),
     _useState20 = _slicedToArray(_useState19, 2),
-    tableMaxTotal = _useState20[0],
-    setTableMaxTotal = _useState20[1];
+    tableMaxBet = _useState20[0],
+    setTableMaxBet = _useState20[1];
+  var _useState21 = (0, _react.useState)(5000),
+    _useState22 = _slicedToArray(_useState21, 2),
+    tableMaxTotal = _useState22[0],
+    setTableMaxTotal = _useState22[1];
   var steps = ["Welcome", "Bankroll", "Buy In", "Table Limits", "Currency"];
   function finish() {
     onComplete({
@@ -4000,11 +4024,11 @@ function OnboardingScreen(_ref28) {
       color: "#e2e8f0",
       textAlign: "center"
     }
-  }, "Which table are you playing?"), [["american", "🇺🇸 American", "Has 0 and 00"], ["european", "🇪🇺 European", "Has 0 only"]].map(function (_ref29) {
-    var _ref30 = _slicedToArray(_ref29, 3),
-      v = _ref30[0],
-      label = _ref30[1],
-      sub = _ref30[2];
+  }, "Which table are you playing?"), [["american", "🇺🇸 American", "Has 0 and 00"], ["european", "🇪🇺 European", "Has 0 only"]].map(function (_ref30) {
+    var _ref31 = _slicedToArray(_ref30, 3),
+      v = _ref31[0],
+      label = _ref31[1],
+      sub = _ref31[2];
     return /*#__PURE__*/React.createElement("button", {
       key: v,
       onClick: function onClick() {
@@ -4158,12 +4182,12 @@ function OnboardingScreen(_ref28) {
     val: tableMaxTotal,
     set: setTableMaxTotal,
     color: "#f87171"
-  }].map(function (_ref31) {
-    var label = _ref31.label,
-      key = _ref31.key,
-      val = _ref31.val,
-      set = _ref31.set,
-      color = _ref31.color;
+  }].map(function (_ref32) {
+    var label = _ref32.label,
+      key = _ref32.key,
+      val = _ref32.val,
+      set = _ref32.set,
+      color = _ref32.color;
     function dec() {
       if (key === "minBet") {
         if (val > 10) return set(val <= 100 ? val - 5 : val <= 1000 ? val - 25 : val - 1000);
@@ -4283,10 +4307,10 @@ function OnboardingScreen(_ref28) {
       flexDirection: "column",
       gap: 6
     }
-  }, Object.entries(CURRENCIES).map(function (_ref32) {
-    var _ref33 = _slicedToArray(_ref32, 2),
-      code = _ref33[0],
-      cur = _ref33[1];
+  }, Object.entries(CURRENCIES).map(function (_ref33) {
+    var _ref34 = _slicedToArray(_ref33, 2),
+      code = _ref34[0],
+      cur = _ref34[1];
     return /*#__PURE__*/React.createElement("button", {
       key: code,
       onClick: function onClick() {
@@ -4372,16 +4396,16 @@ function OnboardingScreen(_ref28) {
 }
 
 // -- Buy In Modal --
-function BuyInModal(_ref34) {
-  var defaultAmount = _ref34.defaultAmount,
-    currency = _ref34.currency,
-    currentBankroll = _ref34.currentBankroll,
-    onBuyIn = _ref34.onBuyIn,
-    onClose = _ref34.onClose;
-  var _useState21 = (0, _react.useState)(defaultAmount || 100),
-    _useState22 = _slicedToArray(_useState21, 2),
-    amount = _useState22[0],
-    setAmount = _useState22[1];
+function BuyInModal(_ref35) {
+  var defaultAmount = _ref35.defaultAmount,
+    currency = _ref35.currency,
+    currentBankroll = _ref35.currentBankroll,
+    onBuyIn = _ref35.onBuyIn,
+    onClose = _ref35.onClose;
+  var _useState23 = (0, _react.useState)(defaultAmount || 100),
+    _useState24 = _slicedToArray(_useState23, 2),
+    amount = _useState24[0],
+    setAmount = _useState24[1];
   function handleBuyIn() {
     if (amount > 0) {
       onBuyIn(amount);
@@ -4489,19 +4513,19 @@ function BuyInModal(_ref34) {
 }
 
 // -- Currency Change Modal --
-function CurrencyModal(_ref35) {
-  var current = _ref35.current,
-    bankroll = _ref35.bankroll,
-    onSave = _ref35.onSave,
-    onClose = _ref35.onClose;
-  var _useState23 = (0, _react.useState)(current),
-    _useState24 = _slicedToArray(_useState23, 2),
-    selected = _useState24[0],
-    setSelected = _useState24[1];
-  var _useState25 = (0, _react.useState)("keep"),
+function CurrencyModal(_ref36) {
+  var current = _ref36.current,
+    bankroll = _ref36.bankroll,
+    onSave = _ref36.onSave,
+    onClose = _ref36.onClose;
+  var _useState25 = (0, _react.useState)(current),
     _useState26 = _slicedToArray(_useState25, 2),
-    mode = _useState26[0],
-    setMode = _useState26[1]; // "convert" or "keep"
+    selected = _useState26[0],
+    setSelected = _useState26[1];
+  var _useState27 = (0, _react.useState)("keep"),
+    _useState28 = _slicedToArray(_useState27, 2),
+    mode = _useState28[0],
+    setMode = _useState28[1]; // "convert" or "keep"
 
   function handleSave() {
     onSave(selected, mode);
@@ -4542,10 +4566,10 @@ function CurrencyModal(_ref35) {
       gap: 5,
       marginBottom: 16
     }
-  }, Object.entries(CURRENCIES).map(function (_ref36) {
-    var _ref37 = _slicedToArray(_ref36, 2),
-      code = _ref37[0],
-      cur = _ref37[1];
+  }, Object.entries(CURRENCIES).map(function (_ref37) {
+    var _ref38 = _slicedToArray(_ref37, 2),
+      code = _ref38[0],
+      cur = _ref38[1];
     return /*#__PURE__*/React.createElement("button", {
       key: code,
       onClick: function onClick() {
@@ -4659,8 +4683,8 @@ function CurrencyModal(_ref35) {
 }
 
 // -- Changelog Modal --
-function ChangelogModal(_ref38) {
-  var onClose = _ref38.onClose;
+function ChangelogModal(_ref39) {
+  var onClose = _ref39.onClose;
   return /*#__PURE__*/React.createElement(Modal, {
     onClose: onClose
   }, /*#__PURE__*/React.createElement("div", {
@@ -4742,13 +4766,13 @@ function ChangelogModal(_ref38) {
     })));
   })));
 }
-function HardResetModal(_ref39) {
-  var onClose = _ref39.onClose,
-    onExport = _ref39.onExport;
-  var _useState27 = (0, _react.useState)(0),
-    _useState28 = _slicedToArray(_useState27, 2),
-    step = _useState28[0],
-    setStep = _useState28[1]; // 0=warn, 1=confirm
+function HardResetModal(_ref40) {
+  var onClose = _ref40.onClose,
+    onExport = _ref40.onExport;
+  var _useState29 = (0, _react.useState)(0),
+    _useState30 = _slicedToArray(_useState29, 2),
+    step = _useState30[0],
+    setStep = _useState30[1]; // 0=warn, 1=confirm
 
   function doExportFirst() {
     onExport();
@@ -4907,12 +4931,12 @@ function HardResetModal(_ref39) {
 
 // ===== components/SimModePage.jsx =====
 // -- Simulation Mode UI --
-function StatContextBar(_ref40) {
-  var simResults = _ref40.simResults,
-    simCfg = _ref40.simCfg,
-    sess = _ref40.sess,
-    cur = _ref40.cur,
-    pnlVal = _ref40.pnlVal;
+function StatContextBar(_ref41) {
+  var simResults = _ref41.simResults,
+    simCfg = _ref41.simCfg,
+    sess = _ref41.sess,
+    cur = _ref41.cur,
+    pnlVal = _ref41.pnlVal;
   // Match live tracks to sim strategies by type+roi+stopLoss
   var liveTracks = sess.tracks.filter(function (t) {
     return t.state !== "closed";
@@ -4983,14 +5007,14 @@ function StatContextBar(_ref40) {
       letterSpacing: 1,
       marginBottom: 2
     }
-  }, "vs Simulation Benchmark"), bars.map(function (_ref41, i) {
-    var t = _ref41.t,
-      status = _ref41.status,
-      statusColor = _ref41.statusColor,
-      statusIcon = _ref41.statusIcon,
-      pctRank = _ref41.pctRank,
-      stats = _ref41.stats,
-      livePnl = _ref41.livePnl;
+  }, "vs Simulation Benchmark"), bars.map(function (_ref42, i) {
+    var t = _ref42.t,
+      status = _ref42.status,
+      statusColor = _ref42.statusColor,
+      statusIcon = _ref42.statusIcon,
+      pctRank = _ref42.pctRank,
+      stats = _ref42.stats,
+      livePnl = _ref42.livePnl;
     return /*#__PURE__*/React.createElement("div", {
       key: t.id,
       style: {
@@ -5039,30 +5063,30 @@ function StatContextBar(_ref40) {
 }
 
 // -- Simulation Mode Page --
-function SimModePage(_ref42) {
-  var simCfg = _ref42.simCfg,
-    setSimCfg = _ref42.setSimCfg,
-    simRunning = _ref42.simRunning,
-    setSimRunning = _ref42.setSimRunning,
-    simPaused = _ref42.simPaused,
-    setSimPaused = _ref42.setSimPaused,
-    simProgress = _ref42.simProgress,
-    setSimProgress = _ref42.setSimProgress,
-    simResults = _ref42.simResults,
-    setSimResults = _ref42.setSimResults,
-    simDone = _ref42.simDone,
-    setSimDone = _ref42.setSimDone,
-    simStopRef = _ref42.simStopRef,
-    currency = _ref42.currency,
-    cur = _ref42.cur;
-  var _useState29 = (0, _react.useState)("setup"),
-    _useState30 = _slicedToArray(_useState29, 2),
-    view = _useState30[0],
-    setView = _useState30[1]; // "setup" | "running" | "results"
-  var _useState31 = (0, _react.useState)(null),
+function SimModePage(_ref43) {
+  var simCfg = _ref43.simCfg,
+    setSimCfg = _ref43.setSimCfg,
+    simRunning = _ref43.simRunning,
+    setSimRunning = _ref43.setSimRunning,
+    simPaused = _ref43.simPaused,
+    setSimPaused = _ref43.setSimPaused,
+    simProgress = _ref43.simProgress,
+    setSimProgress = _ref43.setSimProgress,
+    simResults = _ref43.simResults,
+    setSimResults = _ref43.setSimResults,
+    simDone = _ref43.simDone,
+    setSimDone = _ref43.setSimDone,
+    simStopRef = _ref43.simStopRef,
+    currency = _ref43.currency,
+    cur = _ref43.cur;
+  var _useState31 = (0, _react.useState)("setup"),
     _useState32 = _slicedToArray(_useState31, 2),
-    editStratIdx = _useState32[0],
-    setEditStratIdx = _useState32[1];
+    view = _useState32[0],
+    setView = _useState32[1]; // "setup" | "running" | "results"
+  var _useState33 = (0, _react.useState)(null),
+    _useState34 = _slicedToArray(_useState33, 2),
+    editStratIdx = _useState34[0],
+    setEditStratIdx = _useState34[1];
   function addStrategy(type) {
     var cfg = type === "fibonacci" ? defaultFibCfg() : defaultSolCfg();
     setSimCfg(function (c) {
@@ -5339,10 +5363,10 @@ function SimModePage(_ref42) {
       display: "flex",
       gap: 8
     }
-  }, [["european", "🇪🇺 European"], ["american", "🇺🇸 American"]].map(function (_ref43) {
-    var _ref44 = _slicedToArray(_ref43, 2),
-      v = _ref44[0],
-      l = _ref44[1];
+  }, [["european", "🇪🇺 European"], ["american", "🇺🇸 American"]].map(function (_ref44) {
+    var _ref45 = _slicedToArray(_ref44, 2),
+      v = _ref45[0],
+      l = _ref45[1];
     var sel = simCfg.roulette === v;
     return /*#__PURE__*/React.createElement("button", {
       key: v,
@@ -5919,11 +5943,11 @@ function SimModePage(_ref42) {
         gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr",
         gap: 4
       }
-    }, [["Min", stats.minPnl, "#f87171"], ["P25", stats.p25, "#f97316"], ["P50", stats.p50, "#fbbf24"], ["P75", stats.p75, "#86efac"], ["Max", stats.maxPnl, "#4ade80"]].map(function (_ref45) {
-      var _ref46 = _slicedToArray(_ref45, 3),
-        l = _ref46[0],
-        v = _ref46[1],
-        c = _ref46[2];
+    }, [["Min", stats.minPnl, "#f87171"], ["P25", stats.p25, "#f97316"], ["P50", stats.p50, "#fbbf24"], ["P75", stats.p75, "#86efac"], ["Max", stats.maxPnl, "#4ade80"]].map(function (_ref46) {
+      var _ref47 = _slicedToArray(_ref46, 3),
+        l = _ref47[0],
+        v = _ref47[1],
+        c = _ref47[2];
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -5963,11 +5987,11 @@ function SimModePage(_ref42) {
         gridTemplateColumns: "1fr 1fr",
         gap: 6
       }
-    }, [["Longest Win Streak", stats.longestWinStreak, "#4ade80"], ["Longest Loss Streak", stats.longestLossStreak, "#f87171"], ["Avg Win Streak", stats.avgWinStreak.toFixed(1), "#86efac"], ["Avg Loss Streak", stats.avgLossStreak.toFixed(1), "#f97316"], ["Stop Loss Hits", r.stopLossHits, "#fbbf24"], ["Stop Loss Rate", stats.stopLossRate.toFixed(2) + "/sess", "#fbbf24"]].map(function (_ref47) {
-      var _ref48 = _slicedToArray(_ref47, 3),
-        l = _ref48[0],
-        v = _ref48[1],
-        c = _ref48[2];
+    }, [["Longest Win Streak", stats.longestWinStreak, "#4ade80"], ["Longest Loss Streak", stats.longestLossStreak, "#f87171"], ["Avg Win Streak", stats.avgWinStreak.toFixed(1), "#86efac"], ["Avg Loss Streak", stats.avgLossStreak.toFixed(1), "#f97316"], ["Stop Loss Hits", r.stopLossHits, "#fbbf24"], ["Stop Loss Rate", stats.stopLossRate.toFixed(2) + "/sess", "#fbbf24"]].map(function (_ref48) {
+      var _ref49 = _slicedToArray(_ref48, 3),
+        l = _ref49[0],
+        v = _ref49[1],
+        c = _ref49[2];
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -6007,9 +6031,9 @@ function SimModePage(_ref42) {
         flexDirection: "column",
         gap: 2
       }
-    }, stats.winStreakDist.slice(0, 10).map(function (_ref49) {
-      var len = _ref49.len,
-        p = _ref49.pct;
+    }, stats.winStreakDist.slice(0, 10).map(function (_ref50) {
+      var len = _ref50.len,
+        p = _ref50.pct;
       return /*#__PURE__*/React.createElement("div", {
         key: len,
         style: {
@@ -6061,9 +6085,9 @@ function SimModePage(_ref42) {
         flexDirection: "column",
         gap: 2
       }
-    }, stats.lossStreakDist.slice(0, 10).map(function (_ref50) {
-      var len = _ref50.len,
-        p = _ref50.pct;
+    }, stats.lossStreakDist.slice(0, 10).map(function (_ref51) {
+      var len = _ref51.len,
+        p = _ref51.pct;
       return /*#__PURE__*/React.createElement("div", {
         key: len,
         style: {
@@ -6107,21 +6131,21 @@ function SimModePage(_ref42) {
 }
 
 // -- Sim Strategy Editor --
-function SimStratEditor(_ref51) {
-  var strat = _ref51.strat,
-    idx = _ref51.idx,
-    simCfg = _ref51.simCfg,
-    setSimCfg = _ref51.setSimCfg,
-    cur = _ref51.cur,
-    onClose = _ref51.onClose;
-  var _useState33 = (0, _react.useState)(_objectSpread({}, strat.config)),
-    _useState34 = _slicedToArray(_useState33, 2),
-    cfg = _useState34[0],
-    setCfg = _useState34[1];
-  var _useState35 = (0, _react.useState)(_objectSpread(_objectSpread({}, defaultParkRules()), strat.config.parkRules || {})),
+function SimStratEditor(_ref52) {
+  var strat = _ref52.strat,
+    idx = _ref52.idx,
+    simCfg = _ref52.simCfg,
+    setSimCfg = _ref52.setSimCfg,
+    cur = _ref52.cur,
+    onClose = _ref52.onClose;
+  var _useState35 = (0, _react.useState)(_objectSpread({}, strat.config)),
     _useState36 = _slicedToArray(_useState35, 2),
-    rules = _useState36[0],
-    setRules = _useState36[1];
+    cfg = _useState36[0],
+    setCfg = _useState36[1];
+  var _useState37 = (0, _react.useState)(_objectSpread(_objectSpread({}, defaultParkRules()), strat.config.parkRules || {})),
+    _useState38 = _slicedToArray(_useState37, 2),
+    rules = _useState38[0],
+    setRules = _useState38[1];
   function upCfg(k, v) {
     setCfg(function (c) {
       return _objectSpread(_objectSpread({}, c), {}, _defineProperty({}, k, v));
@@ -6221,10 +6245,10 @@ function SimStratEditor(_ref51) {
       display: "flex",
       gap: 5
     }
-  }, [["flat", "Flat"], ["progression", "Progression"]].map(function (_ref52) {
-    var _ref53 = _slicedToArray(_ref52, 2),
-      m = _ref53[0],
-      l = _ref53[1];
+  }, [["flat", "Flat"], ["progression", "Progression"]].map(function (_ref53) {
+    var _ref54 = _slicedToArray(_ref53, 2),
+      m = _ref54[0],
+      l = _ref54[1];
     var sel = (cfg.betMode || "progression") === m;
     return /*#__PURE__*/React.createElement("button", {
       key: m,
@@ -6412,11 +6436,11 @@ function SimStratEditor(_ref51) {
       flexDirection: "column",
       gap: 6
     }
-  }, [["waitForWin", "Wait for win before entering", "Don't bet until first in-range hit observed"], ["parkAfterStopLoss", "Park after stop loss hit", "Resume only after next in-range win observed"], ["parkAfterLoss", "Park after any miss", "Resume next spin (aggressive filter)"]].map(function (_ref54) {
-    var _ref55 = _slicedToArray(_ref54, 3),
-      key = _ref55[0],
-      label = _ref55[1],
-      desc = _ref55[2];
+  }, [["waitForWin", "Wait for win before entering", "Don't bet until first in-range hit observed"], ["parkAfterStopLoss", "Park after stop loss hit", "Resume only after next in-range win observed"], ["parkAfterLoss", "Park after any miss", "Resume next spin (aggressive filter)"]].map(function (_ref55) {
+    var _ref56 = _slicedToArray(_ref55, 3),
+      key = _ref56[0],
+      label = _ref56[1],
+      desc = _ref56[2];
     return /*#__PURE__*/React.createElement("div", {
       key: key,
       style: {
@@ -6571,115 +6595,83 @@ function SimStratEditor(_ref51) {
 // ===== App.jsx =====
 // -- Main App Component --
 function App() {
-  var _useState37 = (0, _react.useState)(loadApp),
-    _useState38 = _slicedToArray(_useState37, 2),
-    appState = _useState38[0],
-    setAppState = _useState38[1];
-  var _useState39 = (0, _react.useState)(getDriveToken() ? "connected" : "disconnected"),
+  var _useState39 = (0, _react.useState)(loadApp),
     _useState40 = _slicedToArray(_useState39, 2),
-    driveSyncStatus = _useState40[0],
-    setDriveSyncStatus = _useState40[1];
-  var _useState41 = (0, _react.useState)(0),
+    appState = _useState40[0],
+    setAppState = _useState40[1];
+  var _useState41 = (0, _react.useState)(getDriveToken() ? "connected" : "disconnected"),
     _useState42 = _slicedToArray(_useState41, 2),
-    tab = _useState42[0],
-    setTab = _useState42[1];
-  var _useState43 = (0, _react.useState)("live"),
+    driveSyncStatus = _useState42[0],
+    setDriveSyncStatus = _useState42[1];
+  var _useState43 = (0, _react.useState)(0),
     _useState44 = _slicedToArray(_useState43, 2),
-    appMode = _useState44[0],
-    setAppMode = _useState44[1]; // "live" | "sim"
-  var _useState45 = (0, _react.useState)(defaultSimConfig),
+    tab = _useState44[0],
+    setTab = _useState44[1];
+  var _useState45 = (0, _react.useState)("live"),
     _useState46 = _slicedToArray(_useState45, 2),
-    simCfg = _useState46[0],
-    setSimCfg = _useState46[1];
-  var _useState47 = (0, _react.useState)(false),
+    appMode = _useState46[0],
+    setAppMode = _useState46[1]; // "live" | "sim"
+  var _useState47 = (0, _react.useState)(defaultSimConfig),
     _useState48 = _slicedToArray(_useState47, 2),
-    simRunning = _useState48[0],
-    setSimRunning = _useState48[1];
+    simCfg = _useState48[0],
+    setSimCfg = _useState48[1];
   var _useState49 = (0, _react.useState)(false),
     _useState50 = _slicedToArray(_useState49, 2),
-    simPaused = _useState50[0],
-    setSimPaused = _useState50[1];
-  var _useState51 = (0, _react.useState)(0),
+    simRunning = _useState50[0],
+    setSimRunning = _useState50[1];
+  var _useState51 = (0, _react.useState)(false),
     _useState52 = _slicedToArray(_useState51, 2),
-    simProgress = _useState52[0],
-    setSimProgress = _useState52[1]; // sessions completed
-  var _useState53 = (0, _react.useState)(null),
+    simPaused = _useState52[0],
+    setSimPaused = _useState52[1];
+  var _useState53 = (0, _react.useState)(0),
     _useState54 = _slicedToArray(_useState53, 2),
-    simResults = _useState54[0],
-    setSimResults = _useState54[1];
-  var _useState55 = (0, _react.useState)(false),
+    simProgress = _useState54[0],
+    setSimProgress = _useState54[1]; // sessions completed
+  var _useState55 = (0, _react.useState)(null),
     _useState56 = _slicedToArray(_useState55, 2),
-    simDone = _useState56[0],
-    setSimDone = _useState56[1];
-  var simStopRef = React.useRef(false);
+    simResults = _useState56[0],
+    setSimResults = _useState56[1];
   var _useState57 = (0, _react.useState)(false),
     _useState58 = _slicedToArray(_useState57, 2),
-    addOpen = _useState58[0],
-    setAddOpen = _useState58[1];
-  var _useState59 = (0, _react.useState)(null),
+    simDone = _useState58[0],
+    setSimDone = _useState58[1];
+  var simStopRef = React.useRef(false);
+  var _useState59 = (0, _react.useState)(false),
     _useState60 = _slicedToArray(_useState59, 2),
-    selectedTrackId = _useState60[0],
-    setSelectedTrackId = _useState60[1];
+    addOpen = _useState60[0],
+    setAddOpen = _useState60[1];
   var _useState61 = (0, _react.useState)(null),
     _useState62 = _slicedToArray(_useState61, 2),
-    result = _useState62[0],
-    setResult = _useState62[1];
+    selectedTrackId = _useState62[0],
+    setSelectedTrackId = _useState62[1];
   var _useState63 = (0, _react.useState)(null),
     _useState64 = _slicedToArray(_useState63, 2),
-    flashNum = _useState64[0],
-    setFlashNum = _useState64[1];
+    result = _useState64[0],
+    setResult = _useState64[1];
   var _useState65 = (0, _react.useState)(null),
     _useState66 = _slicedToArray(_useState65, 2),
-    prevSessState = _useState66[0],
-    setPrevSessState = _useState66[1];
+    flashNum = _useState66[0],
+    setFlashNum = _useState66[1];
   var _useState67 = (0, _react.useState)(null),
     _useState68 = _slicedToArray(_useState67, 2),
-    draggingId = _useState68[0],
-    setDraggingId = _useState68[1];
+    prevSessState = _useState68[0],
+    setPrevSessState = _useState68[1];
   var _useState69 = (0, _react.useState)(null),
     _useState70 = _slicedToArray(_useState69, 2),
-    dragOverId = _useState70[0],
-    setDragOverId = _useState70[1];
+    draggingId = _useState70[0],
+    setDraggingId = _useState70[1];
   var _useState71 = (0, _react.useState)(null),
     _useState72 = _slicedToArray(_useState71, 2),
-    highlightTrackId = _useState72[0],
-    setHighlightTrackId = _useState72[1];
+    dragOverId = _useState72[0],
+    setDragOverId = _useState72[1];
   var _useState73 = (0, _react.useState)(null),
     _useState74 = _slicedToArray(_useState73, 2),
-    editTrackId = _useState74[0],
-    setEditTrackId = _useState74[1];
-  var _useState75 = (0, _react.useState)(Date.now()),
+    highlightTrackId = _useState74[0],
+    setHighlightTrackId = _useState74[1];
+  var _useState75 = (0, _react.useState)(null),
     _useState76 = _slicedToArray(_useState75, 2),
-    nowTick = _useState76[0],
-    setNowTick = _useState76[1];
-  (0, _react.useEffect)(function () {
-    var interval = setInterval(function () {
-      return setNowTick(Date.now());
-    }, 1000);
-    return function () {
-      return clearInterval(interval);
-    };
-  }, []);
-
-  // Restore from Google Drive if localStorage was cleared (e.g. after reset + reconnect)
-  (0, _react.useEffect)(function () {
-    if (!getDriveToken()) return;
-    var hasLocal = !!localStorage.getItem(KEY);
-    if (hasLocal) return;
-    setDriveSyncStatus("restoring");
-    driveRestore().then(function (data) {
-      if (data && data.savedSessions) {
-        setAppState(data);
-        saveApp(data);
-        setDriveSyncStatus("connected");
-        alert("Data restored from Google Drive!");
-      } else {
-        setDriveSyncStatus("connected");
-      }
-    }).catch(function () {
-      return setDriveSyncStatus("connected");
-    });
-  }, []);
+    editTrackId = _useState76[0],
+    setEditTrackId = _useState76[1];
   var _useState77 = (0, _react.useState)(false),
     _useState78 = _slicedToArray(_useState77, 2),
     buyInOpen = _useState78[0],
@@ -6822,14 +6814,14 @@ function App() {
   if (!settings.onboarded) {
     return /*#__PURE__*/React.createElement(OnboardingScreen, {
       initialBankroll: settings._restartBankroll,
-      onComplete: function onComplete(_ref56) {
-        var roulette = _ref56.roulette,
-          bankroll = _ref56.bankroll,
-          defaultBuyIn = _ref56.defaultBuyIn,
-          curr = _ref56.currency,
-          tableMinBet = _ref56.tableMinBet,
-          tableMaxBet = _ref56.tableMaxBet,
-          tableMaxTotal = _ref56.tableMaxTotal;
+      onComplete: function onComplete(_ref57) {
+        var roulette = _ref57.roulette,
+          bankroll = _ref57.bankroll,
+          defaultBuyIn = _ref57.defaultBuyIn,
+          curr = _ref57.currency,
+          tableMinBet = _ref57.tableMinBet,
+          tableMaxBet = _ref57.tableMaxBet,
+          tableMaxTotal = _ref57.tableMaxTotal;
         updApp(function (s) {
           var prevBankroll = s.settings._restartBankroll;
           s.settings.onboarded = true;
@@ -7481,14 +7473,15 @@ function App() {
         fontSize: 12,
         color: "#94a3b8"
       }
-    }, "Session Active"), /*#__PURE__*/React.createElement("span", {
+    }, "Session Active"), /*#__PURE__*/React.createElement(SessionClock, {
+      startedAt: sess.sessionStartedAt,
       style: {
         fontSize: 16,
         fontWeight: 800,
         color: "#4ade80",
         fontVariantNumeric: "tabular-nums"
       }
-    }, formatElapsed(nowTick - sess.sessionStartedAt))) : /*#__PURE__*/React.createElement("div", {
+    })) : /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -7949,10 +7942,10 @@ function App() {
       l: "JP Profit",
       v: (outcomes.jackpot.profit * (primaryTrack.config.unit || 1) >= 0 ? "+" : "-") + cur.symbol + Math.abs(outcomes.jackpot.profit * (primaryTrack.config.unit || 1)).toFixed(cur.dec),
       c: outcomes.jackpot.profit >= 0 ? "#4ade80" : "#f87171"
-    }].map(function (_ref57) {
-      var l = _ref57.l,
-        v = _ref57.v,
-        c = _ref57.c;
+    }].map(function (_ref58) {
+      var l = _ref58.l,
+        v = _ref58.v,
+        c = _ref58.c;
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -8034,10 +8027,10 @@ function App() {
       l: "Partial Profit",
       v: outcomes ? signChips(outcomes.partial.profit, primaryTrack.config.unit || 1, currency) : "--",
       c: outcomes && outcomes.partial.profit >= 0 ? "#4ade80" : "#f97316"
-    }].map(function (_ref58) {
-      var l = _ref58.l,
-        v = _ref58.v,
-        c = _ref58.c;
+    }].map(function (_ref59) {
+      var l = _ref59.l,
+        v = _ref59.v,
+        c = _ref59.c;
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -8366,10 +8359,10 @@ function App() {
         flexDirection: "column",
         gap: 3
       }
-    }, legendRows.map(function (_ref59) {
-      var _ref60 = _slicedToArray(_ref59, 2),
-        abbr = _ref60[0],
-        desc = _ref60[1];
+    }, legendRows.map(function (_ref60) {
+      var _ref61 = _slicedToArray(_ref60, 2),
+        abbr = _ref61[0],
+        desc = _ref61[1];
       return /*#__PURE__*/React.createElement("div", {
         key: abbr,
         style: {
@@ -8635,15 +8628,17 @@ function App() {
         fontSize: 11,
         color: "#64748b"
       }
-    }, "Session Time"), /*#__PURE__*/React.createElement("span", {
+    }, "Session Time"), /*#__PURE__*/React.createElement(SessionClock, {
+      startedAt: sess.sessionStartedAt,
+      endedAt: sess.sessionEndedAt,
       style: {
         fontSize: 14,
         fontWeight: 800,
         color: "#4ade80",
         fontVariantNumeric: "tabular-nums"
       }
-    }, formatElapsed((sess.sessionEndedAt || nowTick) - sess.sessionStartedAt)), function () {
-      var hrs = ((sess.sessionEndedAt || nowTick) - sess.sessionStartedAt) / 3600000;
+    }), function () {
+      var hrs = ((sess.sessionEndedAt || Date.now()) - sess.sessionStartedAt) / 3600000;
       var rate = hrs > 0.01 ? pnlVal / hrs : null;
       return rate !== null ? /*#__PURE__*/React.createElement("div", {
         style: {
@@ -8692,10 +8687,10 @@ function App() {
       l: "Net P&L",
       v: (pnlVal >= 0 ? "+" : "-") + cur.symbol + Math.abs(pnlVal).toFixed(cur.dec),
       c: pnlColor
-    }].map(function (_ref61) {
-      var l = _ref61.l,
-        v = _ref61.v,
-        c = _ref61.c;
+    }].map(function (_ref62) {
+      var l = _ref62.l,
+        v = _ref62.v,
+        c = _ref62.c;
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -8840,11 +8835,11 @@ function App() {
           gap: 6,
           marginBottom: 8
         }
-      }, [["Wins", g.wins, "#4ade80"], ["Losses", g.losses, "#f87171"], ["Win Rate", winRate, "#86efac"]].map(function (_ref62) {
-        var _ref63 = _slicedToArray(_ref62, 3),
-          l = _ref63[0],
-          v = _ref63[1],
-          c = _ref63[2];
+      }, [["Wins", g.wins, "#4ade80"], ["Losses", g.losses, "#f87171"], ["Win Rate", winRate, "#86efac"]].map(function (_ref63) {
+        var _ref64 = _slicedToArray(_ref63, 3),
+          l = _ref64[0],
+          v = _ref64[1],
+          c = _ref64[2];
         return /*#__PURE__*/React.createElement("div", {
           key: l,
           style: {
@@ -9069,10 +9064,10 @@ function App() {
         display: "flex",
         gap: 8
       }
-    }, [["american", "🇺🇸 American (00)"], ["european", "🇪🇺 European"]].map(function (_ref64) {
-      var _ref65 = _slicedToArray(_ref64, 2),
-        v = _ref65[0],
-        label = _ref65[1];
+    }, [["american", "🇺🇸 American (00)"], ["european", "🇪🇺 European"]].map(function (_ref65) {
+      var _ref66 = _slicedToArray(_ref65, 2),
+        v = _ref66[0],
+        label = _ref66[1];
       return /*#__PURE__*/React.createElement("button", {
         key: v,
         onClick: function onClick() {
@@ -9162,10 +9157,10 @@ function App() {
       label: "Max Total (per spin)",
       key: "tableMaxTotal",
       color: "#f87171"
-    }].map(function (_ref66) {
-      var label = _ref66.label,
-        key = _ref66.key,
-        color = _ref66.color;
+    }].map(function (_ref67) {
+      var label = _ref67.label,
+        key = _ref67.key,
+        color = _ref67.color;
       var val = settings[key] || 1;
       function dec() {
         if (key === "tableMinBet") {
@@ -9314,7 +9309,7 @@ function App() {
       }
     }, getDriveToken() ? "Auto-saves on every session save/end" : "Sign in to enable cloud backup")), /*#__PURE__*/React.createElement("button", {
       onClick: /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee() {
-        var localSaved, data, _t;
+        var _t;
         return _regenerator().w(function (_context) {
           while (1) switch (_context.p = _context.n) {
             case 0:
@@ -9324,7 +9319,7 @@ function App() {
               }
               driveSignOut();
               setDriveSyncStatus("disconnected");
-              _context.n = 6;
+              _context.n = 4;
               break;
             case 1:
               _context.p = 1;
@@ -9332,33 +9327,16 @@ function App() {
               return driveSignIn();
             case 2:
               setDriveSyncStatus("connected");
-              localSaved = appState.savedSessions || [];
-              if (!(localSaved.length === 0)) {
-                _context.n = 4;
-                break;
-              }
-              setDriveSyncStatus("restoring");
-              _context.n = 3;
-              return driveRestore();
-            case 3:
-              data = _context.v;
-              if (data && data.savedSessions && data.savedSessions.length > 0) {
-                setAppState(data);
-                saveApp(data);
-                alert("Data restored from Google Drive!");
-              }
-              setDriveSyncStatus("connected");
-            case 4:
-              _context.n = 6;
+              _context.n = 4;
               break;
-            case 5:
-              _context.p = 5;
+            case 3:
+              _context.p = 3;
               _t = _context.v;
               alert("Sign in failed: " + _t.message);
-            case 6:
+            case 4:
               return _context.a(2);
           }
-        }, _callee, null, [[1, 5]]);
+        }, _callee, null, [[1, 3]]);
       })),
       style: {
         padding: "7px 14px",
@@ -9370,7 +9348,13 @@ function App() {
         fontWeight: 700,
         cursor: "pointer"
       }
-    }, getDriveToken() ? "Disconnect" : "Connect")), getDriveToken() && /*#__PURE__*/React.createElement("button", {
+    }, getDriveToken() ? "Disconnect" : "Connect")), getDriveToken() && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        marginTop: 8
+      }
+    }, /*#__PURE__*/React.createElement("button", {
       onClick: /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
         var ok;
         return _regenerator().w(function (_context2) {
@@ -9389,8 +9373,7 @@ function App() {
         }, _callee2);
       })),
       style: {
-        width: "100%",
-        marginTop: 8,
+        flex: 1,
         padding: "8px 0",
         borderRadius: 8,
         border: "1px solid #22c55e",
@@ -9400,7 +9383,57 @@ function App() {
         fontWeight: 700,
         cursor: "pointer"
       }
-    }, "\u2601\uFE0F Backup Now"))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Lbl, null, "Info"), /*#__PURE__*/React.createElement("div", {
+    }, "\u2601\uFE0F Backup Now"), /*#__PURE__*/React.createElement("button", {
+      onClick: /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3() {
+        var data, _t2;
+        return _regenerator().w(function (_context3) {
+          while (1) switch (_context3.p = _context3.n) {
+            case 0:
+              if (window.confirm("Restore from Google Drive? This will replace all local session data.")) {
+                _context3.n = 1;
+                break;
+              }
+              return _context3.a(2);
+            case 1:
+              setDriveSyncStatus("restoring");
+              _context3.p = 2;
+              _context3.n = 3;
+              return driveRestore();
+            case 3:
+              data = _context3.v;
+              if (data && data.savedSessions && data.savedSessions.length > 0) {
+                setAppState(data);
+                saveApp(data);
+                setDriveSyncStatus("connected");
+                alert("Restored " + data.savedSessions.length + " sessions from Google Drive!");
+              } else {
+                setDriveSyncStatus("connected");
+                alert("No backup found on Google Drive.");
+              }
+              _context3.n = 5;
+              break;
+            case 4:
+              _context3.p = 4;
+              _t2 = _context3.v;
+              setDriveSyncStatus("connected");
+              alert("Restore failed: " + _t2.message);
+            case 5:
+              return _context3.a(2);
+          }
+        }, _callee3, null, [[2, 4]]);
+      })),
+      style: {
+        flex: 1,
+        padding: "8px 0",
+        borderRadius: 8,
+        border: "1px solid #60a5fa",
+        background: "transparent",
+        color: "#60a5fa",
+        fontSize: 11,
+        fontWeight: 700,
+        cursor: "pointer"
+      }
+    }, "\uD83D\uDCE5 Restore from Cloud")))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Lbl, null, "Info"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -9457,8 +9490,8 @@ function App() {
   }
 
   // -- Bankroll Edit --
-  function BankrollEdit(_ref69) {
-    var onClose = _ref69.onClose;
+  function BankrollEdit(_ref71) {
+    var onClose = _ref71.onClose;
     var _useState97 = (0, _react.useState)(sess.bankrollCurrent),
       _useState98 = _slicedToArray(_useState97, 2),
       val = _useState98[0],
