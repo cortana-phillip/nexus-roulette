@@ -452,13 +452,15 @@ export default function App() {
                 skipped++;
               }
             });
-            // Load the most recent imported session as current
+            // Load the most recent imported session as current (paused)
             if(lastAdded) {
               var loaded = JSON.parse(JSON.stringify(lastAdded));
-              // If session was active, cap the clock at last save time so it doesn't count idle hours
-              if(loaded.sessionStartedAt && !loaded.sessionEndedAt) {
+              // Always end the session - don't auto-start after import
+              if(loaded.sessionStartedAt) {
                 loaded.sessionEndedAt = loaded.modified || Date.now();
               }
+              // Park all tracks
+              (loaded.tracks||[]).forEach(function(tr){ if(tr.state==="active") tr.state="parked"; });
               s.currentSession = loaded;
             }
           });
@@ -1157,9 +1159,12 @@ export default function App() {
                   try{
                     const data = await driveRestore();
                     if(data && data.savedSessions && data.savedSessions.length > 0) {
-                      // Cap active session clock so it doesn't count idle time
-                      if(data.currentSession && data.currentSession.sessionStartedAt && !data.currentSession.sessionEndedAt) {
+                      // End active session and park all tracks - don't auto-start after restore
+                      if(data.currentSession && data.currentSession.sessionStartedAt) {
                         data.currentSession.sessionEndedAt = data.currentSession.modified || Date.now();
+                      }
+                      if(data.currentSession && data.currentSession.tracks) {
+                        data.currentSession.tracks.forEach(function(tr){ if(tr.state==="active") tr.state="parked"; });
                       }
                       setAppState(data);
                       saveApp(data);
