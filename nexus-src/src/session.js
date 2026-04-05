@@ -48,7 +48,9 @@ function defaultSettings() {
 
 function loadApp() {
   try {
-    const d = JSON.parse(localStorage.getItem(KEY));
+    const raw = localStorage.getItem(KEY);
+    if(!raw) { console.warn("NEXUS: No saved data found in localStorage (key="+KEY+")"); return { savedSessions:[], currentSession:newSession(), settings:defaultSettings() }; }
+    const d = JSON.parse(raw);
     if(d) {
       if(!d.settings) d.settings = defaultSettings();
       if(!d.settings.currency) d.settings.currency = "USD";
@@ -57,6 +59,7 @@ function loadApp() {
       if(d.settings.tableMinBet === undefined) d.settings.tableMinBet = 10;
       if(d.settings.tableMaxBet === undefined) d.settings.tableMaxBet = 500;
       if(d.settings.tableMaxTotal === undefined) d.settings.tableMaxTotal = 10000;
+      if(!d.currentSession) d.currentSession = newSession();
       if(!d.currentSession.totalBuyIn) d.currentSession.totalBuyIn = 0;
       if(!d.currentSession.buyIns) d.currentSession.buyIns = [];
       if(!d.currentSession.totalCashOut) d.currentSession.totalCashOut = 0;
@@ -71,13 +74,21 @@ function loadApp() {
         (sess.totalCashOut||0) +
         (sess.tracks||[]).reduce((sum,t) => sum + t.pnl*(t.config.unit||1), 0)
       )*100)/100;
+      console.log("NEXUS: Loaded "+((d.savedSessions||[]).length)+" saved sessions, current has "+sess.spins.length+" spins");
       return d;
     }
-  } catch(e) {}
+  } catch(e) { console.error("NEXUS: loadApp crashed:", e); }
   return { savedSessions:[], currentSession:newSession(), settings:defaultSettings() };
 }
 
-function saveApp(state) { try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+function saveApp(state) {
+  try{
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }catch(e){
+    console.error("NEXUS: saveApp FAILED:", e);
+    alert("WARNING: Could not save data to local storage! Your data may be lost. Error: "+e.message);
+  }
+}
 
 function computeMetrics(session) {
   const perTrack = session.tracks.map(t => {
