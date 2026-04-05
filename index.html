@@ -2081,7 +2081,9 @@ function Card(_ref15) {
       borderRadius: 14,
       padding: "12px 14px",
       width: "100%",
-      border: "1px solid #2d4057"
+      border: "1px solid #2d4057",
+      minWidth: 0,
+      overflow: "hidden"
     }, style || {})
   }, children);
 }
@@ -2649,7 +2651,9 @@ function FibGrid(_ref22) {
   }
   return /*#__PURE__*/React.createElement("div", {
     style: {
-      width: "100%"
+      width: "100%",
+      minWidth: 0,
+      overflow: "hidden"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2673,7 +2677,8 @@ function FibGrid(_ref22) {
         color: "#6b7280",
         fontSize: 14,
         fontWeight: 800,
-        cursor: "pointer"
+        cursor: "pointer",
+        width: "100%"
       }
     }, v);
   })), /*#__PURE__*/React.createElement("div", {
@@ -2702,7 +2707,8 @@ function FibGrid(_ref22) {
         borderRadius: 8,
         marginBottom: 4,
         border: "1px solid " + (act ? DZ_BD[dz] : "#1a1a2e"),
-        padding: act ? "3px" : "0"
+        padding: act ? "3px" : "0",
+        minWidth: 0
       }
     }, act && /*#__PURE__*/React.createElement("div", {
       style: {
@@ -2724,7 +2730,8 @@ function FibGrid(_ref22) {
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr",
           gap: 4,
-          marginBottom: 4
+          marginBottom: 4,
+          minWidth: 0
         }
       }, [a, b, c].map(function (n) {
         return numCell(String(n));
