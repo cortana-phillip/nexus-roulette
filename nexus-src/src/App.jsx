@@ -1146,7 +1146,7 @@ export default function App() {
   }
 
   // -- Root --
-  const TABS = ["Tracker","Full Table","Spin Log","Stats","🔬 Sim","Settings"];
+  const TABS = ["Tracker","Full Table","Spin Log","Stats","Settings"];
 
   return (
     <div style={{minHeight:"100vh",background:"#0f1923",color:"#e2e8f0",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
@@ -1198,8 +1198,7 @@ export default function App() {
             {tab===1 && <TablePage/>}
             {tab===2 && <SpinPage/>}
             {tab===3 && <StatsPage/>}
-            {tab===4 && <SimPage currency={currency} settings={settings}/>}
-            {tab===5 && <SettingsPage/>}
+            {tab===4 && <SettingsPage/>}
           </div>
         )}
 
