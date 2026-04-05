@@ -7962,43 +7962,6 @@ function App() {
       }
     }, "\u25A0 End Session")), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
-        display: "flex",
-        gap: 4,
-        overflowX: "auto",
-        paddingBottom: 2,
-        WebkitOverflowScrolling: "touch"
-      }
-    }, recentSpins.map(function (val, i) {
-      var isZ = val === "0" || val === "00",
-        r = !isZ && RED.has(+val);
-      var hitTracks = (trackOverlays || []).filter(function (o) {
-        if (isZ) return false;
-        if (o.type === "fibonacci") return (o.dozenTargets || []).includes(dozenOf(val)) || (o.colTargets || []).includes(colOf(val));
-        if (o.type === "solution") return (o.activeBets || []).some(function (b) {
-          return b.number === val;
-        });
-        return false;
-      });
-      var borderColor = i === 0 ? "#ffffff" : hitTracks.length > 0 ? hitTracks[0].color : isZ ? "#22c55e" : r ? "#ef4444" : "#374151";
-      return /*#__PURE__*/React.createElement("div", {
-        key: i,
-        style: {
-          flexShrink: 0,
-          width: 28,
-          height: 28,
-          borderRadius: 6,
-          background: isZ ? "#166534" : r ? "#7f1d1d" : "#0d1117",
-          border: "2px solid " + borderColor,
-          color: isZ ? "#bbf7d0" : r ? "#fecaca" : "#f1f5f9",
-          fontSize: 10,
-          fontWeight: 800,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }
-      }, val);
-    })), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
-      style: {
         display: "grid",
         gridTemplateColumns: "repeat(6,1fr)",
         gap: 3
