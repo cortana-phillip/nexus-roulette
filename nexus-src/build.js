@@ -122,7 +122,19 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>${react}</script>
 <script>${reactdom}</script>
 <script>
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}
+if('serviceWorker' in navigator){
+  // Force-clear old stuck service workers and caches
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    var needsReload = false;
+    regs.forEach(function(r){r.unregister(); needsReload = true;});
+    caches.keys().then(function(keys){
+      Promise.all(keys.map(function(k){return caches.delete(k);})).then(function(){
+        navigator.serviceWorker.register('sw.js?v=53');
+        if(needsReload && !window.__swReloaded){window.__swReloaded=true; setTimeout(function(){location.reload();},500);}
+      });
+    });
+  });
+}
 ${iife}
 </script>
 </body>
