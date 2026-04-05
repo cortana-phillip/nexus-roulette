@@ -4788,6 +4788,13 @@ function HardResetModal(_ref40) {
     setStep(1);
   }
   function doReset() {
+    // Delete cloud backup if connected
+    if (getDriveToken()) {
+      try {
+        driveDeleteBackup();
+      } catch (e) {}
+      driveSignOut();
+    }
     localStorage.removeItem("nexus-roulette-v1");
     window.location.reload();
   }
@@ -7402,13 +7409,15 @@ function App() {
       reader.onload = function (ev) {
         try {
           var data = JSON.parse(ev.target.result);
-          var sessions = data.sessions || [];
+          // Handle both export format (sessions) and drive backup format (appState/savedSessions)
+          var sessions = data.sessions || data.savedSessions || data.appState && data.appState.savedSessions || [];
           if (!sessions.length) {
             alert("No sessions found in file.");
             return;
           }
           var added = 0,
-            skipped = 0;
+            skipped = 0,
+            lastAdded = null;
           updApp(function (s) {
             sessions.forEach(function (sess) {
               if (!s.savedSessions.find(function (x) {
@@ -7416,14 +7425,20 @@ function App() {
               })) {
                 s.savedSessions.push(sess);
                 added++;
+                lastAdded = sess;
               } else {
                 skipped++;
               }
             });
+            // Load the most recent imported session as current
+            if (lastAdded) {
+              s.currentSession = JSON.parse(JSON.stringify(lastAdded));
+            }
           });
-          alert("Import complete!\n".concat(added, " sessions added").concat(skipped ? ", " + skipped + " already existed (skipped)" : "", "."));
+          setTab(0);
+          alert("Import complete!\n".concat(added, " session").concat(added !== 1 ? "s" : "", " added").concat(skipped ? ", " + skipped + " already existed (skipped)" : "", ".\n\nLoaded \"").concat(lastAdded ? lastAdded.name : "", "\"."));
         } catch (err) {
-          alert("Failed to parse file. Make sure it's a valid Nexus Roulette export.");
+          alert("Failed to parse file: " + err.message);
         }
       };
       reader.readAsText(file);

@@ -320,6 +320,11 @@ function HardResetModal({onClose, onExport}) {
   }
 
   function doReset() {
+    // Delete cloud backup if connected
+    if(getDriveToken()) {
+      try { driveDeleteBackup(); } catch(e) {}
+      driveSignOut();
+    }
     localStorage.removeItem("nexus-roulette-v1");
     window.location.reload();
   }

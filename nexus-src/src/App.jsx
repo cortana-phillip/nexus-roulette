@@ -438,22 +438,29 @@ export default function App() {
       reader.onload = ev => {
         try {
           const data = JSON.parse(ev.target.result);
-          const sessions = data.sessions || [];
+          // Handle both export format (sessions) and drive backup format (appState/savedSessions)
+          const sessions = data.sessions || data.savedSessions || (data.appState && data.appState.savedSessions) || [];
           if (!sessions.length) { alert("No sessions found in file."); return; }
-          let added = 0, skipped = 0;
+          let added = 0, skipped = 0, lastAdded = null;
           updApp(s => {
             sessions.forEach(sess => {
               if (!s.savedSessions.find(x => x.id === sess.id)) {
                 s.savedSessions.push(sess);
                 added++;
+                lastAdded = sess;
               } else {
                 skipped++;
               }
             });
+            // Load the most recent imported session as current
+            if(lastAdded) {
+              s.currentSession = JSON.parse(JSON.stringify(lastAdded));
+            }
           });
-          alert(`Import complete!\n${added} sessions added${skipped ? ", " + skipped + " already existed (skipped)" : ""}.`);
+          setTab(0);
+          alert(`Import complete!\n${added} session${added!==1?"s":""} added${skipped ? ", " + skipped + " already existed (skipped)" : ""}.\n\nLoaded "${lastAdded?lastAdded.name:""}".`);
         } catch(err) {
-          alert("Failed to parse file. Make sure it's a valid Nexus Roulette export.");
+          alert("Failed to parse file: " + err.message);
         }
       };
       reader.readAsText(file);
