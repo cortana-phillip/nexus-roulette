@@ -12,7 +12,7 @@ const COL_TX = ["#5eead4","#f9a8d4","#bef264"];
 const TRACK_COLORS = ["#f59e0b","#2dd4bf","#a855f7","#f97316","#38bdf8"];
 const TRACK_ICONS = { fibonacci:"🎲", solution:"🎯" };
 const KEY = "nexus-roulette-v1";
-const APP_VERSION = "0.33.0";
+const APP_VERSION = "0.33.1";
 const ROI_PRESETS = [5,10,15,20,25,30];
 const UNITS = [0.25, 0.50, 1.00];
 
@@ -194,3 +194,5 @@ const EVEN_MONEY = [
   {key:"odd",   label:"Odd",   color:"#a78bfa", pred: n=>n%2===1},
   {key:"even",  label:"Even",  color:"#60a5fa", pred: n=>n%2===0},
   {key:"high",  label:"19-36", color:"#fbbf24", pred: n=>n>=19},
+  {key:"low",   label:"1-18",  color:"#86efac", pred: n=>n<=18},
+];

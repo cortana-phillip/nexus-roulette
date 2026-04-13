@@ -98,8 +98,9 @@ function SessionClock({startedAt, endedAt, style}) {
 }
 
 // -- Roulette Table Board --
-function RouletteBoard({roulette, winningNumber}) {
+function RouletteBoard({roulette, winningNumber, betNumbers}) {
   const isAmerican = roulette === "american";
+  const bets = betNumbers || {};
   const BOARD_ROWS = [
     [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
     [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
@@ -112,17 +113,19 @@ function RouletteBoard({roulette, winningNumber}) {
   const winStr = winningNumber ? String(winningNumber) : null;
 
   function cellStyle(num, isZero) {
+    const numStr = String(isZero ? (num === 0 ? "0" : "00") : num);
     const isRed = !isZero && RED.has(num);
-    const isWin = winStr === String(isZero ? (num === 0 ? "0" : "00") : num);
+    const isWin = winStr === numStr;
+    const betColor = bets[numStr] || null;
     return {
       position: "relative",
       display: "flex", alignItems: "center", justifyContent: "center",
       height: cellH, borderRadius: 4, cursor: "default",
       background: isZero ? "#166534" : isRed ? "#991b1b" : "#1e293b",
-      border: isWin ? "2px solid #fbbf24" : "1px solid #374151",
+      border: isWin ? "2px solid #fbbf24" : betColor ? "2px solid "+betColor : "1px solid #374151",
       color: isWin ? "#fbbf24" : "white",
       fontSize: isZero ? 11 : 12, fontWeight: 800,
-      boxShadow: isWin ? "0 0 12px #fbbf24, inset 0 0 8px #fbbf2444" : "none",
+      boxShadow: isWin ? "0 0 12px #fbbf24, inset 0 0 8px #fbbf2444" : betColor ? "inset 0 0 6px "+betColor+"44" : "none",
       zIndex: isWin ? 2 : 1,
       transition: "box-shadow 0.3s, border 0.3s",
     };

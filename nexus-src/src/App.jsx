@@ -592,7 +592,24 @@ export default function App() {
         )}
 
         {/* Roulette Table */}
-        <RouletteBoard roulette={sess.roulette} winningNumber={gameResult}/>
+        {(()=>{
+          const betNums = {};
+          nonClosedTracks.filter(t=>t.state==="active").forEach(t=>{
+            if(t.type==="fibonacci") {
+              const dts=t.config.dozenTargets||[], cts=t.config.colTargets||[], evts=t.config.evenTargets||[];
+              for(let n=1;n<=36;n++){
+                let covered=false;
+                if(evts.length>0) { evts.forEach(key=>{const em=EVEN_MONEY.find(e=>e.key===key);if(em&&em.pred(n))covered=true;}); }
+                else { if(dts.includes(dozenOf(String(n))))covered=true; if(cts.includes(colOf(String(n))))covered=true; }
+                if(covered && !betNums[String(n)]) betNums[String(n)]=t.color;
+              }
+            }
+            if(t.type==="solution") {
+              (t.config.activeBets||[]).forEach(b=>{ if(!betNums[b.number]) betNums[b.number]=t.color; });
+            }
+          });
+          return <RouletteBoard roulette={sess.roulette} winningNumber={gameResult} betNumbers={betNums}/>;
+        })()}
 
         {/* Drought panel */}
         {sess.spins.length>0 && (
