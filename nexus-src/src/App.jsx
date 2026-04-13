@@ -3,7 +3,7 @@ export default function App() {
   const [appState, setAppState] = useState(loadApp);
   const [driveSyncStatus, setDriveSyncStatus] = useState(getDriveToken()?"connected":"disconnected");
   const [tab, setTab] = useState(0);
-  const [appMode, setAppMode] = useState("live"); // "live" | "sim"
+  const [appMode, setAppMode] = useState("game"); // "game" | "live" | "sim"
   const [simCfg, setSimCfg] = useState(defaultSimConfig);
   const [simRunning, setSimRunning] = useState(false);
   const [simPaused, setSimPaused] = useState(false);
@@ -20,6 +20,8 @@ export default function App() {
   const [dragOverId, setDragOverId] = useState(null);
   const [highlightTrackId, setHighlightTrackId] = useState(null);
   const [editTrackId, setEditTrackId] = useState(null);
+  const [gameSpinning, setGameSpinning] = useState(false);
+  const [gameResult, setGameResult] = useState(null);
 
   const [buyInOpen, setBuyInOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
@@ -475,6 +477,139 @@ export default function App() {
     document.body.appendChild(input);
     input.click();
     document.body.removeChild(input);
+  }
+
+  // -- Game Page --
+  function GamePage() {
+    const recentSpins = [...sess.spins].reverse().slice(0,30);
+    const hasActiveTracks = nonClosedTracks.some(t=>t.state==="active");
+
+    function doGameSpin() {
+      if(gameSpinning) return;
+      if(!hasActiveTracks) { alert("Add at least one strategy track and make sure it's active."); return; }
+      setGameSpinning(true);
+      // Auto-start session on first game spin
+      if(!sess.sessionStartedAt) {
+        updSess(s=>{ s.sessionStartedAt=Date.now(); });
+      }
+      // Animate through random numbers for ~1 second
+      const nums = wheelNums;
+      let ticks = 0;
+      const maxTicks = 15;
+      const iv = setInterval(() => {
+        ticks++;
+        setGameResult(nums[Math.floor(Math.random()*nums.length)]);
+        if(ticks >= maxTicks) {
+          clearInterval(iv);
+          // Final result
+          const val = nums[Math.floor(Math.random()*nums.length)];
+          setGameResult(val);
+          tapNumber(val, true);
+          if(settings.vibration!==false && navigator.vibrate) navigator.vibrate(30);
+          setTimeout(()=>setGameSpinning(false), 300);
+        }
+      }, 70);
+    }
+
+    return (
+      <div style={{display:"flex",flexDirection:"column",gap:10,width:"100%"}}>
+
+        {/* Spin result display */}
+        <div style={{textAlign:"center",padding:"20px 0"}}>
+          {gameResult ? (()=>{
+            const isZ=gameResult==="0"||gameResult==="00";
+            const r=!isZ&&RED.has(+gameResult);
+            return (
+              <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:80,height:80,borderRadius:"50%",background:isZ?"#166534":r?"#991b1b":"#1e293b",border:"4px solid "+(isZ?"#4ade80":r?"#f87171":"#64748b"),fontSize:32,fontWeight:900,color:"white",animation:gameSpinning?"pulse 0.15s infinite":"none",boxShadow:"0 0 20px "+(isZ?"#16a34a55":r?"#ef444455":"#64748b33")}}>
+                {gameResult}
+              </div>
+            );
+          })() : (
+            <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:80,height:80,borderRadius:"50%",background:"#1e2d3d",border:"4px solid #2d4057",fontSize:14,fontWeight:700,color:"#64748b"}}>
+              --
+            </div>
+          )}
+        </div>
+
+        {/* Spin button */}
+        <button onClick={doGameSpin} disabled={gameSpinning} style={{width:"100%",padding:"18px 0",borderRadius:16,border:"none",background:gameSpinning?"#374151":hasActiveTracks?"linear-gradient(135deg,#16a34a,#059669)":"#374151",color:"white",fontSize:20,fontWeight:900,cursor:gameSpinning||!hasActiveTracks?"not-allowed":"pointer",letterSpacing:1,opacity:gameSpinning?0.7:1,transition:"opacity 0.2s"}}>
+          {gameSpinning?"Spinning...":"🎰 SPIN"}
+        </button>
+
+        {/* Recent spins ticker */}
+        {sess.spins.length>0 && (
+          <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:2,WebkitOverflowScrolling:"touch",width:"100%",maxWidth:"100%",minWidth:0,boxSizing:"border-box"}}>
+            {recentSpins.map((val,i)=>{
+              const isZ=val==="0"||val==="00", r=!isZ&&RED.has(+val);
+              return(
+                <div key={i} style={{flexShrink:0,width:28,height:28,borderRadius:6,background:isZ?"#166534":r?"#7f1d1d":"#0d1117",border:"2px solid "+(i===0?"#ffffff":isZ?"#22c55e":r?"#ef4444":"#374151"),color:isZ?"#bbf7d0":r?"#fecaca":"#f1f5f9",fontSize:10,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {val}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Even money droughts */}
+        {sess.spins.length>0 && (
+          <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:3}}>
+            {emDroughts.map(em=>(
+              <div key={em.key} style={{borderRadius:7,border:"1px solid "+(em.drought>=8?"#dc2626":em.drought>=5?"#f59e0b":"#2d4057"),background:em.drought>=8?"#200505":em.drought>=5?"#1c1000":"#0f1923",padding:"4px 2px",textAlign:"center"}}>
+                <div style={{fontSize:8,color:em.color,fontWeight:700,textTransform:"uppercase"}}>{em.label}</div>
+                <div style={{fontSize:13,fontWeight:800,color:em.drought>=8?"#f87171":em.drought>=5?"#fbbf24":"#94a3b8"}}>{em.drought}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Strategy tracks */}
+        <Lbl>Strategy Tracks</Lbl>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {nonClosedTracks.map((t) => {
+            const tbl=computeTableForTrack(t);
+            const isEditing=editTrackId===t.id;
+            const dolPnl=t.pnl*(t.config.unit||1);
+            const row=tbl[Math.min(t.level,tbl.length-1)];
+            return (
+              <div key={t.id}>
+                <div style={{background:"#0f1923",borderRadius:12,padding:"10px 12px",border:"2px solid "+(isEditing?"#60a5fa":t.color+"66")}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                    <div style={{width:10,height:10,borderRadius:"50%",background:t.color,flexShrink:0}}/>
+                    <span style={{fontSize:11,fontWeight:700,color:t.color,flex:1}}>{TRACK_ICONS[t.type]} {t.type==="fibonacci"?"Progression":"The Solution"}</span>
+                    <span style={{fontSize:9,color:t.state==="active"?"#4ade80":"#fbbf24",fontWeight:700}}>[{t.state.toUpperCase()}]</span>
+                    <span style={{fontSize:12,fontWeight:800,color:dolPnl>=0?"#4ade80":"#f87171"}}>{dolPnl>=0?"+":"-"}{cur.symbol}{Math.abs(dolPnl).toFixed(cur.dec)}</span>
+                  </div>
+                  <div style={{display:"flex",gap:8,marginBottom:6}}>
+                    <span style={{fontSize:10,color:"#94a3b8"}}>Lvl <strong style={{color:t.level>=10?"#f87171":t.level>=6?"#fbbf24":"#e2e8f0"}}>{t.level}</strong>/{tbl.length}</span>
+                    {row && <span style={{fontSize:10,color:"#60a5fa"}}>Bet: {fmtChips(row.totalBet,t.config.unit,currency)}/spin</span>}
+                  </div>
+                  <div style={{display:"flex",gap:5}}>
+                    <button onClick={()=>parkToggle(t.id)} style={{flex:1,padding:"4px 0",borderRadius:6,border:"1px solid #2d4057",background:t.state==="parked"?"#134e2a":"#1e2d3d",color:t.state==="parked"?"#4ade80":"#94a3b8",fontSize:9,fontWeight:700,cursor:"pointer"}}>{t.state==="parked"?"▶ Resume":"⏸ Park"}</button>
+                    <button onClick={()=>setEditTrackId(isEditing?null:t.id)} style={{padding:"4px 8px",borderRadius:6,border:"1px solid "+(isEditing?"#60a5fa":"#1e3a5f"),background:isEditing?"#1e3a5f":"transparent",color:"#60a5fa",fontSize:9,cursor:"pointer"}}>✏️ Edit</button>
+                    <button onClick={()=>{if(window.confirm("Close track?"))closeTrack(t.id);}} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #7f1d1d",background:"transparent",color:"#f87171",fontSize:9,cursor:"pointer"}}>×</button>
+                  </div>
+                </div>
+                {isEditing && (
+                  <EditTrackCfg track={t} currency={currency} tableMinBet={settings.tableMinBet||1} onSave={cfg=>updateTrackConfig(t.id,cfg)} onCancel={()=>setEditTrackId(null)}/>
+                )}
+              </div>
+            );
+          })}
+          {!addOpen && (
+            <button onClick={()=>setAddOpen(true)} style={{padding:"10px 0",borderRadius:12,border:"2px dashed #2d4057",background:"transparent",color:"#64748b",fontSize:13,cursor:"pointer"}}>+ Add Strategy</button>
+          )}
+          {addOpen && <AddTrackPanel onAdd={addTrack} onClose={()=>setAddOpen(false)} nextColor={nextColorIdx} type={pendingTrackType} cfg={pendingTrackCfg} onTypeChange={(t)=>{setPendingTrackType(t);setPendingTrackCfg(t==="fibonacci"?defaultFibCfg():defaultSolCfg());}} onCfgChange={setPendingTrackCfg} closedTracks={sess.tracks.filter(t=>t.state==="closed")} currency={currency} tableMinBet={settings.tableMinBet||1}/>}
+        </div>
+
+        {/* Session controls */}
+        {sess.sessionStartedAt && (
+          <div style={{display:"flex",gap:8,marginTop:4}}>
+            <button onClick={saveSession} style={{flex:1,padding:11,borderRadius:10,border:"none",background:"#16a34a",color:"white",fontSize:13,fontWeight:700,cursor:"pointer"}}>Save</button>
+            <button onClick={()=>{if(window.confirm("End session and save?"))endSession();}} style={{flex:1,padding:11,borderRadius:10,border:"1px solid #7f1d1d",background:"#200505",color:"#f87171",fontSize:13,fontWeight:700,cursor:"pointer"}}>End Session</button>
+          </div>
+        )}
+      </div>
+    );
   }
 
   // -- Tracker Page --
@@ -1225,10 +1360,11 @@ export default function App() {
           </div>
           {/* Mode Toggle */}
           <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:6,marginBottom:2}}>
+            <button onClick={()=>setAppMode("game")} style={{padding:"5px 16px",borderRadius:20,border:"none",background:appMode==="game"?"#7c3aed":"#1e2d3d",color:appMode==="game"?"white":"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>🎮 Game</button>
             <button onClick={()=>setAppMode("live")} style={{padding:"5px 16px",borderRadius:20,border:"none",background:appMode==="live"?"#16a34a":"#1e2d3d",color:appMode==="live"?"white":"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>🎰 Live</button>
-            <button onClick={()=>setAppMode("sim")} style={{padding:"5px 16px",borderRadius:20,border:"none",background:appMode==="sim"?"#7c3aed":"#1e2d3d",color:appMode==="sim"?"white":"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>🔬 Simulation{simRunning&&!simDone?" ⏳":simDone?" ✅":""}</button>
+            <button onClick={()=>setAppMode("sim")} style={{padding:"5px 16px",borderRadius:20,border:"none",background:appMode==="sim"?"#c2410c":"#1e2d3d",color:appMode==="sim"?"white":"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>🧪 Experimental{simRunning&&!simDone?" ⏳":simDone?" ✅":""}</button>
           </div>
-          {appMode==="live" && (
+          {(appMode==="live"||appMode==="game") && (
             <div>
               <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:12,marginTop:4,flexWrap:"wrap"}}>
                 <button onClick={()=>setEditBankroll(true)} style={{fontSize:12,color:"#64748b",background:"transparent",border:"none",cursor:"pointer",padding:0}}>
@@ -1246,6 +1382,8 @@ export default function App() {
         </div>
 
         {appMode==="sim" && <SimModePage simCfg={simCfg} setSimCfg={setSimCfg} simRunning={simRunning} setSimRunning={setSimRunning} simPaused={simPaused} setSimPaused={setSimPaused} simProgress={simProgress} setSimProgress={setSimProgress} simResults={simResults} setSimResults={setSimResults} simDone={simDone} setSimDone={setSimDone} simStopRef={simStopRef} currency={currency} cur={cur}/>}
+
+        {appMode==="game" && <GamePage/>}
 
         {appMode==="live" && (
           <div style={{width:"100%",minWidth:0,overflow:"hidden"}}>
