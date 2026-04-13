@@ -98,10 +98,11 @@ function SessionClock({startedAt, endedAt, style}) {
 }
 
 // -- Roulette Table Board --
-function RouletteBoard({roulette, winningNumber, betNumbers, spinning}) {
+function RouletteBoard({roulette, winningNumber, betNumbers, spinning, onBet, boardBets, chipColor}) {
   const isAmerican = roulette === "american";
   const bets = betNumbers || {};
-  const BOARD_ROWS = [
+  const bb = boardBets || {};
+  const canBet = !!onBet && !spinning;  const BOARD_ROWS = [
     [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
     [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
     [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
@@ -143,28 +144,39 @@ function RouletteBoard({roulette, winningNumber, betNumbers, spinning}) {
 
   function Mkr(){return React.createElement("div",{style:{position:"absolute",top:-5,right:-3,width:12,height:12,borderRadius:"50%",background:"#fbbf24",border:"2px solid #92400e",boxShadow:"0 0 6px #fbbf24",animation:"pulse 1s infinite"}});}
 
+  function BetChip({amount}){
+    if(!amount) return null;
+    var lbl = amount>=1000?(amount/1000)+"k":amount>=1?amount.toFixed(0):amount<1?(amount*100)+"¢":"";
+    return React.createElement("div",{style:{position:"absolute",bottom:-2,left:"50%",transform:"translateX(-50%)",minWidth:16,height:16,borderRadius:8,background:chipColor||"#fff",border:"1.5px solid #92400e",fontSize:7,fontWeight:900,color:"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 2px",zIndex:5,boxShadow:"0 1px 3px rgba(0,0,0,0.5)"}},lbl);
+  }
+
+  function cell(num,isZero,zeroLabel){
+    var numStr=isZero?(zeroLabel||"0"):String(num);
+    var betKey="s:"+numStr;
+    return React.createElement("div",{key:numStr,onClick:function(){if(canBet)onBet("straight",numStr);},style:{...numStyle(num,isZero),cursor:canBet?"pointer":"default"}},
+      numStr,
+      winStr===numStr&&!spinning&&React.createElement(Mkr),
+      bb[betKey]&&React.createElement(BetChip,{amount:bb[betKey]})
+    );
+  }
+
   return (
     <div style={{width:"100%",overflow:"hidden",borderRadius:8,border:"1px solid #2d4057",background:"#0a1218",padding:4,display:"flex",flexDirection:"column",gap:g}}>
-      {/* Main grid: zeros + numbers + column bets */}
       <div style={{display:"flex",gap:g}}>
         <div style={{display:"flex",flexDirection:"column",gap:g,width:26,flexShrink:0}}>
-          <div style={{...numStyle(0,true),flex:1}}>0{winStr==="0"&&!spinning&&React.createElement(Mkr)}</div>
-          {isAmerican&&<div style={{...numStyle(0,true),flex:1}}>00{winStr==="00"&&!spinning&&React.createElement(Mkr)}</div>}
+          {cell(0,true,"0")}
+          {isAmerican&&cell(0,true,"00")}
         </div>
         <div style={{flex:1,display:"grid",gridTemplateColumns:"repeat(12,1fr)",gridTemplateRows:"repeat(3,32px)",gap:g}}>
-          {BOARD_ROWS.map(function(row){return row.map(function(num){return(
-            React.createElement("div",{key:num,style:numStyle(num,false)},num,winStr===String(num)&&!spinning&&React.createElement(Mkr))
-          );});})}
+          {BOARD_ROWS.map(function(row){return row.map(function(num){return cell(num,false);});})}
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:g,width:28,flexShrink:0}}>
-          {[2,1,0].map(function(c){return React.createElement("div",{key:c,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,border:obdr(winGroups.col===c),color:otxt(winGroups.col===c),background:obg(winGroups.col===c),boxShadow:glow(winGroups.col===c),fontSize:8,fontWeight:700,transition:"all 0.3s"}},"2:1");})}
+          {[2,1,0].map(function(c){var on=winGroups.col===c;var bk="column:"+c;return React.createElement("div",{key:c,onClick:function(){if(canBet)onBet("column",c);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,border:bb[bk]?"2px solid #fbbf24":obdr(on),color:otxt(on||!!bb[bk]),background:obg(on),boxShadow:bb[bk]?"0 0 6px #fbbf2466":glow(on),fontSize:8,fontWeight:700,cursor:canBet?"pointer":"default",transition:"all 0.3s",position:"relative"}},"2:1",bb[bk]&&React.createElement(BetChip,{amount:bb[bk]}));})}
         </div>
       </div>
-      {/* Dozens row */}
       <div style={{display:"flex",gap:g,marginLeft:26+g}}>
-        {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){return React.createElement("div",{key:d.i,style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:10,fontWeight:700,border:obdr(winGroups.doz===d.i),color:otxt(winGroups.doz===d.i),background:obg(winGroups.doz===d.i),boxShadow:glow(winGroups.doz===d.i),transition:"all 0.3s"}},d.l);})}
+        {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){var on=winGroups.doz===d.i;var bk="dozen:"+d.i;return React.createElement("div",{key:d.i,onClick:function(){if(canBet)onBet("dozen",d.i);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:10,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":obdr(on),color:otxt(on||!!bb[bk]),background:obg(on),boxShadow:bb[bk]?"0 0 6px #fbbf2466":glow(on),cursor:canBet?"pointer":"default",transition:"all 0.3s",position:"relative"}},d.l,bb[bk]&&React.createElement(BetChip,{amount:bb[bk]}));})}
       </div>
-      {/* Even money row */}
       <div style={{display:"flex",gap:g,marginLeft:26+g}}>
         {[
           {l:"1-18",k:"low",bg:"#0f1923"},
@@ -173,7 +185,7 @@ function RouletteBoard({roulette, winningNumber, betNumbers, spinning}) {
           {l:"BLK",k:"black",bg:"#1e293b"},
           {l:"ODD",k:"odd",bg:"#0f1923"},
           {l:"19-36",k:"high",bg:"#0f1923"},
-        ].map(function(em){var on=!!winGroups[em.k];return React.createElement("div",{key:em.k,style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:9,fontWeight:700,border:obdr(on),color:on?"#fbbf24":em.k==="red"?"#f87171":em.k==="black"?"#94a3b8":"#94a3b8",background:on?"#1c1000":em.bg,boxShadow:glow(on),transition:"all 0.3s"}},em.l);})}
+        ].map(function(em){var on=!!winGroups[em.k];var bk=em.k;return React.createElement("div",{key:em.k,onClick:function(){if(canBet)onBet(em.k);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:9,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":obdr(on),color:on?"#fbbf24":bb[bk]?"#fbbf24":em.k==="red"?"#f87171":em.k==="black"?"#94a3b8":"#94a3b8",background:on?"#1c1000":em.bg,boxShadow:bb[bk]?"0 0 6px #fbbf2466":glow(on),cursor:canBet?"pointer":"default",transition:"all 0.3s",position:"relative"}},em.l,bb[bk]&&React.createElement(BetChip,{amount:bb[bk]}));})}
       </div>
     </div>
   );

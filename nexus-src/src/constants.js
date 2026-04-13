@@ -12,7 +12,7 @@ const COL_TX = ["#5eead4","#f9a8d4","#bef264"];
 const TRACK_COLORS = ["#f59e0b","#2dd4bf","#a855f7","#f97316","#38bdf8"];
 const TRACK_ICONS = { fibonacci:"🎲", solution:"🎯" };
 const KEY = "nexus-roulette-v1";
-const APP_VERSION = "0.34.1";
+const APP_VERSION = "0.35.0";
 const ROI_PRESETS = [5,10,15,20,25,30];
 const UNITS = [0.25, 0.50, 1.00];
 
@@ -34,6 +34,14 @@ const CURRENCIES = {
 };
 
 const CHANGELOG = [
+  { v:"0.35.0", date:"Apr 13, 2026", title:"Manual Betting", changes:[
+    "Place bets directly on the roulette table — tap any number, dozen, column, or even money bet",
+    "Casino-style chip selector with denominations from 25¢ to $500",
+    "Undo, Clear, Double (2×), and Repeat last bet buttons",
+    "Chip indicators show on the board where your bets are placed",
+    "Manual bets resolve alongside strategy tracks on each spin",
+    "Bets clear after every spin",
+  ]},
   { v:"0.34.0", date:"Apr 13, 2026", title:"Full Roulette Table", changes:[
     "Complete roulette table with outside bets — columns (2:1), dozens, and even money",
     "Winning spin highlights the number AND all matching outside bets with golden glow",

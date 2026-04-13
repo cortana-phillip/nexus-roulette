@@ -508,58 +508,157 @@ export default function App() {
   function GamePage() {
     const recentSpins = [...sess.spins].reverse().slice(0,30);
     const hasActiveTracks = nonClosedTracks.some(t=>t.state==="active");
+    const [selectedChip, setSelectedChip] = useState(1);
+    const [manualBets, setManualBets] = useState([]);
+    const [lastBets, setLastBets] = useState([]);
+    const tMin = settings.tableMinBet||1;
+
+    const CHIPS = [
+      {val:0.25,color:"#89CFF0",border:"#5BA3D9",label:"25¢"},
+      {val:0.50,color:"#FFB6C1",border:"#E8929E",label:"50¢"},
+      {val:1,color:"#ffffff",border:"#aaaaaa",label:"$1"},
+      {val:5,color:"#ef4444",border:"#b91c1c",label:"$5"},
+      {val:25,color:"#22c55e",border:"#15803d",label:"$25"},
+      {val:100,color:"#1e293b",border:"#64748b",label:"$100"},
+      {val:500,color:"#8b5cf6",border:"#6d28d9",label:"$500"},
+    ].filter(c=>c.val>=tMin);
+
+    const totalBetAmt = manualBets.reduce((s,b)=>s+b.amount,0);
+    const canSpin = manualBets.length>0 || hasActiveTracks;
+
+    function placeBet(type, target) {
+      if(gameSpinning) return;
+      setManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type,target,amount:selectedChip}]);
+      if(settings.vibration!==false && navigator.vibrate) navigator.vibrate(10);
+    }
+    function undoBet() { setManualBets(prev=>prev.slice(0,-1)); }
+    function clearBets() { setManualBets([]); }
+    function doubleBets() { setManualBets(prev=>[...prev,...prev.map(b=>({...b,id:Date.now()+Math.random()}))]); }
+    function repeatBets() { if(lastBets.length>0) setManualBets(lastBets.map(b=>({...b,id:Date.now()+Math.random()}))); }
+
+    // Aggregate bets by position for display
+    const boardBets = {};
+    manualBets.forEach(b=>{
+      const key = b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
+      boardBets[key] = (boardBets[key]||0) + b.amount;
+    });
+
+    function resolveManualBets(winVal) {
+      const isZ = winVal==="0"||winVal==="00";
+      const n = isZ?null:+winVal;
+      var totalWin=0, totalBet=0;
+      manualBets.forEach(function(b){
+        totalBet+=b.amount;
+        var won=false;
+        if(b.type==="straight"&&String(b.target)===winVal) won=true;
+        if(!isZ&&n){
+          if(b.type==="dozen") { var d=n<=12?0:n<=24?1:2; if(b.target===d) won=true; }
+          if(b.type==="column") { var c=n%3===0?2:n%3===1?0:1; if(b.target===c) won=true; }
+          if(b.type==="red"&&RED.has(n)) won=true;
+          if(b.type==="black"&&!RED.has(n)) won=true;
+          if(b.type==="odd"&&n%2===1) won=true;
+          if(b.type==="even"&&n%2===0) won=true;
+          if(b.type==="low"&&n<=18) won=true;
+          if(b.type==="high"&&n>=19) won=true;
+        }
+        if(won){
+          var pay = b.type==="straight"?b.amount*36:(b.type==="dozen"||b.type==="column")?b.amount*3:b.amount*2;
+          totalWin+=pay;
+        }
+      });
+      return {totalWin:totalWin,totalBet:totalBet,profit:totalWin-totalBet};
+    }
 
     function doGameSpin() {
-      if(gameSpinning) return;
-      if(!hasActiveTracks) { alert("Add at least one strategy track and make sure it's active."); return; }
+      if(gameSpinning||!canSpin) return;
       setGameSpinning(true);
-      // Auto-start session on first game spin
-      if(!sess.sessionStartedAt) {
-        updSess(s=>{ s.sessionStartedAt=Date.now(); });
-      }
-      // Animate through random numbers for ~1 second
+      if(!sess.sessionStartedAt) updSess(s=>{s.sessionStartedAt=Date.now();});
       const nums = wheelNums;
-      let ticks = 0;
-      const maxTicks = 15;
-      const iv = setInterval(() => {
+      var ticks=0;
+      const iv = setInterval(()=>{
         ticks++;
         setGameResult(nums[Math.floor(Math.random()*nums.length)]);
-        if(ticks >= maxTicks) {
+        if(ticks>=15){
           clearInterval(iv);
-          // Final result
           const val = nums[Math.floor(Math.random()*nums.length)];
           setGameResult(val);
-          tapNumber(val, true);
-          if(settings.vibration!==false && navigator.vibrate) navigator.vibrate(30);
-          setTimeout(()=>setGameSpinning(false), 300);
+          // Process strategy tracks
+          if(hasActiveTracks) tapNumber(val, true);
+          else { updSess(s=>{s.spins.push(val);const nd={...s.droughts};Object.keys(nd).forEach(k=>nd[k]++);nd[val]=0;s.droughts=nd;}); }
+          // Process manual bets
+          if(manualBets.length>0){
+            const res = resolveManualBets(val);
+            updSess(s=>{s.bankrollCurrent=Math.round((s.bankrollCurrent+res.profit)*100)/100;});
+            setLastSpinDelta(prev=>(prev||0)+res.profit);
+          }
+          setLastBets([...manualBets]);
+          setManualBets([]);
+          if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate(30);
+          setTimeout(()=>setGameSpinning(false),300);
         }
-      }, 70);
+      },70);
     }
 
     return (
       <div style={{display:"flex",flexDirection:"column",gap:10,width:"100%"}}>
 
         {/* Spin result display */}
-        <div style={{textAlign:"center",padding:"20px 0"}}>
+        <div style={{textAlign:"center",padding:"16px 0 8px"}}>
           {gameResult ? (()=>{
             const isZ=gameResult==="0"||gameResult==="00";
             const r=!isZ&&RED.has(+gameResult);
             return (
-              <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:80,height:80,borderRadius:"50%",background:isZ?"#166534":r?"#991b1b":"#1e293b",border:"4px solid "+(isZ?"#4ade80":r?"#f87171":"#64748b"),fontSize:32,fontWeight:900,color:"white",animation:gameSpinning?"pulse 0.15s infinite":"none",boxShadow:"0 0 20px "+(isZ?"#16a34a55":r?"#ef444455":"#64748b33")}}>
+              <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:72,height:72,borderRadius:"50%",background:isZ?"#166534":r?"#991b1b":"#1e293b",border:"4px solid "+(isZ?"#4ade80":r?"#f87171":"#64748b"),fontSize:28,fontWeight:900,color:"white",animation:gameSpinning?"pulse 0.15s infinite":"none",boxShadow:"0 0 20px "+(isZ?"#16a34a55":r?"#ef444455":"#64748b33")}}>
                 {gameResult}
               </div>
             );
           })() : (
-            <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:80,height:80,borderRadius:"50%",background:"#1e2d3d",border:"4px solid #2d4057",fontSize:14,fontWeight:700,color:"#64748b"}}>
-              --
-            </div>
+            <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:72,height:72,borderRadius:"50%",background:"#1e2d3d",border:"4px solid #2d4057",fontSize:14,fontWeight:700,color:"#64748b"}}>--</div>
           )}
         </div>
 
         {/* Spin button */}
-        <button onClick={doGameSpin} disabled={gameSpinning} style={{width:"100%",padding:"18px 0",borderRadius:16,border:"none",background:gameSpinning?"#374151":hasActiveTracks?"linear-gradient(135deg,#16a34a,#059669)":"#374151",color:"white",fontSize:20,fontWeight:900,cursor:gameSpinning||!hasActiveTracks?"not-allowed":"pointer",letterSpacing:1,opacity:gameSpinning?0.7:1,transition:"opacity 0.2s"}}>
+        <button onClick={doGameSpin} disabled={gameSpinning||!canSpin} style={{width:"100%",padding:"16px 0",borderRadius:14,border:"none",background:gameSpinning?"#374151":canSpin?"linear-gradient(135deg,#16a34a,#059669)":"#374151",color:"white",fontSize:18,fontWeight:900,cursor:gameSpinning||!canSpin?"not-allowed":"pointer",letterSpacing:1,opacity:gameSpinning?0.7:1}}>
           {gameSpinning?"Spinning...":"🎰 SPIN"}
         </button>
+
+        {/* Chip selector */}
+        <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap"}}>
+          {CHIPS.map(c=>(
+            <button key={c.val} onClick={()=>setSelectedChip(c.val)} style={{width:44,height:44,borderRadius:"50%",border:"3px solid "+(selectedChip===c.val?"#fbbf24":c.border),background:c.color,color:c.val>=100?"#ffffff":c.val<=0.5?"#1e293b":"#1e293b",fontSize:c.val<1?8:10,fontWeight:900,cursor:"pointer",boxShadow:selectedChip===c.val?"0 0 10px #fbbf24":"0 2px 4px rgba(0,0,0,0.3)",display:"flex",alignItems:"center",justifyContent:"center",transition:"box-shadow 0.2s"}}>
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Bet controls */}
+        <div style={{display:"flex",gap:4,alignItems:"center"}}>
+          <button onClick={undoBet} disabled={manualBets.length===0} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0?"#60a5fa":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0?"pointer":"default"}}>↩ Undo</button>
+          <button onClick={clearBets} disabled={manualBets.length===0} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0?"#f87171":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0?"pointer":"default"}}>✕ Clear</button>
+          <button onClick={doubleBets} disabled={manualBets.length===0} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0?"#fbbf24":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0?"pointer":"default"}}>2× Double</button>
+          <button onClick={repeatBets} disabled={lastBets.length===0} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:lastBets.length>0?"#86efac":"#374151",fontSize:10,fontWeight:700,cursor:lastBets.length>0?"pointer":"default"}}>♻ Repeat</button>
+        </div>
+        {totalBetAmt>0 && <div style={{textAlign:"center",fontSize:12,fontWeight:800,color:"#fbbf24"}}>Total Bet: {cur.symbol}{totalBetAmt.toFixed(cur.dec)}</div>}
+
+        {/* Roulette Table - interactive */}
+        {(()=>{
+          const betNums = {};
+          nonClosedTracks.filter(t=>t.state==="active").forEach(t=>{
+            if(t.type==="fibonacci") {
+              const dts=t.config.dozenTargets||[], cts=t.config.colTargets||[], evts=t.config.evenTargets||[];
+              for(let n=1;n<=36;n++){
+                let covered=false;
+                if(evts.length>0) { evts.forEach(key=>{const em=EVEN_MONEY.find(e=>e.key===key);if(em&&em.pred(n))covered=true;}); }
+                else { if(dts.includes(dozenOf(String(n))))covered=true; if(cts.includes(colOf(String(n))))covered=true; }
+                if(covered && !betNums[String(n)]) betNums[String(n)]=t.color;
+              }
+            }
+            if(t.type==="solution") {
+              (t.config.activeBets||[]).forEach(b=>{ if(!betNums[b.number]) betNums[b.number]=t.color; });
+            }
+          });
+          return <RouletteBoard roulette={sess.roulette} winningNumber={gameResult} betNumbers={betNums} spinning={gameSpinning} onBet={placeBet} boardBets={boardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color}/>;
+        })()}
 
         {/* Recent spins ticker */}
         {sess.spins.length>0 && (
@@ -590,26 +689,6 @@ export default function App() {
             )}
           </div>
         )}
-
-        {/* Roulette Table */}
-        {(()=>{
-          const betNums = {};
-          nonClosedTracks.filter(t=>t.state==="active").forEach(t=>{
-            if(t.type==="fibonacci") {
-              const dts=t.config.dozenTargets||[], cts=t.config.colTargets||[], evts=t.config.evenTargets||[];
-              for(let n=1;n<=36;n++){
-                let covered=false;
-                if(evts.length>0) { evts.forEach(key=>{const em=EVEN_MONEY.find(e=>e.key===key);if(em&&em.pred(n))covered=true;}); }
-                else { if(dts.includes(dozenOf(String(n))))covered=true; if(cts.includes(colOf(String(n))))covered=true; }
-                if(covered && !betNums[String(n)]) betNums[String(n)]=t.color;
-              }
-            }
-            if(t.type==="solution") {
-              (t.config.activeBets||[]).forEach(b=>{ if(!betNums[b.number]) betNums[b.number]=t.color; });
-            }
-          });
-          return <RouletteBoard roulette={sess.roulette} winningNumber={gameResult} betNumbers={betNums} spinning={gameSpinning}/>;
-        })()}
 
         {/* Drought panel */}
         {sess.spins.length>0 && (
