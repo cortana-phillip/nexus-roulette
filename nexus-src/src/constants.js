@@ -12,7 +12,7 @@ const COL_TX = ["#5eead4","#f9a8d4","#bef264"];
 const TRACK_COLORS = ["#f59e0b","#2dd4bf","#a855f7","#f97316","#38bdf8"];
 const TRACK_ICONS = { fibonacci:"🎲", solution:"🎯" };
 const KEY = "nexus-roulette-v1";
-const APP_VERSION = "0.35.3";
+const APP_VERSION = "0.35.4";
 const ROI_PRESETS = [5,10,15,20,25,30];
 const UNITS = [0.25, 0.50, 1.00];
 
@@ -167,6 +167,18 @@ function fmtMoney(amount, currCode) {
 
 function fmtChips(chips, unit, currCode) {
   return fmtMoney(chips * unit, currCode);
+}
+
+// Smart format: no decimals unless fractional part exists
+function fmtSmart(amount, cur) {
+  var abs = Math.abs(amount);
+  var hasFrac = abs % 1 !== 0;
+  var str = hasFrac ? abs.toFixed(cur.dec) : abs.toFixed(0);
+  return (amount<0?"-":"") + cur.symbol + str;
+}
+function fmtNum(amount) {
+  var abs = Math.abs(amount);
+  return abs % 1 !== 0 ? abs.toFixed(2) : abs.toFixed(0);
 }
 
 function signChips(chips, unit, currCode) {

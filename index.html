@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.35.3";
+  var MY_V="0.35.4";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -391,7 +391,7 @@ var TRACK_ICONS = {
   solution: "🎯"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.35.3";
+var APP_VERSION = "0.35.4";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -605,6 +605,18 @@ function fmtMoney(amount, currCode) {
 }
 function fmtChips(chips, unit, currCode) {
   return fmtMoney(chips * unit, currCode);
+}
+
+// Smart format: no decimals unless fractional part exists
+function fmtSmart(amount, cur) {
+  var abs = Math.abs(amount);
+  var hasFrac = abs % 1 !== 0;
+  var str = hasFrac ? abs.toFixed(cur.dec) : abs.toFixed(0);
+  return (amount < 0 ? "-" : "") + cur.symbol + str;
+}
+function fmtNum(amount) {
+  var abs = Math.abs(amount);
+  return abs % 1 !== 0 ? abs.toFixed(2) : abs.toFixed(0);
 }
 function signChips(chips, unit, currCode) {
   var v = chips * unit;
@@ -2560,7 +2572,8 @@ function RouletteBoard(_ref16) {
     var amount = _ref17.amount,
       posKey = _ref17.posKey;
     if (!amount) return null;
-    var lbl = amount >= 1000 ? amount / 1000 + "k" : amount >= 1 ? amount.toFixed(0) : amount < 1 ? amount * 100 + "¢" : "";
+    var lbl = amount >= 1000 ? amount / 1000 + "k" : amount >= 100 ? amount.toFixed(0) : amount >= 1 ? amount % 1 !== 0 ? amount.toFixed(2) : amount.toFixed(0) : amount < 1 ? amount * 100 + "¢" : "";
+    var fs = lbl.length > 3 ? 6 : lbl.length > 2 ? 7 : 8;
     var result = br[posKey] || null;
     var bgC = result === "won" ? "#16a34a" : result === "lost" ? "#991b1b" : chipColor || "#fff";
     var bdC = result === "won" ? "#4ade80" : result === "lost" ? "#f87171" : "#92400e";
@@ -2571,21 +2584,22 @@ function RouletteBoard(_ref16) {
         bottom: -2,
         left: "50%",
         transform: "translateX(-50%)",
-        minWidth: 18,
-        height: 18,
-        borderRadius: 9,
+        minWidth: 16,
+        height: 16,
+        borderRadius: 8,
         background: bgC,
-        border: "2px solid " + bdC,
-        fontSize: 8,
+        border: "1.5px solid " + bdC,
+        fontSize: fs,
         fontWeight: 900,
         color: result ? "#fff" : "#1e293b",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "0 3px",
+        padding: "0 2px",
         zIndex: 5,
         boxShadow: shadow,
-        animation: result === "won" ? "pulse 0.8s infinite" : "none"
+        animation: result === "won" ? "pulse 0.8s infinite" : "none",
+        whiteSpace: "nowrap"
       }
     }, lbl);
   }
@@ -7049,10 +7063,14 @@ function App() {
     _useState82 = _slicedToArray(_useState81, 2),
     lastSpinDelta = _useState82[0],
     setLastSpinDelta = _useState82[1];
-  var _useState83 = (0, _react.useState)(null),
+  var _useState83 = (0, _react.useState)(1),
     _useState84 = _slicedToArray(_useState83, 2),
-    updateAvailable = _useState84[0],
-    setUpdateAvailable = _useState84[1]; // {version, notes}
+    selectedChip = _useState84[0],
+    setSelectedChip = _useState84[1];
+  var _useState85 = (0, _react.useState)(null),
+    _useState86 = _slicedToArray(_useState85, 2),
+    updateAvailable = _useState86[0],
+    setUpdateAvailable = _useState86[1]; // {version, notes}
 
   // Check for app updates
   (0, _react.useEffect)(function () {
@@ -7072,46 +7090,46 @@ function App() {
       return clearInterval(iv);
     };
   }, []);
-  var _useState85 = (0, _react.useState)(false),
-    _useState86 = _slicedToArray(_useState85, 2),
-    buyInOpen = _useState86[0],
-    setBuyInOpen = _useState86[1];
   var _useState87 = (0, _react.useState)(false),
     _useState88 = _slicedToArray(_useState87, 2),
-    currencyOpen = _useState88[0],
-    setCurrencyOpen = _useState88[1];
+    buyInOpen = _useState88[0],
+    setBuyInOpen = _useState88[1];
   var _useState89 = (0, _react.useState)(false),
     _useState90 = _slicedToArray(_useState89, 2),
-    changelogOpen = _useState90[0],
-    setChangelogOpen = _useState90[1];
+    currencyOpen = _useState90[0],
+    setCurrencyOpen = _useState90[1];
   var _useState91 = (0, _react.useState)(false),
     _useState92 = _slicedToArray(_useState91, 2),
-    editBankroll = _useState92[0],
-    setEditBankroll = _useState92[1];
+    changelogOpen = _useState92[0],
+    setChangelogOpen = _useState92[1];
   var _useState93 = (0, _react.useState)(false),
     _useState94 = _slicedToArray(_useState93, 2),
-    cashOutOpen = _useState94[0],
-    setCashOutOpen = _useState94[1];
+    editBankroll = _useState94[0],
+    setEditBankroll = _useState94[1];
   var _useState95 = (0, _react.useState)(false),
     _useState96 = _slicedToArray(_useState95, 2),
-    hardResetOpen = _useState96[0],
-    setHardResetOpen = _useState96[1];
+    cashOutOpen = _useState96[0],
+    setCashOutOpen = _useState96[1];
   var _useState97 = (0, _react.useState)(false),
     _useState98 = _slicedToArray(_useState97, 2),
-    feedbackOpen = _useState98[0],
-    setFeedbackOpen = _useState98[1];
-  var _useState99 = (0, _react.useState)(""),
+    hardResetOpen = _useState98[0],
+    setHardResetOpen = _useState98[1];
+  var _useState99 = (0, _react.useState)(false),
     _useState100 = _slicedToArray(_useState99, 2),
-    feedbackText = _useState100[0],
-    setFeedbackText = _useState100[1];
-  var _useState101 = (0, _react.useState)("fibonacci"),
+    feedbackOpen = _useState100[0],
+    setFeedbackOpen = _useState100[1];
+  var _useState101 = (0, _react.useState)(""),
     _useState102 = _slicedToArray(_useState101, 2),
-    pendingTrackType = _useState102[0],
-    setPendingTrackType = _useState102[1];
-  var _useState103 = (0, _react.useState)(defaultFibCfg()),
+    feedbackText = _useState102[0],
+    setFeedbackText = _useState102[1];
+  var _useState103 = (0, _react.useState)("fibonacci"),
     _useState104 = _slicedToArray(_useState103, 2),
-    pendingTrackCfg = _useState104[0],
-    setPendingTrackCfg = _useState104[1];
+    pendingTrackType = _useState104[0],
+    setPendingTrackType = _useState104[1];
+  var _useState105 = (0, _react.useState)(defaultFibCfg()),
+    _useState106 = _slicedToArray(_useState105, 2),
+    pendingTrackCfg = _useState106[0],
+    setPendingTrackCfg = _useState106[1];
   var sess = appState.currentSession;
   var settings = appState.settings || defaultSettings();
   var saved = appState.savedSessions || [];
@@ -7888,10 +7906,6 @@ function App() {
     var hasActiveTracks = nonClosedTracks.some(function (t) {
       return t.state === "active";
     });
-    var _useState105 = (0, _react.useState)(1),
-      _useState106 = _slicedToArray(_useState105, 2),
-      selectedChip = _useState106[0],
-      setSelectedChip = _useState106[1];
     var _useState107 = (0, _react.useState)([]),
       _useState108 = _slicedToArray(_useState107, 2),
       manualBets = _useState108[0],
@@ -8280,7 +8294,7 @@ function App() {
         fontWeight: 800,
         color: "#fbbf24"
       }
-    }, "Total Bet: ", cur.symbol, totalBetAmt.toFixed(cur.dec)), function () {
+    }, "Total Bet: ", cur.symbol, fmtNum(totalBetAmt)), function () {
       // Compute strategy outside bet highlights (labels, not individual numbers)
       var stratBets = {};
       nonClosedTracks.filter(function (t) {
@@ -8379,7 +8393,7 @@ function App() {
         fontWeight: 900,
         color: pnlVal >= 0 ? "#4ade80" : "#f87171"
       }
-    }, pnlVal >= 0 ? "+" : "-", cur.symbol, Math.abs(pnlVal).toFixed(cur.dec))), lastSpinDelta !== null && /*#__PURE__*/React.createElement("div", {
+    }, pnlVal >= 0 ? "+" : "-", cur.symbol, fmtNum(pnlVal))), lastSpinDelta !== null && /*#__PURE__*/React.createElement("div", {
       style: {
         width: 100,
         background: lastSpinDelta > 0 ? "#0a1f0a" : lastSpinDelta < 0 ? "#200505" : "#0f1923",
@@ -8402,7 +8416,7 @@ function App() {
         fontWeight: 900,
         color: lastSpinDelta > 0 ? "#4ade80" : lastSpinDelta < 0 ? "#f87171" : "#94a3b8"
       }
-    }, lastSpinDelta > 0 ? "+" : lastSpinDelta < 0 ? "-" : "", cur.symbol, Math.abs(lastSpinDelta).toFixed(cur.dec)))), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
+    }, lastSpinDelta > 0 ? "+" : lastSpinDelta < 0 ? "-" : "", cur.symbol, fmtNum(lastSpinDelta)))), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -8529,7 +8543,7 @@ function App() {
           fontWeight: 800,
           color: dolPnl >= 0 ? "#4ade80" : "#f87171"
         }
-      }, dolPnl >= 0 ? "+" : "-", cur.symbol, Math.abs(dolPnl).toFixed(cur.dec))), /*#__PURE__*/React.createElement("div", {
+      }, dolPnl >= 0 ? "+" : "-", cur.symbol, fmtNum(dolPnl))), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           gap: 8,
@@ -8975,7 +8989,7 @@ function App() {
           fontWeight: 800,
           color: dolPnl >= 0 ? "#4ade80" : "#f87171"
         }
-      }, dolPnl >= 0 ? "+" : "-", cur.symbol, Math.abs(dolPnl).toFixed(cur.dec))), /*#__PURE__*/React.createElement("div", {
+      }, dolPnl >= 0 ? "+" : "-", cur.symbol, fmtNum(dolPnl))), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           gap: 8,
@@ -9983,7 +9997,7 @@ function App() {
       c: (sess.totalBuyIn || 0) >= (sess.totalCashOut || 0) ? "#f87171" : "#4ade80"
     }, {
       l: "Net P&L",
-      v: (pnlVal >= 0 ? "+" : "-") + cur.symbol + Math.abs(pnlVal).toFixed(cur.dec),
+      v: (pnlVal >= 0 ? "+" : "-") + cur.symbol + fmtNum(pnlVal),
       c: pnlColor
     }].map(function (_ref64) {
       var l = _ref64.l,
@@ -10995,7 +11009,7 @@ function App() {
     style: {
       color: pnlColor
     }
-  }, pnlVal >= 0 ? "+" : "-", cur.symbol, Math.abs(pnlVal).toFixed(cur.dec))), /*#__PURE__*/React.createElement("span", {
+  }, pnlVal >= 0 ? "+" : "-", cur.symbol, fmtNum(pnlVal))), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 12,
       color: "#64748b"

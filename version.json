@@ -1,1 +1,1 @@
-{"version":"0.35.3","date":"2026-04-13","notes":"Fixed bets disappearing during spin. Board stays frozen while wheel spins. Strategy bets highlight the outside bet labels, not every number."}
+{"version":"0.35.4","date":"2026-04-13","notes":"Smart decimals - no .00 unless needed. Chip selection persists between spins. Text fits inside cells."}

@@ -23,6 +23,7 @@ export default function App() {
   const [gameSpinning, setGameSpinning] = useState(false);
   const [gameResult, setGameResult] = useState(null);
   const [lastSpinDelta, setLastSpinDelta] = useState(null);
+  const [selectedChip, setSelectedChip] = useState(1);
   const [updateAvailable, setUpdateAvailable] = useState(null); // {version, notes}
 
   // Check for app updates
@@ -508,7 +509,6 @@ export default function App() {
   function GamePage() {
     const recentSpins = [...sess.spins].reverse().slice(0,30);
     const hasActiveTracks = nonClosedTracks.some(t=>t.state==="active");
-    const [selectedChip, setSelectedChip] = useState(1);
     const [manualBets, setManualBets] = useState([]);
     const [lastBets, setLastBets] = useState([]);
     const [betResults, setBetResults] = useState(null);
@@ -676,7 +676,7 @@ export default function App() {
           <button onClick={doubleBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#fbbf24":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0&&!betResults?"pointer":"default"}}>2× Double</button>
           <button onClick={repeatBets} disabled={lastBets.length===0} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:lastBets.length>0?"#86efac":"#374151",fontSize:10,fontWeight:700,cursor:lastBets.length>0?"pointer":"default"}}>♻ Repeat</button>
         </div>
-        {totalBetAmt>0 && <div style={{textAlign:"center",fontSize:12,fontWeight:800,color:"#fbbf24"}}>Total Bet: {cur.symbol}{totalBetAmt.toFixed(cur.dec)}</div>}
+        {totalBetAmt>0 && <div style={{textAlign:"center",fontSize:12,fontWeight:800,color:"#fbbf24"}}>Total Bet: {cur.symbol}{fmtNum(totalBetAmt)}</div>}
 
         {/* Roulette Table - interactive */}
         {(()=>{
@@ -715,12 +715,12 @@ export default function App() {
           <div style={{display:"flex",gap:8,width:"100%"}}>
             <div style={{flex:1,background:pnlVal>=0?"#0a1f0a":"#200505",borderRadius:12,padding:"12px 10px",border:"1px solid "+(pnlVal>=0?"#16a34a":"#991b1b"),textAlign:"center"}}>
               <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>Session Profit</div>
-              <div style={{fontSize:24,fontWeight:900,color:pnlVal>=0?"#4ade80":"#f87171"}}>{pnlVal>=0?"+":"-"}{cur.symbol}{Math.abs(pnlVal).toFixed(cur.dec)}</div>
+              <div style={{fontSize:24,fontWeight:900,color:pnlVal>=0?"#4ade80":"#f87171"}}>{pnlVal>=0?"+":"-"}{cur.symbol}{fmtNum(pnlVal)}</div>
             </div>
             {lastSpinDelta!==null && (
               <div style={{width:100,background:lastSpinDelta>0?"#0a1f0a":lastSpinDelta<0?"#200505":"#0f1923",borderRadius:12,padding:"12px 10px",border:"1px solid "+(lastSpinDelta>0?"#16a34a":lastSpinDelta<0?"#991b1b":"#2d4057"),textAlign:"center"}}>
                 <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>Last Spin</div>
-                <div style={{fontSize:20,fontWeight:900,color:lastSpinDelta>0?"#4ade80":lastSpinDelta<0?"#f87171":"#94a3b8"}}>{lastSpinDelta>0?"+":lastSpinDelta<0?"-":""}{cur.symbol}{Math.abs(lastSpinDelta).toFixed(cur.dec)}</div>
+                <div style={{fontSize:20,fontWeight:900,color:lastSpinDelta>0?"#4ade80":lastSpinDelta<0?"#f87171":"#94a3b8"}}>{lastSpinDelta>0?"+":lastSpinDelta<0?"-":""}{cur.symbol}{fmtNum(lastSpinDelta)}</div>
               </div>
             )}
           </div>
@@ -763,7 +763,7 @@ export default function App() {
                     <div style={{width:10,height:10,borderRadius:"50%",background:t.color,flexShrink:0}}/>
                     <span style={{fontSize:11,fontWeight:700,color:t.color,flex:1}}>{TRACK_ICONS[t.type]} {t.type==="fibonacci"?"Progression":"The Solution"}</span>
                     <span style={{fontSize:9,color:t.state==="active"?"#4ade80":"#fbbf24",fontWeight:700}}>[{t.state.toUpperCase()}]</span>
-                    <span style={{fontSize:12,fontWeight:800,color:dolPnl>=0?"#4ade80":"#f87171"}}>{dolPnl>=0?"+":"-"}{cur.symbol}{Math.abs(dolPnl).toFixed(cur.dec)}</span>
+                    <span style={{fontSize:12,fontWeight:800,color:dolPnl>=0?"#4ade80":"#f87171"}}>{dolPnl>=0?"+":"-"}{cur.symbol}{fmtNum(dolPnl)}</span>
                   </div>
                   <div style={{display:"flex",gap:8,marginBottom:6}}>
                     <span style={{fontSize:10,color:"#94a3b8"}}>Lvl <strong style={{color:t.level>=10?"#f87171":t.level>=6?"#fbbf24":"#e2e8f0"}}>{t.level}</strong>/{tbl.length}</span>
@@ -900,7 +900,7 @@ export default function App() {
                     <div style={{width:10,height:10,borderRadius:"50%",background:t.color,flexShrink:0}}/>
                     <span style={{fontSize:11,fontWeight:700,color:t.color,flex:1}}>{TRACK_ICONS[t.type]} {t.type==="fibonacci"?"Progression Bet":"The Solution"}</span>
                     <span style={{fontSize:9,color:t.state==="active"?"#4ade80":t.state==="parked"?"#fbbf24":"#94a3b8",fontWeight:700}}>[{t.state.toUpperCase()}]</span>
-                    <span style={{fontSize:12,fontWeight:800,color:dolPnl>=0?"#4ade80":"#f87171"}}>{dolPnl>=0?"+":"-"}{cur.symbol}{Math.abs(dolPnl).toFixed(cur.dec)}</span>
+                    <span style={{fontSize:12,fontWeight:800,color:dolPnl>=0?"#4ade80":"#f87171"}}>{dolPnl>=0?"+":"-"}{cur.symbol}{fmtNum(dolPnl)}</span>
                   </div>
                   <div style={{display:"flex",gap:8,marginBottom:6}}>
                     <span style={{fontSize:10,color:"#94a3b8"}}>Lvl <strong style={{color:t.level>=10?"#f87171":t.level>=6?"#fbbf24":"#e2e8f0"}}>{t.level}</strong>/{tbl.length}</span>
@@ -1240,7 +1240,7 @@ export default function App() {
               {l:"Total Buy Ins",v:"+"+fmtMoney(sess.totalBuyIn||0,currency),c:"#a78bfa"},
               {l:"Total Cash Outs",v:sess.totalCashOut>0?fmtMoney(sess.totalCashOut||0,currency):fmtMoney(0,currency),c:"#f97316"},
               {l:"Net Money In",v:fmtMoney((sess.totalBuyIn||0)-(sess.totalCashOut||0),currency),c:(sess.totalBuyIn||0)>=(sess.totalCashOut||0)?"#f87171":"#4ade80"},
-              {l:"Net P&L",v:(pnlVal>=0?"+":"-")+cur.symbol+Math.abs(pnlVal).toFixed(cur.dec),c:pnlColor},
+              {l:"Net P&L",v:(pnlVal>=0?"+":"-")+cur.symbol+fmtNum(pnlVal),c:pnlColor},
             ].map(({l,v,c}) => (
               <div key={l} style={{background:"#0f1923",borderRadius:10,padding:"10px 8px",border:"1px solid #2d4057",textAlign:"center"}}>
                 <div style={{fontSize:8,color:"#64748b",textTransform:"uppercase",marginBottom:3}}>{l}</div>
@@ -1566,7 +1566,7 @@ export default function App() {
                 <button onClick={()=>setEditBankroll(true)} style={{fontSize:12,color:"#64748b",background:"transparent",border:"none",cursor:"pointer",padding:0}}>
                   Bank: <strong style={{color:"#60a5fa"}}>{fmtMoney(sess.bankrollCurrent,currency)}</strong> <span style={{fontSize:9,color:"#334155"}}>✏️</span>
                 </button>
-                <span style={{fontSize:12,color:"#64748b"}}>Profit: <strong style={{color:pnlColor}}>{pnlVal>=0?"+":"-"}{cur.symbol}{Math.abs(pnlVal).toFixed(cur.dec)}</strong></span>
+                <span style={{fontSize:12,color:"#64748b"}}>Profit: <strong style={{color:pnlColor}}>{pnlVal>=0?"+":"-"}{cur.symbol}{fmtNum(pnlVal)}</strong></span>
                 <span style={{fontSize:12,color:"#64748b"}}>Spins: <strong style={{color:"#e2e8f0"}}>{sess.spins.length}</strong></span>
               </div>
               <div style={{display:"flex",gap:8,marginTop:8,justifyContent:"center"}}>

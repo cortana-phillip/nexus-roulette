@@ -144,12 +144,13 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
 
   function BetChip({amount,posKey}){
     if(!amount) return null;
-    var lbl = amount>=1000?(amount/1000)+"k":amount>=1?amount.toFixed(0):amount<1?(amount*100)+"¢":"";
+    var lbl = amount>=1000?(amount/1000)+"k":amount>=100?amount.toFixed(0):amount>=1?(amount%1!==0?amount.toFixed(2):amount.toFixed(0)):amount<1?(amount*100)+"¢":"";
+    var fs = lbl.length>3?6:lbl.length>2?7:8;
     var result = br[posKey]||null;
     var bgC = result==="won"?"#16a34a":result==="lost"?"#991b1b":(chipColor||"#fff");
     var bdC = result==="won"?"#4ade80":result==="lost"?"#f87171":"#92400e";
     var shadow = result==="won"?"0 0 8px #4ade80":result==="lost"?"0 0 6px #ef4444":"0 1px 3px rgba(0,0,0,0.5)";
-    return React.createElement("div",{style:{position:"absolute",bottom:-2,left:"50%",transform:"translateX(-50%)",minWidth:18,height:18,borderRadius:9,background:bgC,border:"2px solid "+bdC,fontSize:8,fontWeight:900,color:result?"#fff":"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px",zIndex:5,boxShadow:shadow,animation:result==="won"?"pulse 0.8s infinite":"none"}},lbl);
+    return React.createElement("div",{style:{position:"absolute",bottom:-2,left:"50%",transform:"translateX(-50%)",minWidth:16,height:16,borderRadius:8,background:bgC,border:"1.5px solid "+bdC,fontSize:fs,fontWeight:900,color:result?"#fff":"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 2px",zIndex:5,boxShadow:shadow,animation:result==="won"?"pulse 0.8s infinite":"none",whiteSpace:"nowrap"}},lbl);
   }
 
   function cell(num,isZero,zeroLabel){
