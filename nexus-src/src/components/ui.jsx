@@ -86,7 +86,7 @@ function DCard({label, range, drought, colorBd, colorTx}) {
 }
 
 // Self-contained clock that won't cause parent re-renders
-function SessionClock({startedAt, endedAt, style}) {
+function SessionClock({startedAt, endedAt, style, pauseOffset}) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     if(endedAt) return;
@@ -94,7 +94,8 @@ function SessionClock({startedAt, endedAt, style}) {
     return () => clearInterval(id);
   }, [endedAt]);
   const t = endedAt || now;
-  return React.createElement("span", {style}, formatElapsed(t - startedAt));
+  const elapsed = Math.max(0, (t - startedAt) - (pauseOffset||0));
+  return React.createElement("span", {style}, formatElapsed(elapsed));
 }
 
 // -- Roulette Table Board --

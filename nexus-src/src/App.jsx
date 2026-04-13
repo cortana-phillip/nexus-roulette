@@ -4,6 +4,22 @@ export default function App() {
   const [driveSyncStatus, setDriveSyncStatus] = useState(getDriveToken()?"connected":"disconnected");
   const [tab, setTab] = useState(0);
   const [appMode, setAppMode] = useState("game"); // "game" | "live" | "sim"
+  const [livePausedAt, setLivePausedAt] = useState(Date.now()); // paused since app starts in game mode
+  const [livePausedTotal, setLivePausedTotal] = useState(0);
+
+  // Track paused time when leaving/entering live mode
+  useEffect(() => {
+    if(appMode === "live") {
+      // Returning to live - accumulate paused time
+      if(livePausedAt) {
+        setLivePausedTotal(prev => prev + (Date.now() - livePausedAt));
+        setLivePausedAt(null);
+      }
+    } else {
+      // Leaving live - start pause timer
+      if(!livePausedAt) setLivePausedAt(Date.now());
+    }
+  }, [appMode]);
   const [simCfg, setSimCfg] = useState(defaultSimConfig);
   const [simRunning, setSimRunning] = useState(false);
   const [simPaused, setSimPaused] = useState(false);
@@ -51,6 +67,7 @@ export default function App() {
 
   const sessKey = appMode==="game"?"gameSession":"currentSession";
   const sess = appState[sessKey] || appState.currentSession;
+  const livePauseOffset = livePausedTotal + (livePausedAt ? (Date.now() - livePausedAt) : 0);
   const settings = appState.settings || defaultSettings();
   const saved = appState.savedSessions || [];
   const currency = settings.currency || "USD";
@@ -829,7 +846,7 @@ export default function App() {
               ? <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <div style={{width:8,height:8,borderRadius:"50%",background:"#4ade80",animation:"pulse 1.5s infinite"}}/>
                   <span style={{fontSize:12,color:"#94a3b8"}}>Session Active</span>
-                  <SessionClock startedAt={sess.sessionStartedAt} style={{fontSize:16,fontWeight:800,color:"#4ade80",fontVariantNumeric:"tabular-nums"}}/>
+                  <SessionClock startedAt={sess.sessionStartedAt} pauseOffset={livePauseOffset} style={{fontSize:16,fontWeight:800,color:"#4ade80",fontVariantNumeric:"tabular-nums"}}/>
                 </div>
               : <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <div style={{width:8,height:8,borderRadius:"50%",background:"#fbbf24"}}/>
@@ -1228,7 +1245,7 @@ export default function App() {
           {sess.sessionStartedAt && (
             <div style={{background:"#0c1520",borderRadius:9,padding:"8px 12px",border:"1px solid #2d4057",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <span style={{fontSize:11,color:"#64748b"}}>Session Time</span>
-              <SessionClock startedAt={sess.sessionStartedAt} endedAt={sess.sessionEndedAt} style={{fontSize:14,fontWeight:800,color:"#4ade80",fontVariantNumeric:"tabular-nums"}}/>
+              <SessionClock startedAt={sess.sessionStartedAt} endedAt={sess.sessionEndedAt} pauseOffset={livePauseOffset} style={{fontSize:14,fontWeight:800,color:"#4ade80",fontVariantNumeric:"tabular-nums"}}/>
               {(()=>{
                 const hrs=((sess.sessionEndedAt||Date.now())-sess.sessionStartedAt)/3600000;
                 const rate=hrs>0.01?pnlVal/hrs:null;
