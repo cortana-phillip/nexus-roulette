@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.35.0";
+  var MY_V="0.35.1";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -391,7 +391,7 @@ var TRACK_ICONS = {
   solution: "🎯"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.35.0";
+var APP_VERSION = "0.35.1";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2495,11 +2495,13 @@ function RouletteBoard(_ref16) {
     spinning = _ref16.spinning,
     onBet = _ref16.onBet,
     boardBets = _ref16.boardBets,
-    chipColor = _ref16.chipColor;
+    chipColor = _ref16.chipColor,
+    betResults = _ref16.betResults;
   var isAmerican = roulette === "american";
   var bets = betNumbers || {};
   var bb = boardBets || {};
-  var canBet = !!onBet && !spinning;
+  var br = betResults || {};
+  var canBet = !!onBet && !spinning && !betResults;
   var BOARD_ROWS = [[3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36], [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35], [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]];
   var g = 2;
   var winStr = winningNumber ? String(winningNumber) : null;
@@ -2566,29 +2568,35 @@ function RouletteBoard(_ref16) {
     });
   }
   function BetChip(_ref17) {
-    var amount = _ref17.amount;
+    var amount = _ref17.amount,
+      posKey = _ref17.posKey;
     if (!amount) return null;
     var lbl = amount >= 1000 ? amount / 1000 + "k" : amount >= 1 ? amount.toFixed(0) : amount < 1 ? amount * 100 + "¢" : "";
+    var result = br[posKey] || null;
+    var bgC = result === "won" ? "#16a34a" : result === "lost" ? "#991b1b" : chipColor || "#fff";
+    var bdC = result === "won" ? "#4ade80" : result === "lost" ? "#f87171" : "#92400e";
+    var shadow = result === "won" ? "0 0 8px #4ade80" : result === "lost" ? "0 0 6px #ef4444" : "0 1px 3px rgba(0,0,0,0.5)";
     return React.createElement("div", {
       style: {
         position: "absolute",
         bottom: -2,
         left: "50%",
         transform: "translateX(-50%)",
-        minWidth: 16,
-        height: 16,
-        borderRadius: 8,
-        background: chipColor || "#fff",
-        border: "1.5px solid #92400e",
-        fontSize: 7,
+        minWidth: 18,
+        height: 18,
+        borderRadius: 9,
+        background: bgC,
+        border: "2px solid " + bdC,
+        fontSize: 8,
         fontWeight: 900,
-        color: "#1e293b",
+        color: result ? "#fff" : "#1e293b",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "0 2px",
+        padding: "0 3px",
         zIndex: 5,
-        boxShadow: "0 1px 3px rgba(0,0,0,0.5)"
+        boxShadow: shadow,
+        animation: result === "won" ? "pulse 0.8s infinite" : "none"
       }
     }, lbl);
   }
@@ -2604,7 +2612,8 @@ function RouletteBoard(_ref16) {
         cursor: canBet ? "pointer" : "default"
       })
     }, numStr, winStr === numStr && !spinning && React.createElement(Mkr), bb[betKey] && React.createElement(BetChip, {
-      amount: bb[betKey]
+      amount: bb[betKey],
+      posKey: betKey
     }));
   }
   return /*#__PURE__*/React.createElement("div", {
@@ -2677,7 +2686,8 @@ function RouletteBoard(_ref16) {
         position: "relative"
       }
     }, "2:1", bb[bk] && React.createElement(BetChip, {
-      amount: bb[bk]
+      amount: bb[bk],
+      posKey: bk
     }));
   }))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2718,7 +2728,8 @@ function RouletteBoard(_ref16) {
         position: "relative"
       }
     }, d.l, bb[bk] && React.createElement(BetChip, {
-      amount: bb[bk]
+      amount: bb[bk],
+      posKey: bk
     }));
   })), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2774,7 +2785,8 @@ function RouletteBoard(_ref16) {
         position: "relative"
       }
     }, em.l, bb[bk] && React.createElement(BetChip, {
-      amount: bb[bk]
+      amount: bb[bk],
+      posKey: bk
     }));
   })));
 }
@@ -7899,6 +7911,10 @@ function App() {
       _useState110 = _slicedToArray(_useState109, 2),
       lastBets = _useState110[0],
       setLastBets = _useState110[1];
+    var _useState111 = (0, _react.useState)(null),
+      _useState112 = _slicedToArray(_useState111, 2),
+      betResults = _useState112[0],
+      setBetResults = _useState112[1]; // {posKey: "won"|"lost"}
     var tMin = settings.tableMinBet || 1;
     var CHIPS = [{
       val: 0.25,
@@ -7943,7 +7959,7 @@ function App() {
     }, 0);
     var canSpin = manualBets.length > 0 || hasActiveTracks;
     function placeBet(type, target) {
-      if (gameSpinning) return;
+      if (gameSpinning || betResults) return;
       setManualBets(function (prev) {
         return [].concat(_toConsumableArray(prev), [{
           id: Date.now() + Math.random(),
@@ -7990,9 +8006,11 @@ function App() {
       var n = isZ ? null : +winVal;
       var totalWin = 0,
         totalBet = 0;
+      var posResults = {};
       manualBets.forEach(function (b) {
         totalBet += b.amount;
         var won = false;
+        var posKey = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
         if (b.type === "straight" && String(b.target) === winVal) won = true;
         if (!isZ && n) {
           if (b.type === "dozen") {
@@ -8013,16 +8031,20 @@ function App() {
         if (won) {
           var pay = b.type === "straight" ? b.amount * 36 : b.type === "dozen" || b.type === "column" ? b.amount * 3 : b.amount * 2;
           totalWin += pay;
+          posResults[posKey] = "won";
+        } else {
+          if (!posResults[posKey]) posResults[posKey] = "lost";
         }
       });
       return {
         totalWin: totalWin,
         totalBet: totalBet,
-        profit: totalWin - totalBet
+        profit: totalWin - totalBet,
+        posResults: posResults
       };
     }
     function doGameSpin() {
-      if (gameSpinning || !canSpin) return;
+      if (gameSpinning || !canSpin || betResults) return;
       setGameSpinning(true);
       if (!sess.sessionStartedAt) updSess(function (s) {
         s.sessionStartedAt = Date.now();
@@ -8036,7 +8058,6 @@ function App() {
           clearInterval(iv);
           var val = nums[Math.floor(Math.random() * nums.length)];
           setGameResult(val);
-          // Process strategy tracks
           if (hasActiveTracks) tapNumber(val, true);else {
             updSess(function (s) {
               s.spins.push(val);
@@ -8048,7 +8069,7 @@ function App() {
               s.droughts = nd;
             });
           }
-          // Process manual bets
+          // Process manual bets - keep visible with results
           if (manualBets.length > 0) {
             var res = resolveManualBets(val);
             updSess(function (s) {
@@ -8057,9 +8078,16 @@ function App() {
             setLastSpinDelta(function (prev) {
               return (prev || 0) + res.profit;
             });
+            setBetResults(res.posResults);
+            setLastBets(_toConsumableArray(manualBets));
+            // Keep bets visible for 3 seconds, then clear
+            setTimeout(function () {
+              setBetResults(null);
+              setManualBets([]);
+            }, 3000);
+          } else {
+            setLastBets([]);
           }
-          setLastBets(_toConsumableArray(manualBets));
-          setManualBets([]);
           if (settings.vibration !== false && navigator.vibrate) navigator.vibrate(30);
           setTimeout(function () {
             return setGameSpinning(false);
@@ -8271,7 +8299,8 @@ function App() {
         boardBets: boardBets,
         chipColor: (CHIPS.find(function (c) {
           return c.val === selectedChip;
-        }) || CHIPS[0]).color
+        }) || CHIPS[0]).color,
+        betResults: betResults
       });
     }(), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
@@ -9703,10 +9732,10 @@ function App() {
 
   // -- Spin Log Page --
   function SpinPage() {
-    var _useState111 = (0, _react.useState)(false),
-      _useState112 = _slicedToArray(_useState111, 2),
-      showAll = _useState112[0],
-      setShowAll = _useState112[1];
+    var _useState113 = (0, _react.useState)(false),
+      _useState114 = _slicedToArray(_useState113, 2),
+      showAll = _useState114[0],
+      setShowAll = _useState114[1];
     var displaySpins = showAll ? _toConsumableArray(sess.spins).reverse() : _toConsumableArray(sess.spins).reverse().slice(0, 60);
     return /*#__PURE__*/React.createElement("div", {
       style: {
@@ -10238,10 +10267,10 @@ function App() {
 
   // -- Settings Page --
   function SettingsPage() {
-    var _useState113 = (0, _react.useState)(settings.defaultBuyIn || 100),
-      _useState114 = _slicedToArray(_useState113, 2),
-      localBuyIn = _useState114[0],
-      setLocalBuyIn = _useState114[1];
+    var _useState115 = (0, _react.useState)(settings.defaultBuyIn || 100),
+      _useState116 = _slicedToArray(_useState115, 2),
+      localBuyIn = _useState116[0],
+      setLocalBuyIn = _useState116[1];
     function saveBuyIn() {
       updSettings(function (s) {
         s.defaultBuyIn = localBuyIn;
@@ -10762,10 +10791,10 @@ function App() {
   // -- Bankroll Edit --
   function BankrollEdit(_ref73) {
     var onClose = _ref73.onClose;
-    var _useState115 = (0, _react.useState)(sess.bankrollCurrent),
-      _useState116 = _slicedToArray(_useState115, 2),
-      val = _useState116[0],
-      setVal = _useState116[1];
+    var _useState117 = (0, _react.useState)(sess.bankrollCurrent),
+      _useState118 = _slicedToArray(_useState117, 2),
+      val = _useState118[0],
+      setVal = _useState118[1];
     function save() {
       updSess(function (s) {
         s.bankrollCurrent = val;

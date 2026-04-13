@@ -511,6 +511,7 @@ export default function App() {
     const [selectedChip, setSelectedChip] = useState(1);
     const [manualBets, setManualBets] = useState([]);
     const [lastBets, setLastBets] = useState([]);
+    const [betResults, setBetResults] = useState(null); // {posKey: "won"|"lost"}
     const tMin = settings.tableMinBet||1;
 
     const CHIPS = [
@@ -527,7 +528,7 @@ export default function App() {
     const canSpin = manualBets.length>0 || hasActiveTracks;
 
     function placeBet(type, target) {
-      if(gameSpinning) return;
+      if(gameSpinning || betResults) return;
       setManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type,target,amount:selectedChip}]);
       if(settings.vibration!==false && navigator.vibrate) navigator.vibrate(10);
     }
@@ -547,9 +548,11 @@ export default function App() {
       const isZ = winVal==="0"||winVal==="00";
       const n = isZ?null:+winVal;
       var totalWin=0, totalBet=0;
+      var posResults = {};
       manualBets.forEach(function(b){
         totalBet+=b.amount;
         var won=false;
+        var posKey = b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
         if(b.type==="straight"&&String(b.target)===winVal) won=true;
         if(!isZ&&n){
           if(b.type==="dozen") { var d=n<=12?0:n<=24?1:2; if(b.target===d) won=true; }
@@ -564,13 +567,16 @@ export default function App() {
         if(won){
           var pay = b.type==="straight"?b.amount*36:(b.type==="dozen"||b.type==="column")?b.amount*3:b.amount*2;
           totalWin+=pay;
+          posResults[posKey]="won";
+        } else {
+          if(!posResults[posKey]) posResults[posKey]="lost";
         }
       });
-      return {totalWin:totalWin,totalBet:totalBet,profit:totalWin-totalBet};
+      return {totalWin:totalWin,totalBet:totalBet,profit:totalWin-totalBet,posResults:posResults};
     }
 
     function doGameSpin() {
-      if(gameSpinning||!canSpin) return;
+      if(gameSpinning||!canSpin||betResults) return;
       setGameSpinning(true);
       if(!sess.sessionStartedAt) updSess(s=>{s.sessionStartedAt=Date.now();});
       const nums = wheelNums;
@@ -582,17 +588,20 @@ export default function App() {
           clearInterval(iv);
           const val = nums[Math.floor(Math.random()*nums.length)];
           setGameResult(val);
-          // Process strategy tracks
           if(hasActiveTracks) tapNumber(val, true);
           else { updSess(s=>{s.spins.push(val);const nd={...s.droughts};Object.keys(nd).forEach(k=>nd[k]++);nd[val]=0;s.droughts=nd;}); }
-          // Process manual bets
+          // Process manual bets - keep visible with results
           if(manualBets.length>0){
             const res = resolveManualBets(val);
             updSess(s=>{s.bankrollCurrent=Math.round((s.bankrollCurrent+res.profit)*100)/100;});
             setLastSpinDelta(prev=>(prev||0)+res.profit);
+            setBetResults(res.posResults);
+            setLastBets([...manualBets]);
+            // Keep bets visible for 3 seconds, then clear
+            setTimeout(()=>{ setBetResults(null); setManualBets([]); },3000);
+          } else {
+            setLastBets([]);
           }
-          setLastBets([...manualBets]);
-          setManualBets([]);
           if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate(30);
           setTimeout(()=>setGameSpinning(false),300);
         }
@@ -657,7 +666,7 @@ export default function App() {
               (t.config.activeBets||[]).forEach(b=>{ if(!betNums[b.number]) betNums[b.number]=t.color; });
             }
           });
-          return <RouletteBoard roulette={sess.roulette} winningNumber={gameResult} betNumbers={betNums} spinning={gameSpinning} onBet={placeBet} boardBets={boardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color}/>;
+          return <RouletteBoard roulette={sess.roulette} winningNumber={gameResult} betNumbers={betNums} spinning={gameSpinning} onBet={placeBet} boardBets={boardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={betResults}/>;
         })()}
 
         {/* Recent spins ticker */}
