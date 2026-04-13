@@ -511,7 +511,9 @@ export default function App() {
     const [selectedChip, setSelectedChip] = useState(1);
     const [manualBets, setManualBets] = useState([]);
     const [lastBets, setLastBets] = useState([]);
-    const [betResults, setBetResults] = useState(null); // {posKey: "won"|"lost"}
+    const [betResults, setBetResults] = useState(null);
+    const [undoStack, setUndoStack] = useState([]); // how many bets each action added
+    const clearTimerRef = React.useRef(null);
     const tMin = settings.tableMinBet||1;
 
     const CHIPS = [
@@ -527,15 +529,43 @@ export default function App() {
     const totalBetAmt = manualBets.reduce((s,b)=>s+b.amount,0);
     const canSpin = manualBets.length>0 || hasActiveTracks;
 
+    function cancelPendingClear() {
+      if(clearTimerRef.current) { clearTimeout(clearTimerRef.current); clearTimerRef.current=null; }
+      if(betResults) { setBetResults(null); setManualBets([]); }
+    }
+
     function placeBet(type, target) {
-      if(gameSpinning || betResults) return;
+      if(gameSpinning) return;
+      if(betResults) cancelPendingClear();
       setManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type,target,amount:selectedChip}]);
+      setUndoStack(prev=>[...prev,1]);
       if(settings.vibration!==false && navigator.vibrate) navigator.vibrate(10);
     }
-    function undoBet() { setManualBets(prev=>prev.slice(0,-1)); }
-    function clearBets() { setManualBets([]); }
-    function doubleBets() { setManualBets(prev=>[...prev,...prev.map(b=>({...b,id:Date.now()+Math.random()}))]); }
-    function repeatBets() { if(lastBets.length>0) setManualBets(lastBets.map(b=>({...b,id:Date.now()+Math.random()}))); }
+    function undoBet() {
+      if(betResults) return;
+      setUndoStack(prev=>{
+        if(prev.length===0) return prev;
+        const count = prev[prev.length-1];
+        setManualBets(mb=>mb.slice(0,-count));
+        return prev.slice(0,-1);
+      });
+    }
+    function clearBets() { setManualBets([]); setUndoStack([]); }
+    function doubleBets() {
+      if(betResults) return;
+      setManualBets(prev=>{
+        const doubled = prev.map(b=>({...b,id:Date.now()+Math.random()}));
+        setUndoStack(us=>[...us,prev.length]);
+        return [...prev,...doubled];
+      });
+    }
+    function repeatBets() {
+      if(lastBets.length===0) return;
+      cancelPendingClear();
+      const repeated = lastBets.map(b=>({...b,id:Date.now()+Math.random()}));
+      setManualBets(repeated);
+      setUndoStack([repeated.length]);
+    }
 
     // Aggregate bets by position for display
     const boardBets = {};
@@ -590,15 +620,14 @@ export default function App() {
           setGameResult(val);
           if(hasActiveTracks) tapNumber(val, true);
           else { updSess(s=>{s.spins.push(val);const nd={...s.droughts};Object.keys(nd).forEach(k=>nd[k]++);nd[val]=0;s.droughts=nd;}); }
-          // Process manual bets - keep visible with results
           if(manualBets.length>0){
             const res = resolveManualBets(val);
             updSess(s=>{s.bankrollCurrent=Math.round((s.bankrollCurrent+res.profit)*100)/100;});
             setLastSpinDelta(prev=>(prev||0)+res.profit);
             setBetResults(res.posResults);
             setLastBets([...manualBets]);
-            // Keep bets visible for 3 seconds, then clear
-            setTimeout(()=>{ setBetResults(null); setManualBets([]); },3000);
+            setUndoStack([]);
+            clearTimerRef.current = setTimeout(()=>{ setBetResults(null); setManualBets([]); clearTimerRef.current=null; },3000);
           } else {
             setLastBets([]);
           }
@@ -642,9 +671,9 @@ export default function App() {
 
         {/* Bet controls */}
         <div style={{display:"flex",gap:4,alignItems:"center"}}>
-          <button onClick={undoBet} disabled={manualBets.length===0} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0?"#60a5fa":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0?"pointer":"default"}}>↩ Undo</button>
-          <button onClick={clearBets} disabled={manualBets.length===0} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0?"#f87171":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0?"pointer":"default"}}>✕ Clear</button>
-          <button onClick={doubleBets} disabled={manualBets.length===0} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0?"#fbbf24":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0?"pointer":"default"}}>2× Double</button>
+          <button onClick={undoBet} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#60a5fa":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0&&!betResults?"pointer":"default"}}>↩ Undo</button>
+          <button onClick={clearBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#f87171":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0&&!betResults?"pointer":"default"}}>✕ Clear</button>
+          <button onClick={doubleBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#fbbf24":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0&&!betResults?"pointer":"default"}}>2× Double</button>
           <button onClick={repeatBets} disabled={lastBets.length===0} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:lastBets.length>0?"#86efac":"#374151",fontSize:10,fontWeight:700,cursor:lastBets.length>0?"pointer":"default"}}>♻ Repeat</button>
         </div>
         {totalBetAmt>0 && <div style={{textAlign:"center",fontSize:12,fontWeight:800,color:"#fbbf24"}}>Total Bet: {cur.symbol}{totalBetAmt.toFixed(cur.dec)}</div>}

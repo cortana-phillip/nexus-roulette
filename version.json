@@ -1,1 +1,1 @@
-{"version":"0.35.1","date":"2026-04-13","notes":"Bets stay visible after spin! Winning bets glow green, losing bets show red. Bets clear after 3 seconds."}
+{"version":"0.35.2","date":"2026-04-13","notes":"Undo now undoes full actions (including doubles). Repeat works right after spin. Bets stay visible with green/red results for 3 seconds."}
