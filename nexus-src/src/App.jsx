@@ -43,6 +43,8 @@ export default function App() {
   const [editBankroll, setEditBankroll] = useState(false);
   const [cashOutOpen, setCashOutOpen] = useState(false);
   const [hardResetOpen, setHardResetOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
   const [pendingTrackType, setPendingTrackType] = useState("fibonacci");
   const [pendingTrackCfg, setPendingTrackCfg] = useState(defaultFibCfg());
 
@@ -433,6 +435,15 @@ export default function App() {
   function newEmptySession() {
     updApp(s=>{s.currentSession=newSession("american",500);});
     setTab(0);
+  }
+
+  async function submitFeedback() {
+    if(!feedbackText.trim()) return;
+    const subject = encodeURIComponent("[Nexus Roulette Feedback] " + feedbackText.trim().slice(0, 60));
+    const body = encodeURIComponent(feedbackText.trim() + "\n\n---\nv" + APP_VERSION + " · " + new Date().toLocaleString() + " · " + sess.spins.length + " spins");
+    window.open("mailto:info@nexus-foundry.ai?subject=" + subject + "&body=" + body, "_self");
+    setFeedbackText("");
+    setFeedbackOpen(false);
   }
 
   function exportJSON() {
@@ -1481,6 +1492,24 @@ export default function App() {
       {changelogOpen && <ChangelogModal onClose={()=>setChangelogOpen(false)}/>}
       {editBankroll && <BankrollEdit onClose={()=>setEditBankroll(false)}/>}
       {hardResetOpen && <HardResetModal onClose={()=>setHardResetOpen(false)} onExport={exportJSON}/>}
+
+      {/* Floating feedback button */}
+      <button onClick={()=>setFeedbackOpen(true)} style={{position:"fixed",top:12,left:12,width:36,height:36,borderRadius:"50%",border:"none",background:"#1e2d3d",color:"#94a3b8",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,0.4)",zIndex:900}}>🐛</button>
+
+      {/* Feedback modal */}
+      {feedbackOpen && (
+        <Modal onClose={()=>setFeedbackOpen(false)}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+            <div style={{fontSize:17,fontWeight:800,color:"#e2e8f0"}}>🐛💡 Feedback</div>
+            <button onClick={()=>setFeedbackOpen(false)} style={{background:"transparent",border:"none",color:"#64748b",fontSize:22,cursor:"pointer"}}>×</button>
+          </div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:12,lineHeight:1.5}}>Found a bug? Have an idea to make the app better? Let us know! You can also use your phone's voice-to-text.</div>
+          <textarea value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="What's on your mind? Describe what's not working or what you'd like to see..." style={{width:"100%",minHeight:120,padding:12,borderRadius:10,border:"1px solid #2d4057",background:"#0f1923",color:"#e2e8f0",fontSize:14,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+          <button onClick={submitFeedback} disabled={!feedbackText.trim()} style={{width:"100%",marginTop:12,padding:"14px 0",borderRadius:12,border:"none",background:feedbackText.trim()?"#16a34a":"#374151",color:"white",fontSize:15,fontWeight:800,cursor:feedbackText.trim()?"pointer":"not-allowed"}}>
+            Send Feedback
+          </button>
+        </Modal>
+      )}
       </div>
     </div>
   );

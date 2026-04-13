@@ -12,7 +12,7 @@ const COL_TX = ["#5eead4","#f9a8d4","#bef264"];
 const TRACK_COLORS = ["#f59e0b","#2dd4bf","#a855f7","#f97316","#38bdf8"];
 const TRACK_ICONS = { fibonacci:"🎲", solution:"🎯" };
 const KEY = "nexus-roulette-v1";
-const APP_VERSION = "0.31.0";
+const APP_VERSION = "0.32.0";
 const ROI_PRESETS = [5,10,15,20,25,30];
 const UNITS = [0.25, 0.50, 1.00];
 
@@ -34,6 +34,10 @@ const CURRENCIES = {
 };
 
 const CHANGELOG = [
+  { v:"0.32.0", date:"Apr 13, 2026", title:"Feedback Button", changes:[
+    "Bug report & idea suggestion button (🐛) — floating top-left corner",
+    "Submit feedback with text or voice-to-text, goes directly to developer",
+  ]},
   { v:"0.31.0", date:"Apr 13, 2026", title:"Game Mode & Auto-Updates", changes:[
     "Game Mode — spin a virtual roulette wheel with your strategies, default mode on launch",
     "Auto-update detection — get notified when a new version is available, tap to update",
