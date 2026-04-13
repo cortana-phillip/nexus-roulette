@@ -372,6 +372,7 @@ var TRACK_ICONS = {
   solution: "🎯"
 };
 var KEY = "nexus-roulette-v1";
+var APP_VERSION = "0.5.0";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -475,6 +476,21 @@ var CURRENCIES = {
   }
 };
 var CHANGELOG = [{
+  v: "0.5.0",
+  date: "Apr 13, 2026",
+  title: "Game Mode & Auto-Updates",
+  changes: ["Game Mode — spin a virtual roulette wheel with your strategies, default mode on launch", "Auto-update detection — get notified when a new version is available, tap to update", "Session Profit display with last spin result", "Changelog versioning system"]
+}, {
+  v: "0.4.0",
+  date: "Apr 13, 2026",
+  title: "Cloud Sync & Strategy Editing",
+  changes: ["Google Drive backup — auto-saves on every session save, manual Restore from Cloud button", "Editing a strategy now parks the original and creates a new active variation", "Losses now properly tracked in session profit (was only showing wins)", "Hard reset now deletes cloud backup too", "Import session data loads and activates the imported session"]
+}, {
+  v: "0.3.0",
+  date: "Apr 13, 2026",
+  title: "Three-Mode Layout",
+  changes: ["Three app modes: Game, Live, Experimental (formerly Simulation)", "Full drought panel — even money, dozens, and columns all visible", "Session clock isolated — no more edit panel resets", "Network-first service worker — updates load without clearing cache"]
+}, {
   v: "1.2.0",
   date: "Apr 2025",
   title: "Cash Flow Tracking",
@@ -6700,38 +6716,58 @@ function App() {
     _useState82 = _slicedToArray(_useState81, 2),
     lastSpinDelta = _useState82[0],
     setLastSpinDelta = _useState82[1];
-  var _useState83 = (0, _react.useState)(false),
+  var _useState83 = (0, _react.useState)(null),
     _useState84 = _slicedToArray(_useState83, 2),
-    buyInOpen = _useState84[0],
-    setBuyInOpen = _useState84[1];
+    updateAvailable = _useState84[0],
+    setUpdateAvailable = _useState84[1];
+
+  // Check for app updates every 60 seconds
+  (0, _react.useEffect)(function () {
+    function checkUpdate() {
+      fetch("version.json?t=" + Date.now()).then(function (r) {
+        return r.json();
+      }).then(function (data) {
+        if (data.version && data.version !== APP_VERSION) setUpdateAvailable(data.version);
+      }).catch(function () {});
+    }
+    checkUpdate();
+    var iv = setInterval(checkUpdate, 60000);
+    return function () {
+      return clearInterval(iv);
+    };
+  }, []);
   var _useState85 = (0, _react.useState)(false),
     _useState86 = _slicedToArray(_useState85, 2),
-    currencyOpen = _useState86[0],
-    setCurrencyOpen = _useState86[1];
+    buyInOpen = _useState86[0],
+    setBuyInOpen = _useState86[1];
   var _useState87 = (0, _react.useState)(false),
     _useState88 = _slicedToArray(_useState87, 2),
-    changelogOpen = _useState88[0],
-    setChangelogOpen = _useState88[1];
+    currencyOpen = _useState88[0],
+    setCurrencyOpen = _useState88[1];
   var _useState89 = (0, _react.useState)(false),
     _useState90 = _slicedToArray(_useState89, 2),
-    editBankroll = _useState90[0],
-    setEditBankroll = _useState90[1];
+    changelogOpen = _useState90[0],
+    setChangelogOpen = _useState90[1];
   var _useState91 = (0, _react.useState)(false),
     _useState92 = _slicedToArray(_useState91, 2),
-    cashOutOpen = _useState92[0],
-    setCashOutOpen = _useState92[1];
+    editBankroll = _useState92[0],
+    setEditBankroll = _useState92[1];
   var _useState93 = (0, _react.useState)(false),
     _useState94 = _slicedToArray(_useState93, 2),
-    hardResetOpen = _useState94[0],
-    setHardResetOpen = _useState94[1];
-  var _useState95 = (0, _react.useState)("fibonacci"),
+    cashOutOpen = _useState94[0],
+    setCashOutOpen = _useState94[1];
+  var _useState95 = (0, _react.useState)(false),
     _useState96 = _slicedToArray(_useState95, 2),
-    pendingTrackType = _useState96[0],
-    setPendingTrackType = _useState96[1];
-  var _useState97 = (0, _react.useState)(defaultFibCfg()),
+    hardResetOpen = _useState96[0],
+    setHardResetOpen = _useState96[1];
+  var _useState97 = (0, _react.useState)("fibonacci"),
     _useState98 = _slicedToArray(_useState97, 2),
-    pendingTrackCfg = _useState98[0],
-    setPendingTrackCfg = _useState98[1];
+    pendingTrackType = _useState98[0],
+    setPendingTrackType = _useState98[1];
+  var _useState99 = (0, _react.useState)(defaultFibCfg()),
+    _useState100 = _slicedToArray(_useState99, 2),
+    pendingTrackCfg = _useState100[0],
+    setPendingTrackCfg = _useState100[1];
   var sess = appState.currentSession;
   var settings = appState.settings || defaultSettings();
   var saved = appState.savedSessions || [];
@@ -9007,10 +9043,10 @@ function App() {
 
   // -- Spin Log Page --
   function SpinPage() {
-    var _useState99 = (0, _react.useState)(false),
-      _useState100 = _slicedToArray(_useState99, 2),
-      showAll = _useState100[0],
-      setShowAll = _useState100[1];
+    var _useState101 = (0, _react.useState)(false),
+      _useState102 = _slicedToArray(_useState101, 2),
+      showAll = _useState102[0],
+      setShowAll = _useState102[1];
     var displaySpins = showAll ? _toConsumableArray(sess.spins).reverse() : _toConsumableArray(sess.spins).reverse().slice(0, 60);
     return /*#__PURE__*/React.createElement("div", {
       style: {
@@ -9542,10 +9578,10 @@ function App() {
 
   // -- Settings Page --
   function SettingsPage() {
-    var _useState101 = (0, _react.useState)(settings.defaultBuyIn || 100),
-      _useState102 = _slicedToArray(_useState101, 2),
-      localBuyIn = _useState102[0],
-      setLocalBuyIn = _useState102[1];
+    var _useState103 = (0, _react.useState)(settings.defaultBuyIn || 100),
+      _useState104 = _slicedToArray(_useState103, 2),
+      localBuyIn = _useState104[0],
+      setLocalBuyIn = _useState104[1];
     function saveBuyIn() {
       updSettings(function (s) {
         s.defaultBuyIn = localBuyIn;
@@ -10066,10 +10102,10 @@ function App() {
   // -- Bankroll Edit --
   function BankrollEdit(_ref71) {
     var onClose = _ref71.onClose;
-    var _useState103 = (0, _react.useState)(sess.bankrollCurrent),
-      _useState104 = _slicedToArray(_useState103, 2),
-      val = _useState104[0],
-      setVal = _useState104[1];
+    var _useState105 = (0, _react.useState)(sess.bankrollCurrent),
+      _useState106 = _slicedToArray(_useState105, 2),
+      val = _useState106[0],
+      setVal = _useState106[1];
     function save() {
       updSess(function (s) {
         s.bankrollCurrent = val;
@@ -10298,7 +10334,49 @@ function App() {
       fontWeight: 700,
       cursor: "pointer"
     }
-  }, "\uD83D\uDCB8 Cash Out")))), appMode === "sim" && /*#__PURE__*/React.createElement(SimModePage, {
+  }, "\uD83D\uDCB8 Cash Out")))), updateAvailable && /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      // Save current state before reload
+      saveApp(appState);
+      window.location.reload();
+    },
+    style: {
+      width: "100%",
+      padding: "12px 16px",
+      borderRadius: 12,
+      border: "2px solid #7c3aed",
+      background: "linear-gradient(135deg,#1e1040,#2d1060)",
+      color: "white",
+      fontSize: 13,
+      fontWeight: 700,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 800
+    }
+  }, "\uD83C\uDF89 Update Available \u2014 v", updateAvailable), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "#c4b5fd",
+      marginTop: 2
+    }
+  }, "Tap to update. No data will be lost.")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 22
+    }
+  }, "\u21BB")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9,
+      color: "#374151",
+      textAlign: "center"
+    }
+  }, "v", APP_VERSION), appMode === "sim" && /*#__PURE__*/React.createElement(SimModePage, {
     simCfg: simCfg,
     setSimCfg: setSimCfg,
     simRunning: simRunning,

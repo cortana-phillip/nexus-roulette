@@ -23,6 +23,19 @@ export default function App() {
   const [gameSpinning, setGameSpinning] = useState(false);
   const [gameResult, setGameResult] = useState(null);
   const [lastSpinDelta, setLastSpinDelta] = useState(null);
+  const [updateAvailable, setUpdateAvailable] = useState(null);
+
+  // Check for app updates every 60 seconds
+  useEffect(() => {
+    function checkUpdate() {
+      fetch("version.json?t="+Date.now()).then(r=>r.json()).then(data=>{
+        if(data.version && data.version !== APP_VERSION) setUpdateAvailable(data.version);
+      }).catch(()=>{});
+    }
+    checkUpdate();
+    const iv = setInterval(checkUpdate, 60000);
+    return () => clearInterval(iv);
+  }, []);
 
   const [buyInOpen, setBuyInOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
@@ -1417,6 +1430,24 @@ export default function App() {
             </div>
           )}
         </div>
+
+        {/* Update banner */}
+        {updateAvailable && (
+          <button onClick={()=>{
+            // Save current state before reload
+            saveApp(appState);
+            window.location.reload();
+          }} style={{width:"100%",padding:"12px 16px",borderRadius:12,border:"2px solid #7c3aed",background:"linear-gradient(135deg,#1e1040,#2d1060)",color:"white",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+            <div>
+              <div style={{fontSize:13,fontWeight:800}}>🎉 Update Available — v{updateAvailable}</div>
+              <div style={{fontSize:10,color:"#c4b5fd",marginTop:2}}>Tap to update. No data will be lost.</div>
+            </div>
+            <span style={{fontSize:22}}>↻</span>
+          </button>
+        )}
+
+        {/* Version badge */}
+        <div style={{fontSize:9,color:"#374151",textAlign:"center"}}>v{APP_VERSION}</div>
 
         {appMode==="sim" && <SimModePage simCfg={simCfg} setSimCfg={setSimCfg} simRunning={simRunning} setSimRunning={setSimRunning} simPaused={simPaused} setSimPaused={setSimPaused} simProgress={simProgress} setSimProgress={setSimProgress} simResults={simResults} setSimResults={setSimResults} simDone={simDone} setSimDone={setSimDone} simStopRef={simStopRef} currency={currency} cur={cur}/>}
 

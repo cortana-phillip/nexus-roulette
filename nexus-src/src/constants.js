@@ -12,6 +12,7 @@ const COL_TX = ["#5eead4","#f9a8d4","#bef264"];
 const TRACK_COLORS = ["#f59e0b","#2dd4bf","#a855f7","#f97316","#38bdf8"];
 const TRACK_ICONS = { fibonacci:"🎲", solution:"🎯" };
 const KEY = "nexus-roulette-v1";
+const APP_VERSION = "0.5.0";
 const ROI_PRESETS = [5,10,15,20,25,30];
 const UNITS = [0.25, 0.50, 1.00];
 
@@ -33,6 +34,25 @@ const CURRENCIES = {
 };
 
 const CHANGELOG = [
+  { v:"0.5.0", date:"Apr 13, 2026", title:"Game Mode & Auto-Updates", changes:[
+    "Game Mode — spin a virtual roulette wheel with your strategies, default mode on launch",
+    "Auto-update detection — get notified when a new version is available, tap to update",
+    "Session Profit display with last spin result",
+    "Changelog versioning system",
+  ]},
+  { v:"0.4.0", date:"Apr 13, 2026", title:"Cloud Sync & Strategy Editing", changes:[
+    "Google Drive backup — auto-saves on every session save, manual Restore from Cloud button",
+    "Editing a strategy now parks the original and creates a new active variation",
+    "Losses now properly tracked in session profit (was only showing wins)",
+    "Hard reset now deletes cloud backup too",
+    "Import session data loads and activates the imported session",
+  ]},
+  { v:"0.3.0", date:"Apr 13, 2026", title:"Three-Mode Layout", changes:[
+    "Three app modes: Game, Live, Experimental (formerly Simulation)",
+    "Full drought panel — even money, dozens, and columns all visible",
+    "Session clock isolated — no more edit panel resets",
+    "Network-first service worker — updates load without clearing cache",
+  ]},
   { v:"1.2.0", date:"Apr 2025", title:"Cash Flow Tracking", changes:[
     "Cash Out button -- withdraw any amount from your bankroll at any time",
     "Full money flow log -- tracks every buy in and cash out with spin number",

@@ -1,4 +1,4 @@
-const CACHE = 'nexus-roulette-v64';
+const CACHE = 'nexus-roulette-v65';
 const FILES = ['./','./index.html','./manifest.json','./icon.svg'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
@@ -9,6 +9,11 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 self.addEventListener('fetch', e => {
+  // Never cache version.json — always fetch fresh for update detection
+  if(e.request.url.includes('version.json')) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
   // Network-first for HTML — always get latest version
   if(e.request.mode === 'navigate' || e.request.url.endsWith('.html') || e.request.url.endsWith('/')) {
     e.respondWith(
