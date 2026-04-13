@@ -106,66 +106,73 @@ function RouletteBoard({roulette, winningNumber, betNumbers}) {
     [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
     [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
   ];
-  const cellH = 34;
-  const cellW = "1fr";
-  const zeroW = 28;
-  const gap = 2;
+  const g = 2;
   const winStr = winningNumber ? String(winningNumber) : null;
+  const winN = winStr && winStr!=="0" && winStr!=="00" ? +winStr : null;
+  // Compute winning groups
+  const winGroups = {};
+  if(winN) {
+    winGroups.col = winN%3===0?2:winN%3===1?0:1;
+    winGroups.doz = winN<=12?0:winN<=24?1:2;
+    if(RED.has(winN)) winGroups.red=true; else winGroups.black=true;
+    if(winN%2===1) winGroups.odd=true; else winGroups.even=true;
+    if(winN<=18) winGroups.low=true; else winGroups.high=true;
+  }
+  var glow = function(on){return on?"0 0 8px #fbbf24, inset 0 0 6px #fbbf2444":"none";};
+  var obdr = function(on){return on?"2px solid #fbbf24":"1px solid #374151";};
+  var otxt = function(on){return on?"#fbbf24":"#94a3b8";};
+  var obg = function(on,base){return on?(base||"#1c1000"):(base||"#0f1923");};
 
-  function cellStyle(num, isZero) {
-    const numStr = String(isZero ? (num === 0 ? "0" : "00") : num);
-    const isRed = !isZero && RED.has(num);
-    const isWin = winStr === numStr;
-    const betColor = bets[numStr] || null;
+  function numStyle(num, isZero) {
+    var numStr = String(isZero ? (num===0?"0":"00") : num);
+    var isRed = !isZero && RED.has(num);
+    var isWin = winStr===numStr;
+    var betColor = bets[numStr]||null;
     return {
-      position: "relative",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      height: cellH, borderRadius: 4, cursor: "default",
-      background: isZero ? "#166534" : isRed ? "#991b1b" : "#1e293b",
-      border: isWin ? "2px solid #fbbf24" : betColor ? "2px solid "+betColor : "1px solid #374151",
-      color: isWin ? "#fbbf24" : "white",
-      fontSize: isZero ? 11 : 12, fontWeight: 800,
-      boxShadow: isWin ? "0 0 12px #fbbf24, inset 0 0 8px #fbbf2444" : betColor ? "inset 0 0 6px "+betColor+"44" : "none",
-      zIndex: isWin ? 2 : 1,
-      transition: "box-shadow 0.3s, border 0.3s",
+      position:"relative", display:"flex", alignItems:"center", justifyContent:"center",
+      height:32, borderRadius:3, cursor:"default",
+      background: isZero?"#166534":isRed?"#991b1b":"#1e293b",
+      border: isWin?"2px solid #fbbf24":betColor?"2px solid "+betColor:"1px solid #374151",
+      color: isWin?"#fbbf24":"white",
+      fontSize: isZero?10:11, fontWeight:800,
+      boxShadow: isWin?"0 0 10px #fbbf24, inset 0 0 6px #fbbf2444":betColor?"inset 0 0 5px "+betColor+"44":"none",
+      zIndex: isWin?2:1, transition:"box-shadow 0.3s",
     };
   }
 
-  function Marker() {
-    return React.createElement("div", {style: {
-      position: "absolute", top: -6, right: -4,
-      width: 14, height: 14, borderRadius: "50%",
-      background: "#fbbf24", border: "2px solid #92400e",
-      boxShadow: "0 0 6px #fbbf24",
-      animation: "pulse 1s infinite",
-    }});
-  }
+  function Mkr(){return React.createElement("div",{style:{position:"absolute",top:-5,right:-3,width:12,height:12,borderRadius:"50%",background:"#fbbf24",border:"2px solid #92400e",boxShadow:"0 0 6px #fbbf24",animation:"pulse 1s infinite"}});}
 
   return (
-    <div style={{width: "100%", overflow: "hidden", borderRadius: 8, border: "1px solid #2d4057", background: "#0a1218", padding: 4}}>
-      <div style={{display: "flex", gap: gap}}>
-        {/* Zeros column */}
-        <div style={{display: "flex", flexDirection: "column", gap: gap, width: zeroW, flexShrink: 0}}>
-          <div style={{...cellStyle(0, true), flex: isAmerican ? 1 : 1}}>
-            0
-            {winStr === "0" && React.createElement(Marker)}
-          </div>
-          {isAmerican && (
-            <div style={{...cellStyle(0, true), flex: 1}}>
-              00
-              {winStr === "00" && React.createElement(Marker)}
-            </div>
-          )}
+    <div style={{width:"100%",overflow:"hidden",borderRadius:8,border:"1px solid #2d4057",background:"#0a1218",padding:4,display:"flex",flexDirection:"column",gap:g}}>
+      {/* Main grid: zeros + numbers + column bets */}
+      <div style={{display:"flex",gap:g}}>
+        <div style={{display:"flex",flexDirection:"column",gap:g,width:26,flexShrink:0}}>
+          <div style={{...numStyle(0,true),flex:1}}>0{winStr==="0"&&React.createElement(Mkr)}</div>
+          {isAmerican&&<div style={{...numStyle(0,true),flex:1}}>00{winStr==="00"&&React.createElement(Mkr)}</div>}
         </div>
-        {/* Numbers grid */}
-        <div style={{flex: 1, display: "grid", gridTemplateColumns: "repeat(12, " + cellW + ")", gridTemplateRows: "repeat(3, " + cellH + "px)", gap: gap}}>
-          {BOARD_ROWS.map((row) => row.map((num) => (
-            <div key={num} style={cellStyle(num, false)}>
-              {num}
-              {winStr === String(num) && React.createElement(Marker)}
-            </div>
-          )))}
+        <div style={{flex:1,display:"grid",gridTemplateColumns:"repeat(12,1fr)",gridTemplateRows:"repeat(3,32px)",gap:g}}>
+          {BOARD_ROWS.map(function(row){return row.map(function(num){return(
+            React.createElement("div",{key:num,style:numStyle(num,false)},num,winStr===String(num)&&React.createElement(Mkr))
+          );});})}
         </div>
+        <div style={{display:"flex",flexDirection:"column",gap:g,width:28,flexShrink:0}}>
+          {[2,1,0].map(function(c){return React.createElement("div",{key:c,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,border:obdr(winGroups.col===c),color:otxt(winGroups.col===c),background:obg(winGroups.col===c),boxShadow:glow(winGroups.col===c),fontSize:8,fontWeight:700,transition:"all 0.3s"}},"2:1");})}
+        </div>
+      </div>
+      {/* Dozens row */}
+      <div style={{display:"flex",gap:g,marginLeft:26+g}}>
+        {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){return React.createElement("div",{key:d.i,style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:10,fontWeight:700,border:obdr(winGroups.doz===d.i),color:otxt(winGroups.doz===d.i),background:obg(winGroups.doz===d.i),boxShadow:glow(winGroups.doz===d.i),transition:"all 0.3s"}},d.l);})}
+      </div>
+      {/* Even money row */}
+      <div style={{display:"flex",gap:g,marginLeft:26+g}}>
+        {[
+          {l:"1-18",k:"low",bg:"#0f1923"},
+          {l:"EVEN",k:"even",bg:"#0f1923"},
+          {l:"RED",k:"red",bg:"#7f1d1d"},
+          {l:"BLK",k:"black",bg:"#1e293b"},
+          {l:"ODD",k:"odd",bg:"#0f1923"},
+          {l:"19-36",k:"high",bg:"#0f1923"},
+        ].map(function(em){var on=!!winGroups[em.k];return React.createElement("div",{key:em.k,style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:9,fontWeight:700,border:obdr(on),color:on?"#fbbf24":em.k==="red"?"#f87171":em.k==="black"?"#94a3b8":"#94a3b8",background:on?"#1c1000":em.bg,boxShadow:glow(on),transition:"all 0.3s"}},em.l);})}
       </div>
     </div>
   );

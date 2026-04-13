@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.33.2";
+  var MY_V="0.34.0";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -391,7 +391,7 @@ var TRACK_ICONS = {
   solution: "🎯"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.33.2";
+var APP_VERSION = "0.34.0";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -495,6 +495,11 @@ var CURRENCIES = {
   }
 };
 var CHANGELOG = [{
+  v: "0.34.0",
+  date: "Apr 13, 2026",
+  title: "Full Roulette Table",
+  changes: ["Complete roulette table with outside bets — columns (2:1), dozens, and even money", "Winning spin highlights the number AND all matching outside bets with golden glow", "Strategy bet numbers highlighted with track colors on the board"]
+}, {
   v: "0.33.0",
   date: "Apr 13, 2026",
   title: "Roulette Table Display",
@@ -2485,12 +2490,31 @@ function RouletteBoard(_ref16) {
   var isAmerican = roulette === "american";
   var bets = betNumbers || {};
   var BOARD_ROWS = [[3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36], [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35], [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]];
-  var cellH = 34;
-  var cellW = "1fr";
-  var zeroW = 28;
-  var gap = 2;
+  var g = 2;
   var winStr = winningNumber ? String(winningNumber) : null;
-  function cellStyle(num, isZero) {
+  var winN = winStr && winStr !== "0" && winStr !== "00" ? +winStr : null;
+  // Compute winning groups
+  var winGroups = {};
+  if (winN) {
+    winGroups.col = winN % 3 === 0 ? 2 : winN % 3 === 1 ? 0 : 1;
+    winGroups.doz = winN <= 12 ? 0 : winN <= 24 ? 1 : 2;
+    if (RED.has(winN)) winGroups.red = true;else winGroups.black = true;
+    if (winN % 2 === 1) winGroups.odd = true;else winGroups.even = true;
+    if (winN <= 18) winGroups.low = true;else winGroups.high = true;
+  }
+  var glow = function glow(on) {
+    return on ? "0 0 8px #fbbf24, inset 0 0 6px #fbbf2444" : "none";
+  };
+  var obdr = function obdr(on) {
+    return on ? "2px solid #fbbf24" : "1px solid #374151";
+  };
+  var otxt = function otxt(on) {
+    return on ? "#fbbf24" : "#94a3b8";
+  };
+  var obg = function obg(on, base) {
+    return on ? base || "#1c1000" : base || "#0f1923";
+  };
+  function numStyle(num, isZero) {
     var numStr = String(isZero ? num === 0 ? "0" : "00" : num);
     var isRed = !isZero && RED.has(num);
     var isWin = winStr === numStr;
@@ -2500,27 +2524,27 @@ function RouletteBoard(_ref16) {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      height: cellH,
-      borderRadius: 4,
+      height: 32,
+      borderRadius: 3,
       cursor: "default",
       background: isZero ? "#166534" : isRed ? "#991b1b" : "#1e293b",
       border: isWin ? "2px solid #fbbf24" : betColor ? "2px solid " + betColor : "1px solid #374151",
       color: isWin ? "#fbbf24" : "white",
-      fontSize: isZero ? 11 : 12,
+      fontSize: isZero ? 10 : 11,
       fontWeight: 800,
-      boxShadow: isWin ? "0 0 12px #fbbf24, inset 0 0 8px #fbbf2444" : betColor ? "inset 0 0 6px " + betColor + "44" : "none",
+      boxShadow: isWin ? "0 0 10px #fbbf24, inset 0 0 6px #fbbf2444" : betColor ? "inset 0 0 5px " + betColor + "44" : "none",
       zIndex: isWin ? 2 : 1,
-      transition: "box-shadow 0.3s, border 0.3s"
+      transition: "box-shadow 0.3s"
     };
   }
-  function Marker() {
+  function Mkr() {
     return React.createElement("div", {
       style: {
         position: "absolute",
-        top: -6,
-        right: -4,
-        width: 14,
-        height: 14,
+        top: -5,
+        right: -3,
+        width: 12,
+        height: 12,
         borderRadius: "50%",
         background: "#fbbf24",
         border: "2px solid #92400e",
@@ -2536,45 +2560,154 @@ function RouletteBoard(_ref16) {
       borderRadius: 8,
       border: "1px solid #2d4057",
       background: "#0a1218",
-      padding: 4
+      padding: 4,
+      display: "flex",
+      flexDirection: "column",
+      gap: g
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: gap
+      gap: g
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
-      gap: gap,
-      width: zeroW,
+      gap: g,
+      width: 26,
       flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("div", {
-    style: _objectSpread(_objectSpread({}, cellStyle(0, true)), {}, {
-      flex: isAmerican ? 1 : 1
-    })
-  }, "0", winStr === "0" && React.createElement(Marker)), isAmerican && /*#__PURE__*/React.createElement("div", {
-    style: _objectSpread(_objectSpread({}, cellStyle(0, true)), {}, {
+    style: _objectSpread(_objectSpread({}, numStyle(0, true)), {}, {
       flex: 1
     })
-  }, "00", winStr === "00" && React.createElement(Marker))), /*#__PURE__*/React.createElement("div", {
+  }, "0", winStr === "0" && React.createElement(Mkr)), isAmerican && /*#__PURE__*/React.createElement("div", {
+    style: _objectSpread(_objectSpread({}, numStyle(0, true)), {}, {
+      flex: 1
+    })
+  }, "00", winStr === "00" && React.createElement(Mkr))), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       display: "grid",
-      gridTemplateColumns: "repeat(12, " + cellW + ")",
-      gridTemplateRows: "repeat(3, " + cellH + "px)",
-      gap: gap
+      gridTemplateColumns: "repeat(12,1fr)",
+      gridTemplateRows: "repeat(3,32px)",
+      gap: g
     }
   }, BOARD_ROWS.map(function (row) {
     return row.map(function (num) {
-      return /*#__PURE__*/React.createElement("div", {
+      return React.createElement("div", {
         key: num,
-        style: cellStyle(num, false)
-      }, num, winStr === String(num) && React.createElement(Marker));
+        style: numStyle(num, false)
+      }, num, winStr === String(num) && React.createElement(Mkr));
     });
-  }))));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: g,
+      width: 28,
+      flexShrink: 0
+    }
+  }, [2, 1, 0].map(function (c) {
+    return React.createElement("div", {
+      key: c,
+      style: {
+        flex: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 3,
+        border: obdr(winGroups.col === c),
+        color: otxt(winGroups.col === c),
+        background: obg(winGroups.col === c),
+        boxShadow: glow(winGroups.col === c),
+        fontSize: 8,
+        fontWeight: 700,
+        transition: "all 0.3s"
+      }
+    }, "2:1");
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: g,
+      marginLeft: 26 + g
+    }
+  }, [{
+    l: "1st 12",
+    i: 0
+  }, {
+    l: "2nd 12",
+    i: 1
+  }, {
+    l: "3rd 12",
+    i: 2
+  }].map(function (d) {
+    return React.createElement("div", {
+      key: d.i,
+      style: {
+        flex: 1,
+        padding: "6px 0",
+        borderRadius: 3,
+        textAlign: "center",
+        fontSize: 10,
+        fontWeight: 700,
+        border: obdr(winGroups.doz === d.i),
+        color: otxt(winGroups.doz === d.i),
+        background: obg(winGroups.doz === d.i),
+        boxShadow: glow(winGroups.doz === d.i),
+        transition: "all 0.3s"
+      }
+    }, d.l);
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: g,
+      marginLeft: 26 + g
+    }
+  }, [{
+    l: "1-18",
+    k: "low",
+    bg: "#0f1923"
+  }, {
+    l: "EVEN",
+    k: "even",
+    bg: "#0f1923"
+  }, {
+    l: "RED",
+    k: "red",
+    bg: "#7f1d1d"
+  }, {
+    l: "BLK",
+    k: "black",
+    bg: "#1e293b"
+  }, {
+    l: "ODD",
+    k: "odd",
+    bg: "#0f1923"
+  }, {
+    l: "19-36",
+    k: "high",
+    bg: "#0f1923"
+  }].map(function (em) {
+    var on = !!winGroups[em.k];
+    return React.createElement("div", {
+      key: em.k,
+      style: {
+        flex: 1,
+        padding: "6px 0",
+        borderRadius: 3,
+        textAlign: "center",
+        fontSize: 9,
+        fontWeight: 700,
+        border: obdr(on),
+        color: on ? "#fbbf24" : em.k === "red" ? "#f87171" : em.k === "black" ? "#94a3b8" : "#94a3b8",
+        background: on ? "#1c1000" : em.bg,
+        boxShadow: glow(on),
+        transition: "all 0.3s"
+      }
+    }, em.l);
+  })));
 }
 
 // ===== components/RouletteIcon.jsx =====
@@ -10822,4 +10955,4 @@ function App() {
 })();
 </script>
 </body>
-</html><!-- v74 -->
+</html>
