@@ -6999,7 +6999,7 @@ function App() {
             if (cat !== "loss") {
               var _profit4 = hitCount * payMult * (row ? row.c : 1) - (row ? row.totalInvest : 0);
               var spinDelta = hitCount * payMult * (row ? row.c : 1) - (row ? row.c : 1) * numTargets;
-              t.pnl += _profit4;
+              t.pnl += spinDelta;
               t.wins++;
               t.sequences++;
               t.level = 0;
@@ -7020,14 +7020,16 @@ function App() {
                 cat: cat
               });
             } else {
+              var betChips = (row ? row.c : 1) * numTargets;
+              t.pnl -= betChips;
               t.bets.push({
                 spinIdx: s.spins.length - 1,
                 level: t.level,
                 outcome: "loss",
-                profit: 0,
+                profit: -betChips,
                 cat: "loss"
               });
-              var bc = (row ? row.c : 1) * (t.config.unit || 1) * numTargets;
+              var bc = betChips * (t.config.unit || 1);
               totalDelta -= bc;
               if (t.level < tbl.length - 1) t.level++;else {
                 t.state = "closed";
@@ -7050,12 +7052,13 @@ function App() {
           bets.forEach(function (b) {
             if (b.number === val) {
               var _row4 = tbl[Math.min(b.level, tbl.length - 1)];
+              var winDelta = _row4 ? _row4.ret - _row4.c : 0;
               var _profit5 = _row4 ? _row4.profit : 0;
-              t.pnl += _profit5;
+              t.pnl += winDelta;
               t.wins++;
               t.sequences++;
               resolved.push(b.number);
-              totalDelta += _profit5 * (t.config.unit || 1);
+              totalDelta += winDelta * (t.config.unit || 1);
               t.bets.push({
                 spinIdx: s.spins.length - 1,
                 level: b.level,
@@ -7072,16 +7075,18 @@ function App() {
                 cat: "win"
               });
             } else {
+              var lossCost = tbl[Math.min(b.level, tbl.length - 1)] ? tbl[Math.min(b.level, tbl.length - 1)].c : 1;
+              t.pnl -= lossCost;
               b.level = Math.min(b.level + 1, tbl.length - 1);
               trackResults.push({
                 name: TRACK_ICONS[t.type] + " #" + b.number,
                 color: t.color,
-                profit: -(tbl[b.level] ? tbl[b.level].c : 1),
+                profit: -lossCost,
                 unit: t.config.unit || 1,
                 outcome: "Miss",
                 cat: "loss"
               });
-              totalDelta -= (tbl[b.level] ? tbl[b.level].c : 1) * (t.config.unit || 1);
+              totalDelta -= lossCost * (t.config.unit || 1);
             }
           });
           t.config.activeBets = bets.filter(function (b) {
@@ -7089,9 +7094,7 @@ function App() {
           });
         }
       });
-      s.bankrollCurrent = Math.round((s.bankroll + (s.totalBuyIn || 0) - (s.totalCashOut || 0) + s.tracks.reduce(function (sum, t) {
-        return sum + t.pnl * (t.config.unit || 1);
-      }, 0)) * 100) / 100;
+      s.bankrollCurrent = Math.round((s.bankrollCurrent + totalDelta) * 100) / 100;
     });
     if (trackResults.length > 0) {
       setResult({
@@ -7629,7 +7632,7 @@ function App() {
         letterSpacing: 1,
         marginBottom: 2
       }
-    }, "Total P&L"), /*#__PURE__*/React.createElement("div", {
+    }, "Session Profit"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 24,
         fontWeight: 900,
@@ -10247,7 +10250,7 @@ function App() {
       fontSize: 12,
       color: "#64748b"
     }
-  }, "P&L: ", /*#__PURE__*/React.createElement("strong", {
+  }, "Profit: ", /*#__PURE__*/React.createElement("strong", {
     style: {
       color: pnlColor
     }

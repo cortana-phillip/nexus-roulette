@@ -1,4 +1,4 @@
-const CACHE = 'nexus-roulette-v63';
+const CACHE = 'nexus-roulette-v64';
 const FILES = ['./','./index.html','./manifest.json','./icon.svg'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));

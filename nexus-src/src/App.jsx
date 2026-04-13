@@ -190,13 +190,15 @@ export default function App() {
             if(cat!=="loss") {
               const profit=hitCount*payMult*(row?row.c:1)-(row?row.totalInvest:0);
               const spinDelta=hitCount*payMult*(row?row.c:1)-(row?row.c:1)*numTargets;
-              t.pnl+=profit; t.wins++; t.sequences++; t.level=0;
+              t.pnl+=spinDelta; t.wins++; t.sequences++; t.level=0;
               t.bets.push({spinIdx:s.spins.length-1,level:t.level,outcome:"win",profit,cat});
               totalDelta+=spinDelta*(t.config.unit||1);
               trackResults.push({name:TRACK_ICONS[t.type]+(effectiveBetMode==="martingale"?" Martingale":effectiveBetMode==="flat"?" Flat":" Prog"),color:t.color,profit,unit:t.config.unit||1,outcome:cat==="jackpot"?"Jackpot!":"Win",cat});
             } else {
-              t.bets.push({spinIdx:s.spins.length-1,level:t.level,outcome:"loss",profit:0,cat:"loss"});
-              const bc=(row?row.c:1)*(t.config.unit||1)*numTargets;
+              const betChips=(row?row.c:1)*numTargets;
+              t.pnl-=betChips;
+              t.bets.push({spinIdx:s.spins.length-1,level:t.level,outcome:"loss",profit:-betChips,cat:"loss"});
+              const bc=betChips*(t.config.unit||1);
               totalDelta-=bc;
               if(t.level<tbl.length-1) t.level++; else{ t.state="closed"; t.closedAtSpin=s.spins.length-1; }
               trackResults.push({name:TRACK_ICONS[t.type]+(effectiveBetMode==="martingale"?" Martingale":" Prog"),color:t.color,profit:-(row?row.c:1),unit:t.config.unit||1,outcome:"Miss",cat:"loss"});
@@ -208,26 +210,24 @@ export default function App() {
           bets.forEach(b => {
             if(b.number===val) {
               const row=tbl[Math.min(b.level,tbl.length-1)];
+              const winDelta=row?(row.ret-row.c):0;
               const profit=row?row.profit:0;
-              t.pnl+=profit; t.wins++; t.sequences++; resolved.push(b.number);
-              totalDelta+=profit*(t.config.unit||1);
+              t.pnl+=winDelta; t.wins++; t.sequences++; resolved.push(b.number);
+              totalDelta+=winDelta*(t.config.unit||1);
               t.bets.push({spinIdx:s.spins.length-1,level:b.level,outcome:"win",profit,cat:"win"});
               trackResults.push({name:TRACK_ICONS[t.type]+" #"+b.number,color:t.color,profit,unit:t.config.unit||1,outcome:"Win",cat:"win"});
             } else {
+              const lossCost=(tbl[Math.min(b.level,tbl.length-1)]?tbl[Math.min(b.level,tbl.length-1)].c:1);
+              t.pnl-=lossCost;
               b.level=Math.min(b.level+1,tbl.length-1);
-              trackResults.push({name:TRACK_ICONS[t.type]+" #"+b.number,color:t.color,profit:-(tbl[b.level]?tbl[b.level].c:1),unit:t.config.unit||1,outcome:"Miss",cat:"loss"});
-              totalDelta-=(tbl[b.level]?tbl[b.level].c:1)*(t.config.unit||1);
+              trackResults.push({name:TRACK_ICONS[t.type]+" #"+b.number,color:t.color,profit:-lossCost,unit:t.config.unit||1,outcome:"Miss",cat:"loss"});
+              totalDelta-=lossCost*(t.config.unit||1);
             }
           });
           t.config.activeBets=bets.filter(b=>!resolved.includes(b.number));
         }
       });
-      s.bankrollCurrent = Math.round((
-        s.bankroll +
-        (s.totalBuyIn||0) -
-        (s.totalCashOut||0) +
-        s.tracks.reduce((sum,t) => sum + t.pnl*(t.config.unit||1), 0)
-      )*100)/100;
+      s.bankrollCurrent = Math.round((s.bankrollCurrent + totalDelta)*100)/100;
     });
     if(trackResults.length>0) { setResult({val,trackResults,totalDelta}); setLastSpinDelta(totalDelta); }
     // Visual flash
@@ -555,7 +555,7 @@ export default function App() {
         {sess.spins.length>0 && (
           <div style={{display:"flex",gap:8,width:"100%"}}>
             <div style={{flex:1,background:pnlVal>=0?"#0a1f0a":"#200505",borderRadius:12,padding:"12px 10px",border:"1px solid "+(pnlVal>=0?"#16a34a":"#991b1b"),textAlign:"center"}}>
-              <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>Total P&L</div>
+              <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>Session Profit</div>
               <div style={{fontSize:24,fontWeight:900,color:pnlVal>=0?"#4ade80":"#f87171"}}>{pnlVal>=0?"+":"-"}{cur.symbol}{Math.abs(pnlVal).toFixed(cur.dec)}</div>
             </div>
             {lastSpinDelta!==null && (
@@ -1407,7 +1407,7 @@ export default function App() {
                 <button onClick={()=>setEditBankroll(true)} style={{fontSize:12,color:"#64748b",background:"transparent",border:"none",cursor:"pointer",padding:0}}>
                   Bank: <strong style={{color:"#60a5fa"}}>{fmtMoney(sess.bankrollCurrent,currency)}</strong> <span style={{fontSize:9,color:"#334155"}}>✏️</span>
                 </button>
-                <span style={{fontSize:12,color:"#64748b"}}>P&L: <strong style={{color:pnlColor}}>{pnlVal>=0?"+":"-"}{cur.symbol}{Math.abs(pnlVal).toFixed(cur.dec)}</strong></span>
+                <span style={{fontSize:12,color:"#64748b"}}>Profit: <strong style={{color:pnlColor}}>{pnlVal>=0?"+":"-"}{cur.symbol}{Math.abs(pnlVal).toFixed(cur.dec)}</strong></span>
                 <span style={{fontSize:12,color:"#64748b"}}>Spins: <strong style={{color:"#e2e8f0"}}>{sess.spins.length}</strong></span>
               </div>
               <div style={{display:"flex",gap:8,marginTop:8,justifyContent:"center"}}>
