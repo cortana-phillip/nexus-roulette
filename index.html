@@ -372,7 +372,7 @@ var TRACK_ICONS = {
   solution: "🎯"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.32.0";
+var APP_VERSION = "0.32.1";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -6736,7 +6736,7 @@ function App() {
       }).catch(function () {});
     }
     checkUpdate();
-    var iv = setInterval(checkUpdate, 60000);
+    var iv = setInterval(checkUpdate, 10000);
     return function () {
       return clearInterval(iv);
     };

@@ -33,7 +33,7 @@ export default function App() {
       }).catch(()=>{});
     }
     checkUpdate();
-    const iv = setInterval(checkUpdate, 60000);
+    const iv = setInterval(checkUpdate, 10000);
     return () => clearInterval(iv);
   }, []);
 
