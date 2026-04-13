@@ -97,6 +97,9 @@ const iife = `(function(){
   );
 })();`;
 
+const appVersion = compiled.match(/APP_VERSION\s*=\s*"([^"]+)"/);
+const versionStr = appVersion ? appVersion[1] : "0.0.0";
+
 const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -115,7 +118,26 @@ const html = `<!DOCTYPE html>
 html,body{background:#0f1923;min-height:100%;}
 button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-family:inherit;cursor:pointer;}
 #root{min-height:100vh;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 </style>
+<script>
+// Pre-app update check — runs before React, works even when HTML is cached
+(function(){
+  var MY_V="${versionStr}";
+  try{
+    fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
+      if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
+        sessionStorage.setItem("nexus_updating","1");
+        if('caches' in window) caches.keys().then(function(k){k.forEach(function(c){caches.delete(c);});});
+        if('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(sw){sw.unregister();});});
+        setTimeout(function(){window.location.href=window.location.pathname+"?v="+Date.now();},500);
+      } else {
+        sessionStorage.removeItem("nexus_updating");
+      }
+    });
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 <div id="root"></div>
