@@ -49,7 +49,7 @@ function defaultSettings() {
 function loadApp() {
   try {
     const raw = localStorage.getItem(KEY);
-    if(!raw) { console.warn("NEXUS: No saved data found in localStorage (key="+KEY+")"); return { savedSessions:[], currentSession:newSession(), settings:defaultSettings() }; }
+    if(!raw) { console.warn("NEXUS: No saved data found in localStorage (key="+KEY+")"); return { savedSessions:[], currentSession:newSession(), gameSession:newSession(), settings:defaultSettings() }; }
     const d = JSON.parse(raw);
     if(d) {
       if(!d.settings) d.settings = defaultSettings();
@@ -60,6 +60,11 @@ function loadApp() {
       if(d.settings.tableMaxBet === undefined) d.settings.tableMaxBet = 500;
       if(d.settings.tableMaxTotal === undefined) d.settings.tableMaxTotal = 10000;
       if(!d.currentSession) d.currentSession = newSession();
+      if(!d.gameSession) d.gameSession = newSession(d.currentSession.roulette, d.currentSession.bankroll);
+      if(!d.gameSession.totalBuyIn) d.gameSession.totalBuyIn = 0;
+      if(!d.gameSession.buyIns) d.gameSession.buyIns = [];
+      if(!d.gameSession.totalCashOut) d.gameSession.totalCashOut = 0;
+      if(!d.gameSession.cashOuts) d.gameSession.cashOuts = [];
       if(!d.currentSession.totalBuyIn) d.currentSession.totalBuyIn = 0;
       if(!d.currentSession.buyIns) d.currentSession.buyIns = [];
       if(!d.currentSession.totalCashOut) d.currentSession.totalCashOut = 0;
@@ -78,7 +83,7 @@ function loadApp() {
       return d;
     }
   } catch(e) { console.error("NEXUS: loadApp crashed:", e); }
-  return { savedSessions:[], currentSession:newSession(), settings:defaultSettings() };
+  return { savedSessions:[], currentSession:newSession(), gameSession:newSession(), settings:defaultSettings() };
 }
 
 function saveApp(state) {

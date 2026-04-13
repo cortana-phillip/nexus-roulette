@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.35.4";
+  var MY_V="0.36.0";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -391,7 +391,7 @@ var TRACK_ICONS = {
   solution: "🎯"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.35.4";
+var APP_VERSION = "0.36.0";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -1041,6 +1041,7 @@ function loadApp() {
       return {
         savedSessions: [],
         currentSession: newSession(),
+        gameSession: newSession(),
         settings: defaultSettings()
       };
     }
@@ -1054,6 +1055,11 @@ function loadApp() {
       if (d.settings.tableMaxBet === undefined) d.settings.tableMaxBet = 500;
       if (d.settings.tableMaxTotal === undefined) d.settings.tableMaxTotal = 10000;
       if (!d.currentSession) d.currentSession = newSession();
+      if (!d.gameSession) d.gameSession = newSession(d.currentSession.roulette, d.currentSession.bankroll);
+      if (!d.gameSession.totalBuyIn) d.gameSession.totalBuyIn = 0;
+      if (!d.gameSession.buyIns) d.gameSession.buyIns = [];
+      if (!d.gameSession.totalCashOut) d.gameSession.totalCashOut = 0;
+      if (!d.gameSession.cashOuts) d.gameSession.cashOuts = [];
       if (!d.currentSession.totalBuyIn) d.currentSession.totalBuyIn = 0;
       if (!d.currentSession.buyIns) d.currentSession.buyIns = [];
       if (!d.currentSession.totalCashOut) d.currentSession.totalCashOut = 0;
@@ -1074,6 +1080,7 @@ function loadApp() {
   return {
     savedSessions: [],
     currentSession: newSession(),
+    gameSession: newSession(),
     settings: defaultSettings()
   };
 }
@@ -7130,7 +7137,8 @@ function App() {
     _useState106 = _slicedToArray(_useState105, 2),
     pendingTrackCfg = _useState106[0],
     setPendingTrackCfg = _useState106[1];
-  var sess = appState.currentSession;
+  var sessKey = appMode === "game" ? "gameSession" : "currentSession";
+  var sess = appState[sessKey] || appState.currentSession;
   var settings = appState.settings || defaultSettings();
   var saved = appState.savedSessions || [];
   var currency = settings.currency || "USD";
@@ -7147,8 +7155,9 @@ function App() {
   }
   function updSess(fn) {
     updApp(function (s) {
-      fn(s.currentSession);
-      s.currentSession.modified = Date.now();
+      if (!s[sessKey]) s[sessKey] = newSession();
+      fn(s[sessKey]);
+      s[sessKey].modified = Date.now();
     });
   }
   function updSettings(fn) {
@@ -7289,6 +7298,7 @@ function App() {
           } else {
             // Fresh start
             s.currentSession = newSession(roulette, bankroll);
+            s.gameSession = newSession(roulette, bankroll);
           }
         });
       }
@@ -7542,11 +7552,14 @@ function App() {
       s.settings.currency = newCode;
       if (mode === "convert" && oldCode !== newCode) {
         var ratio = getCur(newCode).rate / getCur(oldCode).rate;
-        s.currentSession.bankroll = Math.round(s.currentSession.bankroll * ratio * 100) / 100;
-        s.currentSession.bankrollCurrent = Math.round(s.currentSession.bankrollCurrent * ratio * 100) / 100;
-        s.currentSession.totalBuyIn = Math.round((s.currentSession.totalBuyIn || 0) * ratio * 100) / 100;
-        s.currentSession.tracks.forEach(function (t) {
-          t.config.stopLoss = Math.round(t.config.stopLoss * ratio * 100) / 100;
+        ["currentSession", "gameSession"].forEach(function (sk) {
+          if (!s[sk]) return;
+          s[sk].bankroll = Math.round(s[sk].bankroll * ratio * 100) / 100;
+          s[sk].bankrollCurrent = Math.round(s[sk].bankrollCurrent * ratio * 100) / 100;
+          s[sk].totalBuyIn = Math.round((s[sk].totalBuyIn || 0) * ratio * 100) / 100;
+          s[sk].tracks.forEach(function (t) {
+            t.config.stopLoss = Math.round(t.config.stopLoss * ratio * 100) / 100;
+          });
         });
       }
     });
@@ -7564,8 +7577,8 @@ function App() {
     if (!window.confirm("Undo last tracked spin? This reverses the bankroll and progression but session time continues.")) return;
     var preservedStart = sess.sessionStartedAt;
     updApp(function (s) {
-      s.currentSession = prevSessState;
-      s.currentSession.sessionStartedAt = preservedStart; // time keeps running
+      s[sessKey] = prevSessState;
+      s[sessKey].sessionStartedAt = preservedStart;
     });
     setPrevSessState(null);
   }
@@ -7714,15 +7727,16 @@ function App() {
   function saveSession() {
     var allSessions;
     updApp(function (s) {
-      s.currentSession.modified = Date.now();
-      s.currentSession.metrics = computeMetrics(s.currentSession);
+      var sk = sessKey;
+      s[sk].modified = Date.now();
+      s[sk].mode = appMode;
+      s[sk].metrics = computeMetrics(s[sk]);
       var idx = s.savedSessions.findIndex(function (x) {
-        return x.id === s.currentSession.id;
+        return x.id === s[sk].id;
       });
-      if (idx >= 0) s.savedSessions[idx] = JSON.parse(JSON.stringify(s.currentSession));else s.savedSessions.push(JSON.parse(JSON.stringify(s.currentSession)));
+      if (idx >= 0) s.savedSessions[idx] = JSON.parse(JSON.stringify(s[sk]));else s.savedSessions.push(JSON.parse(JSON.stringify(s[sk])));
       allSessions = s.savedSessions;
     });
-    // Auto-export backup to Downloads after every save
     setTimeout(function () {
       return autoExport(allSessions);
     }, 300);
@@ -7730,15 +7744,17 @@ function App() {
   function endSession() {
     var allSessions;
     updApp(function (s) {
-      s.currentSession.sessionEndedAt = Date.now();
-      s.currentSession.modified = Date.now();
-      s.currentSession.metrics = computeMetrics(s.currentSession);
+      var sk = sessKey;
+      s[sk].sessionEndedAt = Date.now();
+      s[sk].modified = Date.now();
+      s[sk].mode = appMode;
+      s[sk].metrics = computeMetrics(s[sk]);
       var idx = s.savedSessions.findIndex(function (x) {
-        return x.id === s.currentSession.id;
+        return x.id === s[sk].id;
       });
-      if (idx >= 0) s.savedSessions[idx] = JSON.parse(JSON.stringify(s.currentSession));else s.savedSessions.push(JSON.parse(JSON.stringify(s.currentSession)));
+      if (idx >= 0) s.savedSessions[idx] = JSON.parse(JSON.stringify(s[sk]));else s.savedSessions.push(JSON.parse(JSON.stringify(s[sk])));
       allSessions = s.savedSessions;
-      s.currentSession = newSession(s.currentSession.roulette, s.currentSession.bankrollCurrent);
+      s[sk] = newSession(s[sk].roulette, s[sk].bankrollCurrent);
     });
     setTimeout(function () {
       return autoExport(allSessions);

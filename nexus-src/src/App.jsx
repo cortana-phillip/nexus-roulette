@@ -49,7 +49,8 @@ export default function App() {
   const [pendingTrackType, setPendingTrackType] = useState("fibonacci");
   const [pendingTrackCfg, setPendingTrackCfg] = useState(defaultFibCfg());
 
-  const sess = appState.currentSession;
+  const sessKey = appMode==="game"?"gameSession":"currentSession";
+  const sess = appState[sessKey] || appState.currentSession;
   const settings = appState.settings || defaultSettings();
   const saved = appState.savedSessions || [];
   const currency = settings.currency || "USD";
@@ -58,7 +59,7 @@ export default function App() {
   useEffect(() => { saveApp(appState); }, [appState]);
 
   function updApp(fn) { setAppState(p => { const n=JSON.parse(JSON.stringify(p)); fn(n); return n; }); }
-  function updSess(fn) { updApp(s => { fn(s.currentSession); s.currentSession.modified=Date.now(); }); }
+  function updSess(fn) { updApp(s => { if(!s[sessKey])s[sessKey]=newSession(); fn(s[sessKey]); s[sessKey].modified=Date.now(); }); }
   function updSettings(fn) { updApp(s => { fn(s.settings); }); }
 
   const wheelNums = useMemo(() => getWheelNums(sess.roulette), [sess.roulette]);
@@ -136,6 +137,7 @@ export default function App() {
             } else {
               // Fresh start
               s.currentSession = newSession(roulette, bankroll);
+              s.gameSession = newSession(roulette, bankroll);
             }
           });
         }}
@@ -279,11 +281,14 @@ export default function App() {
       s.settings.currency = newCode;
       if(mode==="convert" && oldCode!==newCode) {
         const ratio = getCur(newCode).rate / getCur(oldCode).rate;
-        s.currentSession.bankroll = Math.round(s.currentSession.bankroll*ratio*100)/100;
-        s.currentSession.bankrollCurrent = Math.round(s.currentSession.bankrollCurrent*ratio*100)/100;
-        s.currentSession.totalBuyIn = Math.round((s.currentSession.totalBuyIn||0)*ratio*100)/100;
-        s.currentSession.tracks.forEach(t => {
-          t.config.stopLoss = Math.round(t.config.stopLoss*ratio*100)/100;
+        ["currentSession","gameSession"].forEach(function(sk){
+          if(!s[sk]) return;
+          s[sk].bankroll = Math.round(s[sk].bankroll*ratio*100)/100;
+          s[sk].bankrollCurrent = Math.round(s[sk].bankrollCurrent*ratio*100)/100;
+          s[sk].totalBuyIn = Math.round((s[sk].totalBuyIn||0)*ratio*100)/100;
+          s[sk].tracks.forEach(t => {
+            t.config.stopLoss = Math.round(t.config.stopLoss*ratio*100)/100;
+          });
         });
       }
     });
@@ -295,8 +300,8 @@ export default function App() {
     if(!window.confirm("Undo last tracked spin? This reverses the bankroll and progression but session time continues.")) return;
     const preservedStart = sess.sessionStartedAt;
     updApp(s => {
-      s.currentSession = prevSessState;
-      s.currentSession.sessionStartedAt = preservedStart; // time keeps running
+      s[sessKey] = prevSessState;
+      s[sessKey].sessionStartedAt = preservedStart;
     });
     setPrevSessState(null);
   }
@@ -381,28 +386,31 @@ export default function App() {
   function saveSession() {
     let allSessions;
     updApp(s => {
-      s.currentSession.modified=Date.now();
-      s.currentSession.metrics=computeMetrics(s.currentSession);
-      const idx=s.savedSessions.findIndex(x=>x.id===s.currentSession.id);
-      if(idx>=0) s.savedSessions[idx]=JSON.parse(JSON.stringify(s.currentSession));
-      else s.savedSessions.push(JSON.parse(JSON.stringify(s.currentSession)));
+      var sk = sessKey;
+      s[sk].modified=Date.now();
+      s[sk].mode=appMode;
+      s[sk].metrics=computeMetrics(s[sk]);
+      const idx=s.savedSessions.findIndex(x=>x.id===s[sk].id);
+      if(idx>=0) s.savedSessions[idx]=JSON.parse(JSON.stringify(s[sk]));
+      else s.savedSessions.push(JSON.parse(JSON.stringify(s[sk])));
       allSessions=s.savedSessions;
     });
-    // Auto-export backup to Downloads after every save
     setTimeout(()=>autoExport(allSessions),300);
   }
 
   function endSession() {
     let allSessions;
     updApp(s => {
-      s.currentSession.sessionEndedAt = Date.now();
-      s.currentSession.modified = Date.now();
-      s.currentSession.metrics = computeMetrics(s.currentSession);
-      const idx = s.savedSessions.findIndex(x=>x.id===s.currentSession.id);
-      if(idx>=0) s.savedSessions[idx]=JSON.parse(JSON.stringify(s.currentSession));
-      else s.savedSessions.push(JSON.parse(JSON.stringify(s.currentSession)));
+      var sk = sessKey;
+      s[sk].sessionEndedAt = Date.now();
+      s[sk].modified = Date.now();
+      s[sk].mode=appMode;
+      s[sk].metrics = computeMetrics(s[sk]);
+      const idx = s.savedSessions.findIndex(x=>x.id===s[sk].id);
+      if(idx>=0) s.savedSessions[idx]=JSON.parse(JSON.stringify(s[sk]));
+      else s.savedSessions.push(JSON.parse(JSON.stringify(s[sk])));
       allSessions = s.savedSessions;
-      s.currentSession = newSession(s.currentSession.roulette, s.currentSession.bankrollCurrent);
+      s[sk] = newSession(s[sk].roulette, s[sk].bankrollCurrent);
     });
     setTimeout(()=>autoExport(allSessions),300);
     setTab(0);
