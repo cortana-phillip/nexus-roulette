@@ -608,7 +608,7 @@ export default function App() {
               (t.config.activeBets||[]).forEach(b=>{ if(!betNums[b.number]) betNums[b.number]=t.color; });
             }
           });
-          return <RouletteBoard roulette={sess.roulette} winningNumber={gameResult} betNumbers={betNums}/>;
+          return <RouletteBoard roulette={sess.roulette} winningNumber={gameResult} betNumbers={betNums} spinning={gameSpinning}/>;
         })()}
 
         {/* Drought panel */}

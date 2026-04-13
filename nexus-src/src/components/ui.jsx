@@ -98,7 +98,7 @@ function SessionClock({startedAt, endedAt, style}) {
 }
 
 // -- Roulette Table Board --
-function RouletteBoard({roulette, winningNumber, betNumbers}) {
+function RouletteBoard({roulette, winningNumber, betNumbers, spinning}) {
   const isAmerican = roulette === "american";
   const bets = betNumbers || {};
   const BOARD_ROWS = [
@@ -109,9 +109,9 @@ function RouletteBoard({roulette, winningNumber, betNumbers}) {
   const g = 2;
   const winStr = winningNumber ? String(winningNumber) : null;
   const winN = winStr && winStr!=="0" && winStr!=="00" ? +winStr : null;
-  // Compute winning groups
+  // Only highlight outside bets on FINAL result, not during spin
   const winGroups = {};
-  if(winN) {
+  if(winN && !spinning) {
     winGroups.col = winN%3===0?2:winN%3===1?0:1;
     winGroups.doz = winN<=12?0:winN<=24?1:2;
     if(RED.has(winN)) winGroups.red=true; else winGroups.black=true;
@@ -126,17 +126,18 @@ function RouletteBoard({roulette, winningNumber, betNumbers}) {
   function numStyle(num, isZero) {
     var numStr = String(isZero ? (num===0?"0":"00") : num);
     var isRed = !isZero && RED.has(num);
-    var isWin = winStr===numStr;
+    var isWin = winStr===numStr && !spinning;
+    var isFlash = spinning && winStr===numStr;
     var betColor = bets[numStr]||null;
     return {
       position:"relative", display:"flex", alignItems:"center", justifyContent:"center",
       height:32, borderRadius:3, cursor:"default",
       background: isZero?"#166534":isRed?"#991b1b":"#1e293b",
-      border: isWin?"2px solid #fbbf24":betColor?"2px solid "+betColor:"1px solid #374151",
-      color: isWin?"#fbbf24":"white",
+      border: isWin?"2px solid #fbbf24":isFlash?"2px solid #ffffff88":betColor?"2px solid "+betColor:"1px solid #374151",
+      color: isWin?"#fbbf24":isFlash?"#fff":"white",
       fontSize: isZero?10:11, fontWeight:800,
-      boxShadow: isWin?"0 0 10px #fbbf24, inset 0 0 6px #fbbf2444":betColor?"inset 0 0 5px "+betColor+"44":"none",
-      zIndex: isWin?2:1, transition:"box-shadow 0.3s",
+      boxShadow: isWin?"0 0 10px #fbbf24, inset 0 0 6px #fbbf2444":betColor&&!isFlash?"inset 0 0 5px "+betColor+"44":"none",
+      zIndex: isWin?2:1, transition: spinning?"none":"box-shadow 0.3s",
     };
   }
 
@@ -147,12 +148,12 @@ function RouletteBoard({roulette, winningNumber, betNumbers}) {
       {/* Main grid: zeros + numbers + column bets */}
       <div style={{display:"flex",gap:g}}>
         <div style={{display:"flex",flexDirection:"column",gap:g,width:26,flexShrink:0}}>
-          <div style={{...numStyle(0,true),flex:1}}>0{winStr==="0"&&React.createElement(Mkr)}</div>
-          {isAmerican&&<div style={{...numStyle(0,true),flex:1}}>00{winStr==="00"&&React.createElement(Mkr)}</div>}
+          <div style={{...numStyle(0,true),flex:1}}>0{winStr==="0"&&!spinning&&React.createElement(Mkr)}</div>
+          {isAmerican&&<div style={{...numStyle(0,true),flex:1}}>00{winStr==="00"&&!spinning&&React.createElement(Mkr)}</div>}
         </div>
         <div style={{flex:1,display:"grid",gridTemplateColumns:"repeat(12,1fr)",gridTemplateRows:"repeat(3,32px)",gap:g}}>
           {BOARD_ROWS.map(function(row){return row.map(function(num){return(
-            React.createElement("div",{key:num,style:numStyle(num,false)},num,winStr===String(num)&&React.createElement(Mkr))
+            React.createElement("div",{key:num,style:numStyle(num,false)},num,winStr===String(num)&&!spinning&&React.createElement(Mkr))
           );});})}
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:g,width:28,flexShrink:0}}>

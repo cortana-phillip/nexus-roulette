@@ -1,1 +1,1 @@
-{"version":"0.34.0","date":"2026-04-13","notes":"Full roulette table with outside bets! Winning areas light up in gold after each spin."}
+{"version":"0.34.1","date":"2026-04-13","notes":"Outside bets only highlight on final result, not during spin animation. Strategy bets show in track colors."}

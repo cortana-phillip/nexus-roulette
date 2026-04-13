@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.34.0";
+  var MY_V="0.34.1";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -391,7 +391,7 @@ var TRACK_ICONS = {
   solution: "🎯"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.34.0";
+var APP_VERSION = "0.34.1";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2486,16 +2486,17 @@ function SessionClock(_ref15) {
 function RouletteBoard(_ref16) {
   var roulette = _ref16.roulette,
     winningNumber = _ref16.winningNumber,
-    betNumbers = _ref16.betNumbers;
+    betNumbers = _ref16.betNumbers,
+    spinning = _ref16.spinning;
   var isAmerican = roulette === "american";
   var bets = betNumbers || {};
   var BOARD_ROWS = [[3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36], [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35], [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]];
   var g = 2;
   var winStr = winningNumber ? String(winningNumber) : null;
   var winN = winStr && winStr !== "0" && winStr !== "00" ? +winStr : null;
-  // Compute winning groups
+  // Only highlight outside bets on FINAL result, not during spin
   var winGroups = {};
-  if (winN) {
+  if (winN && !spinning) {
     winGroups.col = winN % 3 === 0 ? 2 : winN % 3 === 1 ? 0 : 1;
     winGroups.doz = winN <= 12 ? 0 : winN <= 24 ? 1 : 2;
     if (RED.has(winN)) winGroups.red = true;else winGroups.black = true;
@@ -2517,7 +2518,8 @@ function RouletteBoard(_ref16) {
   function numStyle(num, isZero) {
     var numStr = String(isZero ? num === 0 ? "0" : "00" : num);
     var isRed = !isZero && RED.has(num);
-    var isWin = winStr === numStr;
+    var isWin = winStr === numStr && !spinning;
+    var isFlash = spinning && winStr === numStr;
     var betColor = bets[numStr] || null;
     return {
       position: "relative",
@@ -2528,13 +2530,13 @@ function RouletteBoard(_ref16) {
       borderRadius: 3,
       cursor: "default",
       background: isZero ? "#166534" : isRed ? "#991b1b" : "#1e293b",
-      border: isWin ? "2px solid #fbbf24" : betColor ? "2px solid " + betColor : "1px solid #374151",
-      color: isWin ? "#fbbf24" : "white",
+      border: isWin ? "2px solid #fbbf24" : isFlash ? "2px solid #ffffff88" : betColor ? "2px solid " + betColor : "1px solid #374151",
+      color: isWin ? "#fbbf24" : isFlash ? "#fff" : "white",
       fontSize: isZero ? 10 : 11,
       fontWeight: 800,
-      boxShadow: isWin ? "0 0 10px #fbbf24, inset 0 0 6px #fbbf2444" : betColor ? "inset 0 0 5px " + betColor + "44" : "none",
+      boxShadow: isWin ? "0 0 10px #fbbf24, inset 0 0 6px #fbbf2444" : betColor && !isFlash ? "inset 0 0 5px " + betColor + "44" : "none",
       zIndex: isWin ? 2 : 1,
-      transition: "box-shadow 0.3s"
+      transition: spinning ? "none" : "box-shadow 0.3s"
     };
   }
   function Mkr() {
@@ -2582,11 +2584,11 @@ function RouletteBoard(_ref16) {
     style: _objectSpread(_objectSpread({}, numStyle(0, true)), {}, {
       flex: 1
     })
-  }, "0", winStr === "0" && React.createElement(Mkr)), isAmerican && /*#__PURE__*/React.createElement("div", {
+  }, "0", winStr === "0" && !spinning && React.createElement(Mkr)), isAmerican && /*#__PURE__*/React.createElement("div", {
     style: _objectSpread(_objectSpread({}, numStyle(0, true)), {}, {
       flex: 1
     })
-  }, "00", winStr === "00" && React.createElement(Mkr))), /*#__PURE__*/React.createElement("div", {
+  }, "00", winStr === "00" && !spinning && React.createElement(Mkr))), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       display: "grid",
@@ -2599,7 +2601,7 @@ function RouletteBoard(_ref16) {
       return React.createElement("div", {
         key: num,
         style: numStyle(num, false)
-      }, num, winStr === String(num) && React.createElement(Mkr));
+      }, num, winStr === String(num) && !spinning && React.createElement(Mkr));
     });
   })), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -8035,7 +8037,8 @@ function App() {
       return /*#__PURE__*/React.createElement(RouletteBoard, {
         roulette: sess.roulette,
         winningNumber: gameResult,
-        betNumbers: betNums
+        betNumbers: betNums,
+        spinning: gameSpinning
       });
     }(), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
