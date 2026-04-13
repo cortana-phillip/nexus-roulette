@@ -7666,40 +7666,6 @@ function App() {
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        display: "flex",
-        gap: 4
-      }
-    }, [0, 1, 2].map(function (i) {
-      return /*#__PURE__*/React.createElement(DCard, {
-        key: "d" + i,
-        label: DZ_LABELS[i],
-        range: ["1-12", "13-24", "25-36"][i],
-        drought: dozD[i],
-        colorBd: DZ_BD[i],
-        colorTx: DZ_TX[i]
-      });
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 4
-      }
-    }, [0, 1, 2].map(function (i) {
-      return /*#__PURE__*/React.createElement(DCard, {
-        key: "c" + i,
-        label: COL_LABELS[i],
-        range: ["1,4..34", "2,5..35", "3,6..36"][i],
-        drought: colD[i],
-        colorBd: COL_BD[i],
-        colorTx: COL_TX[i]
-      });
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        borderTop: "1px solid #2d4057",
-        marginTop: 2,
-        paddingTop: 6
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
         display: "grid",
         gridTemplateColumns: "repeat(6,1fr)",
         gap: 3
@@ -7728,6 +7694,43 @@ function App() {
           color: em.drought >= 8 ? "#f87171" : em.drought >= 5 ? "#fbbf24" : "#94a3b8"
         }
       }, em.drought));
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        borderTop: "1px solid #2d4057",
+        marginTop: 2,
+        paddingTop: 6,
+        display: "flex",
+        flexDirection: "column",
+        gap: 4
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 4
+      }
+    }, [0, 1, 2].map(function (i) {
+      return /*#__PURE__*/React.createElement(DCard, {
+        key: "d" + i,
+        label: DZ_LABELS[i],
+        range: ["1-12", "13-24", "25-36"][i],
+        drought: dozD[i],
+        colorBd: DZ_BD[i],
+        colorTx: DZ_TX[i]
+      });
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 4
+      }
+    }, [0, 1, 2].map(function (i) {
+      return /*#__PURE__*/React.createElement(DCard, {
+        key: "c" + i,
+        label: COL_LABELS[i],
+        range: ["1,4..34", "2,5..35", "3,6..36"][i],
+        drought: colD[i],
+        colorBd: COL_BD[i],
+        colorTx: COL_TX[i]
+      });
     })))), /*#__PURE__*/React.createElement(Lbl, null, "Strategy Tracks"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
@@ -8071,40 +8074,6 @@ function App() {
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        display: "flex",
-        gap: 4
-      }
-    }, [0, 1, 2].map(function (i) {
-      return /*#__PURE__*/React.createElement(DCard, {
-        key: "d" + i,
-        label: DZ_LABELS[i],
-        range: ["1-12", "13-24", "25-36"][i],
-        drought: dozD[i],
-        colorBd: DZ_BD[i],
-        colorTx: DZ_TX[i]
-      });
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 4
-      }
-    }, [0, 1, 2].map(function (i) {
-      return /*#__PURE__*/React.createElement(DCard, {
-        key: "c" + i,
-        label: COL_LABELS[i],
-        range: ["1,4..34", "2,5..35", "3,6..36"][i],
-        drought: colD[i],
-        colorBd: COL_BD[i],
-        colorTx: COL_TX[i]
-      });
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        borderTop: "1px solid #2d4057",
-        marginTop: 2,
-        paddingTop: 6
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
         display: "grid",
         gridTemplateColumns: "repeat(6,1fr)",
         gap: 3
@@ -8133,6 +8102,43 @@ function App() {
           color: em.drought >= 8 ? "#f87171" : em.drought >= 5 ? "#fbbf24" : "#94a3b8"
         }
       }, em.drought));
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        borderTop: "1px solid #2d4057",
+        marginTop: 2,
+        paddingTop: 6,
+        display: "flex",
+        flexDirection: "column",
+        gap: 4
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 4
+      }
+    }, [0, 1, 2].map(function (i) {
+      return /*#__PURE__*/React.createElement(DCard, {
+        key: "d" + i,
+        label: DZ_LABELS[i],
+        range: ["1-12", "13-24", "25-36"][i],
+        drought: dozD[i],
+        colorBd: DZ_BD[i],
+        colorTx: DZ_TX[i]
+      });
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 4
+      }
+    }, [0, 1, 2].map(function (i) {
+      return /*#__PURE__*/React.createElement(DCard, {
+        key: "c" + i,
+        label: COL_LABELS[i],
+        range: ["1,4..34", "2,5..35", "3,6..36"][i],
+        drought: colD[i],
+        colorBd: COL_BD[i],
+        colorTx: COL_TX[i]
+      });
     })))), /*#__PURE__*/React.createElement(Lbl, null, "Active Strategy Tracks"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",

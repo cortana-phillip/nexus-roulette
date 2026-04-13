@@ -567,23 +567,23 @@ export default function App() {
           </div>
         )}
 
-        {/* Dozens & Columns droughts */}
+        {/* Drought panel */}
         {sess.spins.length>0 && (
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
-            <div style={{display:"flex",gap:4}}>
-              {[0,1,2].map(i=><DCard key={"d"+i} label={DZ_LABELS[i]} range={["1-12","13-24","25-36"][i]} drought={dozD[i]} colorBd={DZ_BD[i]} colorTx={DZ_TX[i]}/>)}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:3}}>
+              {emDroughts.map(em=>(
+                <div key={em.key} style={{borderRadius:7,border:"1px solid "+(em.drought>=8?"#dc2626":em.drought>=5?"#f59e0b":"#2d4057"),background:em.drought>=8?"#200505":em.drought>=5?"#1c1000":"#0f1923",padding:"6px 2px",textAlign:"center"}}>
+                  <div style={{fontSize:9,color:em.color,fontWeight:700,textTransform:"uppercase"}}>{em.label}</div>
+                  <div style={{fontSize:15,fontWeight:800,color:em.drought>=8?"#f87171":em.drought>=5?"#fbbf24":"#94a3b8"}}>{em.drought}</div>
+                </div>
+              ))}
             </div>
-            <div style={{display:"flex",gap:4}}>
-              {[0,1,2].map(i=><DCard key={"c"+i} label={COL_LABELS[i]} range={["1,4..34","2,5..35","3,6..36"][i]} drought={colD[i]} colorBd={COL_BD[i]} colorTx={COL_TX[i]}/>)}
-            </div>
-            <div style={{borderTop:"1px solid #2d4057",marginTop:2,paddingTop:6}}>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:3}}>
-                {emDroughts.map(em=>(
-                  <div key={em.key} style={{borderRadius:7,border:"1px solid "+(em.drought>=8?"#dc2626":em.drought>=5?"#f59e0b":"#2d4057"),background:em.drought>=8?"#200505":em.drought>=5?"#1c1000":"#0f1923",padding:"6px 2px",textAlign:"center"}}>
-                    <div style={{fontSize:9,color:em.color,fontWeight:700,textTransform:"uppercase"}}>{em.label}</div>
-                    <div style={{fontSize:15,fontWeight:800,color:em.drought>=8?"#f87171":em.drought>=5?"#fbbf24":"#94a3b8"}}>{em.drought}</div>
-                  </div>
-                ))}
+            <div style={{borderTop:"1px solid #2d4057",marginTop:2,paddingTop:6,display:"flex",flexDirection:"column",gap:4}}>
+              <div style={{display:"flex",gap:4}}>
+                {[0,1,2].map(i=><DCard key={"d"+i} label={DZ_LABELS[i]} range={["1-12","13-24","25-36"][i]} drought={dozD[i]} colorBd={DZ_BD[i]} colorTx={DZ_TX[i]}/>)}
+              </div>
+              <div style={{display:"flex",gap:4}}>
+                {[0,1,2].map(i=><DCard key={"c"+i} label={COL_LABELS[i]} range={["1,4..34","2,5..35","3,6..36"][i]} drought={colD[i]} colorBd={COL_BD[i]} colorTx={COL_TX[i]}/>)}
               </div>
             </div>
           </div>
@@ -695,23 +695,23 @@ export default function App() {
           </div>
         )}
 
-        {/* Dozens, Columns & Even money droughts */}
+        {/* Drought panel */}
         {sess.spins.length>0 && (
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
-            <div style={{display:"flex",gap:4}}>
-              {[0,1,2].map(i=><DCard key={"d"+i} label={DZ_LABELS[i]} range={["1-12","13-24","25-36"][i]} drought={dozD[i]} colorBd={DZ_BD[i]} colorTx={DZ_TX[i]}/>)}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:3}}>
+              {emDroughts.map(em=>(
+                <div key={em.key} style={{borderRadius:7,border:"1px solid "+(em.drought>=8?"#dc2626":em.drought>=5?"#f59e0b":"#2d4057"),background:em.drought>=8?"#200505":em.drought>=5?"#1c1000":"#0f1923",padding:"6px 2px",textAlign:"center"}}>
+                  <div style={{fontSize:9,color:em.color,fontWeight:700,textTransform:"uppercase"}}>{em.label}</div>
+                  <div style={{fontSize:15,fontWeight:800,color:em.drought>=8?"#f87171":em.drought>=5?"#fbbf24":"#94a3b8"}}>{em.drought}</div>
+                </div>
+              ))}
             </div>
-            <div style={{display:"flex",gap:4}}>
-              {[0,1,2].map(i=><DCard key={"c"+i} label={COL_LABELS[i]} range={["1,4..34","2,5..35","3,6..36"][i]} drought={colD[i]} colorBd={COL_BD[i]} colorTx={COL_TX[i]}/>)}
-            </div>
-            <div style={{borderTop:"1px solid #2d4057",marginTop:2,paddingTop:6}}>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:3}}>
-                {emDroughts.map(em=>(
-                  <div key={em.key} style={{borderRadius:7,border:"1px solid "+(em.drought>=8?"#dc2626":em.drought>=5?"#f59e0b":"#2d4057"),background:em.drought>=8?"#200505":em.drought>=5?"#1c1000":"#0f1923",padding:"6px 2px",textAlign:"center"}}>
-                    <div style={{fontSize:9,color:em.color,fontWeight:700,textTransform:"uppercase"}}>{em.label}</div>
-                    <div style={{fontSize:15,fontWeight:800,color:em.drought>=8?"#f87171":em.drought>=5?"#fbbf24":"#94a3b8"}}>{em.drought}</div>
-                  </div>
-                ))}
+            <div style={{borderTop:"1px solid #2d4057",marginTop:2,paddingTop:6,display:"flex",flexDirection:"column",gap:4}}>
+              <div style={{display:"flex",gap:4}}>
+                {[0,1,2].map(i=><DCard key={"d"+i} label={DZ_LABELS[i]} range={["1-12","13-24","25-36"][i]} drought={dozD[i]} colorBd={DZ_BD[i]} colorTx={DZ_TX[i]}/>)}
+              </div>
+              <div style={{display:"flex",gap:4}}>
+                {[0,1,2].map(i=><DCard key={"c"+i} label={COL_LABELS[i]} range={["1,4..34","2,5..35","3,6..36"][i]} drought={colD[i]} colorBd={COL_BD[i]} colorTx={COL_TX[i]}/>)}
               </div>
             </div>
           </div>
