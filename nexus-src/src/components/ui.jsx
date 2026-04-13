@@ -96,3 +96,74 @@ function SessionClock({startedAt, endedAt, style}) {
   const t = endedAt || now;
   return React.createElement("span", {style}, formatElapsed(t - startedAt));
 }
+
+// -- Roulette Table Board --
+function RouletteBoard({roulette, winningNumber}) {
+  const isAmerican = roulette === "american";
+  const BOARD_ROWS = [
+    [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
+    [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
+    [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
+  ];
+  const cellH = 34;
+  const cellW = "1fr";
+  const zeroW = 28;
+  const gap = 2;
+  const winStr = winningNumber ? String(winningNumber) : null;
+
+  function cellStyle(num, isZero) {
+    const isRed = !isZero && RED.has(num);
+    const isWin = winStr === String(isZero ? (num === 0 ? "0" : "00") : num);
+    return {
+      position: "relative",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      height: cellH, borderRadius: 4, cursor: "default",
+      background: isZero ? "#166534" : isRed ? "#991b1b" : "#1e293b",
+      border: isWin ? "2px solid #fbbf24" : "1px solid #374151",
+      color: isWin ? "#fbbf24" : "white",
+      fontSize: isZero ? 11 : 12, fontWeight: 800,
+      boxShadow: isWin ? "0 0 12px #fbbf24, inset 0 0 8px #fbbf2444" : "none",
+      zIndex: isWin ? 2 : 1,
+      transition: "box-shadow 0.3s, border 0.3s",
+    };
+  }
+
+  function Marker() {
+    return React.createElement("div", {style: {
+      position: "absolute", top: -6, right: -4,
+      width: 14, height: 14, borderRadius: "50%",
+      background: "#fbbf24", border: "2px solid #92400e",
+      boxShadow: "0 0 6px #fbbf24",
+      animation: "pulse 1s infinite",
+    }});
+  }
+
+  return (
+    <div style={{width: "100%", overflow: "hidden", borderRadius: 8, border: "1px solid #2d4057", background: "#0a1218", padding: 4}}>
+      <div style={{display: "flex", gap: gap}}>
+        {/* Zeros column */}
+        <div style={{display: "flex", flexDirection: "column", gap: gap, width: zeroW, flexShrink: 0}}>
+          <div style={{...cellStyle(0, true), flex: isAmerican ? 1 : 1}}>
+            0
+            {winStr === "0" && React.createElement(Marker)}
+          </div>
+          {isAmerican && (
+            <div style={{...cellStyle(0, true), flex: 1}}>
+              00
+              {winStr === "00" && React.createElement(Marker)}
+            </div>
+          )}
+        </div>
+        {/* Numbers grid */}
+        <div style={{flex: 1, display: "grid", gridTemplateColumns: "repeat(12, " + cellW + ")", gridTemplateRows: "repeat(3, " + cellH + "px)", gap: gap}}>
+          {BOARD_ROWS.map((row) => row.map((num) => (
+            <div key={num} style={cellStyle(num, false)}>
+              {num}
+              {winStr === String(num) && React.createElement(Marker)}
+            </div>
+          )))}
+        </div>
+      </div>
+    </div>
+  );
+}

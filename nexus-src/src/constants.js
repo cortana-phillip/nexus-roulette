@@ -12,7 +12,7 @@ const COL_TX = ["#5eead4","#f9a8d4","#bef264"];
 const TRACK_COLORS = ["#f59e0b","#2dd4bf","#a855f7","#f97316","#38bdf8"];
 const TRACK_ICONS = { fibonacci:"🎲", solution:"🎯" };
 const KEY = "nexus-roulette-v1";
-const APP_VERSION = "0.32.1";
+const APP_VERSION = "0.33.0";
 const ROI_PRESETS = [5,10,15,20,25,30];
 const UNITS = [0.25, 0.50, 1.00];
 
@@ -34,6 +34,11 @@ const CURRENCIES = {
 };
 
 const CHANGELOG = [
+  { v:"0.33.0", date:"Apr 13, 2026", title:"Roulette Table Display", changes:[
+    "Visual roulette table layout with traditional number arrangement",
+    "Winning number highlighted with golden marker after each spin",
+    "Update notifications now show what's new in each update",
+  ]},
   { v:"0.32.0", date:"Apr 13, 2026", title:"Feedback Button", changes:[
     "Bug report & idea suggestion button (🐛) — floating top-left corner",
     "Submit feedback with text or voice-to-text, goes directly to developer",

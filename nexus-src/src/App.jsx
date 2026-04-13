@@ -23,13 +23,13 @@ export default function App() {
   const [gameSpinning, setGameSpinning] = useState(false);
   const [gameResult, setGameResult] = useState(null);
   const [lastSpinDelta, setLastSpinDelta] = useState(null);
-  const [updateAvailable, setUpdateAvailable] = useState(null);
+  const [updateAvailable, setUpdateAvailable] = useState(null); // {version, notes}
 
-  // Check for app updates every 60 seconds
+  // Check for app updates
   useEffect(() => {
     function checkUpdate() {
       fetch("version.json?t="+Date.now()).then(r=>r.json()).then(data=>{
-        if(data.version && data.version !== APP_VERSION) setUpdateAvailable(data.version);
+        if(data.version && data.version !== APP_VERSION) setUpdateAvailable({version:data.version, notes:data.notes||""});
       }).catch(()=>{});
     }
     checkUpdate();
@@ -590,6 +590,9 @@ export default function App() {
             )}
           </div>
         )}
+
+        {/* Roulette Table */}
+        <RouletteBoard roulette={sess.roulette} winningNumber={gameResult}/>
 
         {/* Drought panel */}
         {sess.spins.length>0 && (
@@ -1445,13 +1448,13 @@ export default function App() {
         {/* Update banner */}
         {updateAvailable && (
           <button onClick={()=>{
-            // Save current state before reload
             saveApp(appState);
             window.location.reload();
           }} style={{width:"100%",padding:"12px 16px",borderRadius:12,border:"2px solid #7c3aed",background:"linear-gradient(135deg,#1e1040,#2d1060)",color:"white",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-            <div>
-              <div style={{fontSize:13,fontWeight:800}}>🎉 Update Available — v{updateAvailable}</div>
-              <div style={{fontSize:10,color:"#c4b5fd",marginTop:2}}>Tap to update. No data will be lost.</div>
+            <div style={{flex:1,textAlign:"left"}}>
+              <div style={{fontSize:13,fontWeight:800}}>🎉 Update Available — v{updateAvailable.version}</div>
+              {updateAvailable.notes && <div style={{fontSize:11,color:"#e9d5ff",marginTop:4,lineHeight:1.4}}>{updateAvailable.notes}</div>}
+              <div style={{fontSize:10,color:"#c4b5fd",marginTop:3}}>Tap to update. No data will be lost.</div>
             </div>
             <span style={{fontSize:22}}>↻</span>
           </button>

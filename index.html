@@ -372,7 +372,7 @@ var TRACK_ICONS = {
   solution: "🎯"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.32.1";
+var APP_VERSION = "0.33.0";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -476,6 +476,11 @@ var CURRENCIES = {
   }
 };
 var CHANGELOG = [{
+  v: "0.33.0",
+  date: "Apr 13, 2026",
+  title: "Roulette Table Display",
+  changes: ["Visual roulette table layout with traditional number arrangement", "Winning number highlighted with golden marker after each spin", "Update notifications now show what's new in each update"]
+}, {
   v: "0.32.0",
   date: "Apr 13, 2026",
   title: "Feedback Button",
@@ -2452,10 +2457,106 @@ function SessionClock(_ref15) {
   }, formatElapsed(t - startedAt));
 }
 
+// -- Roulette Table Board --
+function RouletteBoard(_ref16) {
+  var roulette = _ref16.roulette,
+    winningNumber = _ref16.winningNumber;
+  var isAmerican = roulette === "american";
+  var BOARD_ROWS = [[3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36], [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35], [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]];
+  var cellH = 34;
+  var cellW = "1fr";
+  var zeroW = 28;
+  var gap = 2;
+  var winStr = winningNumber ? String(winningNumber) : null;
+  function cellStyle(num, isZero) {
+    var isRed = !isZero && RED.has(num);
+    var isWin = winStr === String(isZero ? num === 0 ? "0" : "00" : num);
+    return {
+      position: "relative",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      height: cellH,
+      borderRadius: 4,
+      cursor: "default",
+      background: isZero ? "#166534" : isRed ? "#991b1b" : "#1e293b",
+      border: isWin ? "2px solid #fbbf24" : "1px solid #374151",
+      color: isWin ? "#fbbf24" : "white",
+      fontSize: isZero ? 11 : 12,
+      fontWeight: 800,
+      boxShadow: isWin ? "0 0 12px #fbbf24, inset 0 0 8px #fbbf2444" : "none",
+      zIndex: isWin ? 2 : 1,
+      transition: "box-shadow 0.3s, border 0.3s"
+    };
+  }
+  function Marker() {
+    return React.createElement("div", {
+      style: {
+        position: "absolute",
+        top: -6,
+        right: -4,
+        width: 14,
+        height: 14,
+        borderRadius: "50%",
+        background: "#fbbf24",
+        border: "2px solid #92400e",
+        boxShadow: "0 0 6px #fbbf24",
+        animation: "pulse 1s infinite"
+      }
+    });
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      overflow: "hidden",
+      borderRadius: 8,
+      border: "1px solid #2d4057",
+      background: "#0a1218",
+      padding: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: gap
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: gap,
+      width: zeroW,
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: _objectSpread(_objectSpread({}, cellStyle(0, true)), {}, {
+      flex: isAmerican ? 1 : 1
+    })
+  }, "0", winStr === "0" && React.createElement(Marker)), isAmerican && /*#__PURE__*/React.createElement("div", {
+    style: _objectSpread(_objectSpread({}, cellStyle(0, true)), {}, {
+      flex: 1
+    })
+  }, "00", winStr === "00" && React.createElement(Marker))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      display: "grid",
+      gridTemplateColumns: "repeat(12, " + cellW + ")",
+      gridTemplateRows: "repeat(3, " + cellH + "px)",
+      gap: gap
+    }
+  }, BOARD_ROWS.map(function (row) {
+    return row.map(function (num) {
+      return /*#__PURE__*/React.createElement("div", {
+        key: num,
+        style: cellStyle(num, false)
+      }, num, winStr === String(num) && React.createElement(Marker));
+    });
+  }))));
+}
+
 // ===== components/RouletteIcon.jsx =====
 // -- Roulette Wheel SVG Icon --
-function RouletteIcon(_ref16) {
-  var size = _ref16.size;
+function RouletteIcon(_ref17) {
+  var size = _ref17.size;
   var s = size || 32;
   return /*#__PURE__*/React.createElement("svg", {
     width: s,
@@ -2699,14 +2800,14 @@ function RouletteIcon(_ref16) {
 
 // ===== components/grids.jsx =====
 // -- Number Grids --
-function FibGrid(_ref17) {
-  var onNumber = _ref17.onNumber,
-    onGhost = _ref17.onGhost,
-    dozenTargets = _ref17.dozenTargets,
-    colTargets = _ref17.colTargets,
-    fibRow = _ref17.fibRow,
-    trackOverlays = _ref17.trackOverlays,
-    flashNum = _ref17.flashNum;
+function FibGrid(_ref18) {
+  var onNumber = _ref18.onNumber,
+    onGhost = _ref18.onGhost,
+    dozenTargets = _ref18.dozenTargets,
+    colTargets = _ref18.colTargets,
+    fibRow = _ref18.fibRow,
+    trackOverlays = _ref18.trackOverlays,
+    flashNum = _ref18.flashNum;
   var rows = Array.from({
     length: 12
   }, function (_, r) {
@@ -2844,11 +2945,11 @@ function FibGrid(_ref17) {
         textTransform: "uppercase",
         padding: "1px 0 2px"
       }
-    }, DZ_LABELS[dz]), rows.slice(dz * 4, dz * 4 + 4).map(function (_ref18) {
-      var _ref19 = _slicedToArray(_ref18, 3),
-        a = _ref19[0],
-        b = _ref19[1],
-        c = _ref19[2];
+    }, DZ_LABELS[dz]), rows.slice(dz * 4, dz * 4 + 4).map(function (_ref19) {
+      var _ref20 = _slicedToArray(_ref19, 3),
+        a = _ref20[0],
+        b = _ref20[1],
+        c = _ref20[2];
       return /*#__PURE__*/React.createElement("div", {
         key: a,
         style: {
@@ -2868,11 +2969,11 @@ function FibGrid(_ref17) {
       flexWrap: "wrap",
       marginTop: 4
     }
-  }, [["jackpot", "#fbbf24", "Jackpot"], ["win", "#4ade80", "Win"], ["breakeven", "#a3e635", "Breakeven"], ["partial-loss", "#f97316", "Partial Loss"], ["loss", "#374151", "Total Loss"]].map(function (_ref20) {
-    var _ref21 = _slicedToArray(_ref20, 3),
-      c = _ref21[0],
-      col = _ref21[1],
-      l = _ref21[2];
+  }, [["jackpot", "#fbbf24", "Jackpot"], ["win", "#4ade80", "Win"], ["breakeven", "#a3e635", "Breakeven"], ["partial-loss", "#f97316", "Partial Loss"], ["loss", "#374151", "Total Loss"]].map(function (_ref21) {
+    var _ref22 = _slicedToArray(_ref21, 3),
+      c = _ref22[0],
+      col = _ref22[1],
+      l = _ref22[2];
     return /*#__PURE__*/React.createElement("div", {
       key: c,
       style: {
@@ -2895,14 +2996,14 @@ function FibGrid(_ref17) {
     }, l));
   })));
 }
-function SolGrid(_ref22) {
-  var onNumber = _ref22.onNumber,
-    droughts = _ref22.droughts,
-    entry = _ref22.entry,
-    maxLvl = _ref22.maxLvl,
-    activeBets = _ref22.activeBets,
-    wheelNums = _ref22.wheelNums,
-    trackOverlays = _ref22.trackOverlays;
+function SolGrid(_ref23) {
+  var onNumber = _ref23.onNumber,
+    droughts = _ref23.droughts,
+    entry = _ref23.entry,
+    maxLvl = _ref23.maxLvl,
+    activeBets = _ref23.activeBets,
+    wheelNums = _ref23.wheelNums,
+    trackOverlays = _ref23.trackOverlays;
   var activeSet = new Set((activeBets || []).map(function (b) {
     return b.number;
   }));
@@ -3018,9 +3119,9 @@ function SolGrid(_ref22) {
 
 // ===== components/ResultFlash.jsx =====
 // -- Result Flash Overlay --
-function ResultFlash(_ref23) {
-  var result = _ref23.result,
-    onDismiss = _ref23.onDismiss;
+function ResultFlash(_ref24) {
+  var result = _ref24.result,
+    onDismiss = _ref24.onDismiss;
   (0, _react.useEffect)(function () {
     var t = setTimeout(onDismiss, 3000);
     return function () {
@@ -3138,12 +3239,12 @@ function ResultFlash(_ref23) {
 
 // ===== components/TrackPanel.jsx =====
 // -- Track Config Panels (Edit + Add) --
-function EditTrackCfg(_ref24) {
-  var track = _ref24.track,
-    currency = _ref24.currency,
-    tableMinBet = _ref24.tableMinBet,
-    onSave = _ref24.onSave,
-    onCancel = _ref24.onCancel;
+function EditTrackCfg(_ref25) {
+  var track = _ref25.track,
+    currency = _ref25.currency,
+    tableMinBet = _ref25.tableMinBet,
+    onSave = _ref25.onSave,
+    onCancel = _ref25.onCancel;
   var cur = getCur(currency || "USD");
   var tMin = tableMinBet || 1;
   var _useState5 = (0, _react.useState)(_objectSpread({}, track.config)),
@@ -3344,17 +3445,17 @@ function EditTrackCfg(_ref24) {
     }
   }, "Cancel")));
 }
-function AddTrackPanel(_ref25) {
-  var onAdd = _ref25.onAdd,
-    onClose = _ref25.onClose,
-    nextColor = _ref25.nextColor,
-    type = _ref25.type,
-    cfg = _ref25.cfg,
-    onTypeChange = _ref25.onTypeChange,
-    onCfgChange = _ref25.onCfgChange,
-    closedTracks = _ref25.closedTracks,
-    currency = _ref25.currency,
-    tableMinBet = _ref25.tableMinBet;
+function AddTrackPanel(_ref26) {
+  var onAdd = _ref26.onAdd,
+    onClose = _ref26.onClose,
+    nextColor = _ref26.nextColor,
+    type = _ref26.type,
+    cfg = _ref26.cfg,
+    onTypeChange = _ref26.onTypeChange,
+    onCfgChange = _ref26.onCfgChange,
+    closedTracks = _ref26.closedTracks,
+    currency = _ref26.currency,
+    tableMinBet = _ref26.tableMinBet;
   var cur = getCur(currency || "USD");
   var tMin = tableMinBet || 1;
   function upCfg(k, v) {
@@ -3463,10 +3564,10 @@ function AddTrackPanel(_ref25) {
       display: "flex",
       gap: 8
     }
-  }, [["flat", "➡️ Flat"], ["fibonacci", "📈 Progression Bet"], ["solution", "🎯 The Solution"]].map(function (_ref26) {
-    var _ref27 = _slicedToArray(_ref26, 2),
-      m = _ref27[0],
-      l = _ref27[1];
+  }, [["flat", "➡️ Flat"], ["fibonacci", "📈 Progression Bet"], ["solution", "🎯 The Solution"]].map(function (_ref27) {
+    var _ref28 = _slicedToArray(_ref27, 2),
+      m = _ref28[0],
+      l = _ref28[1];
     var isSel = m === "solution" ? type === "solution" : type === "fibonacci" && m === "flat" === ((cfg.betMode || "progression") === "flat");
     return /*#__PURE__*/React.createElement("button", {
       key: m,
@@ -3796,12 +3897,12 @@ function AddTrackPanel(_ref25) {
 
 // ===== components/modals.jsx =====
 // -- Modal Dialogs --
-function CashOutModal(_ref28) {
-  var maxAmount = _ref28.maxAmount,
-    currency = _ref28.currency,
-    currentBankroll = _ref28.currentBankroll,
-    onCashOut = _ref28.onCashOut,
-    onClose = _ref28.onClose;
+function CashOutModal(_ref29) {
+  var maxAmount = _ref29.maxAmount,
+    currency = _ref29.currency,
+    currentBankroll = _ref29.currentBankroll,
+    onCashOut = _ref29.onCashOut,
+    onClose = _ref29.onClose;
   var _useState7 = (0, _react.useState)(Math.min(100, maxAmount)),
     _useState8 = _slicedToArray(_useState7, 2),
     amount = _useState8[0],
@@ -3932,9 +4033,9 @@ function CashOutModal(_ref28) {
 }
 
 // -- Onboarding --
-function OnboardingScreen(_ref29) {
-  var onComplete = _ref29.onComplete,
-    initialBankroll = _ref29.initialBankroll;
+function OnboardingScreen(_ref30) {
+  var onComplete = _ref30.onComplete,
+    initialBankroll = _ref30.initialBankroll;
   var _useState9 = (0, _react.useState)(0),
     _useState0 = _slicedToArray(_useState9, 2),
     step = _useState0[0],
@@ -4054,11 +4155,11 @@ function OnboardingScreen(_ref29) {
       color: "#e2e8f0",
       textAlign: "center"
     }
-  }, "Which table are you playing?"), [["american", "🇺🇸 American", "Has 0 and 00"], ["european", "🇪🇺 European", "Has 0 only"]].map(function (_ref30) {
-    var _ref31 = _slicedToArray(_ref30, 3),
-      v = _ref31[0],
-      label = _ref31[1],
-      sub = _ref31[2];
+  }, "Which table are you playing?"), [["american", "🇺🇸 American", "Has 0 and 00"], ["european", "🇪🇺 European", "Has 0 only"]].map(function (_ref31) {
+    var _ref32 = _slicedToArray(_ref31, 3),
+      v = _ref32[0],
+      label = _ref32[1],
+      sub = _ref32[2];
     return /*#__PURE__*/React.createElement("button", {
       key: v,
       onClick: function onClick() {
@@ -4212,12 +4313,12 @@ function OnboardingScreen(_ref29) {
     val: tableMaxTotal,
     set: setTableMaxTotal,
     color: "#f87171"
-  }].map(function (_ref32) {
-    var label = _ref32.label,
-      key = _ref32.key,
-      val = _ref32.val,
-      set = _ref32.set,
-      color = _ref32.color;
+  }].map(function (_ref33) {
+    var label = _ref33.label,
+      key = _ref33.key,
+      val = _ref33.val,
+      set = _ref33.set,
+      color = _ref33.color;
     function dec() {
       if (key === "minBet") {
         if (val > 10) return set(val <= 100 ? val - 5 : val <= 1000 ? val - 25 : val - 1000);
@@ -4337,10 +4438,10 @@ function OnboardingScreen(_ref29) {
       flexDirection: "column",
       gap: 6
     }
-  }, Object.entries(CURRENCIES).map(function (_ref33) {
-    var _ref34 = _slicedToArray(_ref33, 2),
-      code = _ref34[0],
-      cur = _ref34[1];
+  }, Object.entries(CURRENCIES).map(function (_ref34) {
+    var _ref35 = _slicedToArray(_ref34, 2),
+      code = _ref35[0],
+      cur = _ref35[1];
     return /*#__PURE__*/React.createElement("button", {
       key: code,
       onClick: function onClick() {
@@ -4426,12 +4527,12 @@ function OnboardingScreen(_ref29) {
 }
 
 // -- Buy In Modal --
-function BuyInModal(_ref35) {
-  var defaultAmount = _ref35.defaultAmount,
-    currency = _ref35.currency,
-    currentBankroll = _ref35.currentBankroll,
-    onBuyIn = _ref35.onBuyIn,
-    onClose = _ref35.onClose;
+function BuyInModal(_ref36) {
+  var defaultAmount = _ref36.defaultAmount,
+    currency = _ref36.currency,
+    currentBankroll = _ref36.currentBankroll,
+    onBuyIn = _ref36.onBuyIn,
+    onClose = _ref36.onClose;
   var _useState23 = (0, _react.useState)(defaultAmount || 100),
     _useState24 = _slicedToArray(_useState23, 2),
     amount = _useState24[0],
@@ -4543,11 +4644,11 @@ function BuyInModal(_ref35) {
 }
 
 // -- Currency Change Modal --
-function CurrencyModal(_ref36) {
-  var current = _ref36.current,
-    bankroll = _ref36.bankroll,
-    onSave = _ref36.onSave,
-    onClose = _ref36.onClose;
+function CurrencyModal(_ref37) {
+  var current = _ref37.current,
+    bankroll = _ref37.bankroll,
+    onSave = _ref37.onSave,
+    onClose = _ref37.onClose;
   var _useState25 = (0, _react.useState)(current),
     _useState26 = _slicedToArray(_useState25, 2),
     selected = _useState26[0],
@@ -4596,10 +4697,10 @@ function CurrencyModal(_ref36) {
       gap: 5,
       marginBottom: 16
     }
-  }, Object.entries(CURRENCIES).map(function (_ref37) {
-    var _ref38 = _slicedToArray(_ref37, 2),
-      code = _ref38[0],
-      cur = _ref38[1];
+  }, Object.entries(CURRENCIES).map(function (_ref38) {
+    var _ref39 = _slicedToArray(_ref38, 2),
+      code = _ref39[0],
+      cur = _ref39[1];
     return /*#__PURE__*/React.createElement("button", {
       key: code,
       onClick: function onClick() {
@@ -4713,8 +4814,8 @@ function CurrencyModal(_ref36) {
 }
 
 // -- Changelog Modal --
-function ChangelogModal(_ref39) {
-  var onClose = _ref39.onClose;
+function ChangelogModal(_ref40) {
+  var onClose = _ref40.onClose;
   return /*#__PURE__*/React.createElement(Modal, {
     onClose: onClose
   }, /*#__PURE__*/React.createElement("div", {
@@ -4796,9 +4897,9 @@ function ChangelogModal(_ref39) {
     })));
   })));
 }
-function HardResetModal(_ref40) {
-  var onClose = _ref40.onClose,
-    onExport = _ref40.onExport;
+function HardResetModal(_ref41) {
+  var onClose = _ref41.onClose,
+    onExport = _ref41.onExport;
   var _useState29 = (0, _react.useState)(0),
     _useState30 = _slicedToArray(_useState29, 2),
     step = _useState30[0],
@@ -4968,12 +5069,12 @@ function HardResetModal(_ref40) {
 
 // ===== components/SimModePage.jsx =====
 // -- Simulation Mode UI --
-function StatContextBar(_ref41) {
-  var simResults = _ref41.simResults,
-    simCfg = _ref41.simCfg,
-    sess = _ref41.sess,
-    cur = _ref41.cur,
-    pnlVal = _ref41.pnlVal;
+function StatContextBar(_ref42) {
+  var simResults = _ref42.simResults,
+    simCfg = _ref42.simCfg,
+    sess = _ref42.sess,
+    cur = _ref42.cur,
+    pnlVal = _ref42.pnlVal;
   // Match live tracks to sim strategies by type+roi+stopLoss
   var liveTracks = sess.tracks.filter(function (t) {
     return t.state !== "closed";
@@ -5044,14 +5145,14 @@ function StatContextBar(_ref41) {
       letterSpacing: 1,
       marginBottom: 2
     }
-  }, "vs Simulation Benchmark"), bars.map(function (_ref42, i) {
-    var t = _ref42.t,
-      status = _ref42.status,
-      statusColor = _ref42.statusColor,
-      statusIcon = _ref42.statusIcon,
-      pctRank = _ref42.pctRank,
-      stats = _ref42.stats,
-      livePnl = _ref42.livePnl;
+  }, "vs Simulation Benchmark"), bars.map(function (_ref43, i) {
+    var t = _ref43.t,
+      status = _ref43.status,
+      statusColor = _ref43.statusColor,
+      statusIcon = _ref43.statusIcon,
+      pctRank = _ref43.pctRank,
+      stats = _ref43.stats,
+      livePnl = _ref43.livePnl;
     return /*#__PURE__*/React.createElement("div", {
       key: t.id,
       style: {
@@ -5100,22 +5201,22 @@ function StatContextBar(_ref41) {
 }
 
 // -- Simulation Mode Page --
-function SimModePage(_ref43) {
-  var simCfg = _ref43.simCfg,
-    setSimCfg = _ref43.setSimCfg,
-    simRunning = _ref43.simRunning,
-    setSimRunning = _ref43.setSimRunning,
-    simPaused = _ref43.simPaused,
-    setSimPaused = _ref43.setSimPaused,
-    simProgress = _ref43.simProgress,
-    setSimProgress = _ref43.setSimProgress,
-    simResults = _ref43.simResults,
-    setSimResults = _ref43.setSimResults,
-    simDone = _ref43.simDone,
-    setSimDone = _ref43.setSimDone,
-    simStopRef = _ref43.simStopRef,
-    currency = _ref43.currency,
-    cur = _ref43.cur;
+function SimModePage(_ref44) {
+  var simCfg = _ref44.simCfg,
+    setSimCfg = _ref44.setSimCfg,
+    simRunning = _ref44.simRunning,
+    setSimRunning = _ref44.setSimRunning,
+    simPaused = _ref44.simPaused,
+    setSimPaused = _ref44.setSimPaused,
+    simProgress = _ref44.simProgress,
+    setSimProgress = _ref44.setSimProgress,
+    simResults = _ref44.simResults,
+    setSimResults = _ref44.setSimResults,
+    simDone = _ref44.simDone,
+    setSimDone = _ref44.setSimDone,
+    simStopRef = _ref44.simStopRef,
+    currency = _ref44.currency,
+    cur = _ref44.cur;
   var _useState31 = (0, _react.useState)("setup"),
     _useState32 = _slicedToArray(_useState31, 2),
     view = _useState32[0],
@@ -5400,10 +5501,10 @@ function SimModePage(_ref43) {
       display: "flex",
       gap: 8
     }
-  }, [["european", "🇪🇺 European"], ["american", "🇺🇸 American"]].map(function (_ref44) {
-    var _ref45 = _slicedToArray(_ref44, 2),
-      v = _ref45[0],
-      l = _ref45[1];
+  }, [["european", "🇪🇺 European"], ["american", "🇺🇸 American"]].map(function (_ref45) {
+    var _ref46 = _slicedToArray(_ref45, 2),
+      v = _ref46[0],
+      l = _ref46[1];
     var sel = simCfg.roulette === v;
     return /*#__PURE__*/React.createElement("button", {
       key: v,
@@ -5980,11 +6081,11 @@ function SimModePage(_ref43) {
         gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr",
         gap: 4
       }
-    }, [["Min", stats.minPnl, "#f87171"], ["P25", stats.p25, "#f97316"], ["P50", stats.p50, "#fbbf24"], ["P75", stats.p75, "#86efac"], ["Max", stats.maxPnl, "#4ade80"]].map(function (_ref46) {
-      var _ref47 = _slicedToArray(_ref46, 3),
-        l = _ref47[0],
-        v = _ref47[1],
-        c = _ref47[2];
+    }, [["Min", stats.minPnl, "#f87171"], ["P25", stats.p25, "#f97316"], ["P50", stats.p50, "#fbbf24"], ["P75", stats.p75, "#86efac"], ["Max", stats.maxPnl, "#4ade80"]].map(function (_ref47) {
+      var _ref48 = _slicedToArray(_ref47, 3),
+        l = _ref48[0],
+        v = _ref48[1],
+        c = _ref48[2];
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -6024,11 +6125,11 @@ function SimModePage(_ref43) {
         gridTemplateColumns: "1fr 1fr",
         gap: 6
       }
-    }, [["Longest Win Streak", stats.longestWinStreak, "#4ade80"], ["Longest Loss Streak", stats.longestLossStreak, "#f87171"], ["Avg Win Streak", stats.avgWinStreak.toFixed(1), "#86efac"], ["Avg Loss Streak", stats.avgLossStreak.toFixed(1), "#f97316"], ["Stop Loss Hits", r.stopLossHits, "#fbbf24"], ["Stop Loss Rate", stats.stopLossRate.toFixed(2) + "/sess", "#fbbf24"]].map(function (_ref48) {
-      var _ref49 = _slicedToArray(_ref48, 3),
-        l = _ref49[0],
-        v = _ref49[1],
-        c = _ref49[2];
+    }, [["Longest Win Streak", stats.longestWinStreak, "#4ade80"], ["Longest Loss Streak", stats.longestLossStreak, "#f87171"], ["Avg Win Streak", stats.avgWinStreak.toFixed(1), "#86efac"], ["Avg Loss Streak", stats.avgLossStreak.toFixed(1), "#f97316"], ["Stop Loss Hits", r.stopLossHits, "#fbbf24"], ["Stop Loss Rate", stats.stopLossRate.toFixed(2) + "/sess", "#fbbf24"]].map(function (_ref49) {
+      var _ref50 = _slicedToArray(_ref49, 3),
+        l = _ref50[0],
+        v = _ref50[1],
+        c = _ref50[2];
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -6068,9 +6169,9 @@ function SimModePage(_ref43) {
         flexDirection: "column",
         gap: 2
       }
-    }, stats.winStreakDist.slice(0, 10).map(function (_ref50) {
-      var len = _ref50.len,
-        p = _ref50.pct;
+    }, stats.winStreakDist.slice(0, 10).map(function (_ref51) {
+      var len = _ref51.len,
+        p = _ref51.pct;
       return /*#__PURE__*/React.createElement("div", {
         key: len,
         style: {
@@ -6122,9 +6223,9 @@ function SimModePage(_ref43) {
         flexDirection: "column",
         gap: 2
       }
-    }, stats.lossStreakDist.slice(0, 10).map(function (_ref51) {
-      var len = _ref51.len,
-        p = _ref51.pct;
+    }, stats.lossStreakDist.slice(0, 10).map(function (_ref52) {
+      var len = _ref52.len,
+        p = _ref52.pct;
       return /*#__PURE__*/React.createElement("div", {
         key: len,
         style: {
@@ -6168,13 +6269,13 @@ function SimModePage(_ref43) {
 }
 
 // -- Sim Strategy Editor --
-function SimStratEditor(_ref52) {
-  var strat = _ref52.strat,
-    idx = _ref52.idx,
-    simCfg = _ref52.simCfg,
-    setSimCfg = _ref52.setSimCfg,
-    cur = _ref52.cur,
-    onClose = _ref52.onClose;
+function SimStratEditor(_ref53) {
+  var strat = _ref53.strat,
+    idx = _ref53.idx,
+    simCfg = _ref53.simCfg,
+    setSimCfg = _ref53.setSimCfg,
+    cur = _ref53.cur,
+    onClose = _ref53.onClose;
   var _useState35 = (0, _react.useState)(_objectSpread({}, strat.config)),
     _useState36 = _slicedToArray(_useState35, 2),
     cfg = _useState36[0],
@@ -6282,10 +6383,10 @@ function SimStratEditor(_ref52) {
       display: "flex",
       gap: 5
     }
-  }, [["flat", "Flat"], ["progression", "Progression"]].map(function (_ref53) {
-    var _ref54 = _slicedToArray(_ref53, 2),
-      m = _ref54[0],
-      l = _ref54[1];
+  }, [["flat", "Flat"], ["progression", "Progression"]].map(function (_ref54) {
+    var _ref55 = _slicedToArray(_ref54, 2),
+      m = _ref55[0],
+      l = _ref55[1];
     var sel = (cfg.betMode || "progression") === m;
     return /*#__PURE__*/React.createElement("button", {
       key: m,
@@ -6473,11 +6574,11 @@ function SimStratEditor(_ref52) {
       flexDirection: "column",
       gap: 6
     }
-  }, [["waitForWin", "Wait for win before entering", "Don't bet until first in-range hit observed"], ["parkAfterStopLoss", "Park after stop loss hit", "Resume only after next in-range win observed"], ["parkAfterLoss", "Park after any miss", "Resume next spin (aggressive filter)"]].map(function (_ref55) {
-    var _ref56 = _slicedToArray(_ref55, 3),
-      key = _ref56[0],
-      label = _ref56[1],
-      desc = _ref56[2];
+  }, [["waitForWin", "Wait for win before entering", "Don't bet until first in-range hit observed"], ["parkAfterStopLoss", "Park after stop loss hit", "Resume only after next in-range win observed"], ["parkAfterLoss", "Park after any miss", "Resume next spin (aggressive filter)"]].map(function (_ref56) {
+    var _ref57 = _slicedToArray(_ref56, 3),
+      key = _ref57[0],
+      label = _ref57[1],
+      desc = _ref57[2];
     return /*#__PURE__*/React.createElement("div", {
       key: key,
       style: {
@@ -6724,15 +6825,18 @@ function App() {
   var _useState83 = (0, _react.useState)(null),
     _useState84 = _slicedToArray(_useState83, 2),
     updateAvailable = _useState84[0],
-    setUpdateAvailable = _useState84[1];
+    setUpdateAvailable = _useState84[1]; // {version, notes}
 
-  // Check for app updates every 60 seconds
+  // Check for app updates
   (0, _react.useEffect)(function () {
     function checkUpdate() {
       fetch("version.json?t=" + Date.now()).then(function (r) {
         return r.json();
       }).then(function (data) {
-        if (data.version && data.version !== APP_VERSION) setUpdateAvailable(data.version);
+        if (data.version && data.version !== APP_VERSION) setUpdateAvailable({
+          version: data.version,
+          notes: data.notes || ""
+        });
       }).catch(function () {});
     }
     checkUpdate();
@@ -6891,14 +6995,14 @@ function App() {
   if (!settings.onboarded) {
     return /*#__PURE__*/React.createElement(OnboardingScreen, {
       initialBankroll: settings._restartBankroll,
-      onComplete: function onComplete(_ref57) {
-        var roulette = _ref57.roulette,
-          bankroll = _ref57.bankroll,
-          defaultBuyIn = _ref57.defaultBuyIn,
-          curr = _ref57.currency,
-          tableMinBet = _ref57.tableMinBet,
-          tableMaxBet = _ref57.tableMaxBet,
-          tableMaxTotal = _ref57.tableMaxTotal;
+      onComplete: function onComplete(_ref58) {
+        var roulette = _ref58.roulette,
+          bankroll = _ref58.bankroll,
+          defaultBuyIn = _ref58.defaultBuyIn,
+          curr = _ref58.currency,
+          tableMinBet = _ref58.tableMinBet,
+          tableMaxBet = _ref58.tableMaxBet,
+          tableMaxTotal = _ref58.tableMaxTotal;
         updApp(function (s) {
           var prevBankroll = s.settings._restartBankroll;
           s.settings.onboarded = true;
@@ -7737,7 +7841,10 @@ function App() {
         fontWeight: 900,
         color: lastSpinDelta > 0 ? "#4ade80" : lastSpinDelta < 0 ? "#f87171" : "#94a3b8"
       }
-    }, lastSpinDelta > 0 ? "+" : lastSpinDelta < 0 ? "-" : "", cur.symbol, Math.abs(lastSpinDelta).toFixed(cur.dec)))), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
+    }, lastSpinDelta > 0 ? "+" : lastSpinDelta < 0 ? "-" : "", cur.symbol, Math.abs(lastSpinDelta).toFixed(cur.dec)))), /*#__PURE__*/React.createElement(RouletteBoard, {
+      roulette: sess.roulette,
+      winningNumber: gameResult
+    }), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -8575,10 +8682,10 @@ function App() {
       l: "JP Profit",
       v: (outcomes.jackpot.profit * (primaryTrack.config.unit || 1) >= 0 ? "+" : "-") + cur.symbol + Math.abs(outcomes.jackpot.profit * (primaryTrack.config.unit || 1)).toFixed(cur.dec),
       c: outcomes.jackpot.profit >= 0 ? "#4ade80" : "#f87171"
-    }].map(function (_ref58) {
-      var l = _ref58.l,
-        v = _ref58.v,
-        c = _ref58.c;
+    }].map(function (_ref59) {
+      var l = _ref59.l,
+        v = _ref59.v,
+        c = _ref59.c;
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -8660,10 +8767,10 @@ function App() {
       l: "Partial Profit",
       v: outcomes ? signChips(outcomes.partial.profit, primaryTrack.config.unit || 1, currency) : "--",
       c: outcomes && outcomes.partial.profit >= 0 ? "#4ade80" : "#f97316"
-    }].map(function (_ref59) {
-      var l = _ref59.l,
-        v = _ref59.v,
-        c = _ref59.c;
+    }].map(function (_ref60) {
+      var l = _ref60.l,
+        v = _ref60.v,
+        c = _ref60.c;
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -8992,10 +9099,10 @@ function App() {
         flexDirection: "column",
         gap: 3
       }
-    }, legendRows.map(function (_ref60) {
-      var _ref61 = _slicedToArray(_ref60, 2),
-        abbr = _ref61[0],
-        desc = _ref61[1];
+    }, legendRows.map(function (_ref61) {
+      var _ref62 = _slicedToArray(_ref61, 2),
+        abbr = _ref62[0],
+        desc = _ref62[1];
       return /*#__PURE__*/React.createElement("div", {
         key: abbr,
         style: {
@@ -9320,10 +9427,10 @@ function App() {
       l: "Net P&L",
       v: (pnlVal >= 0 ? "+" : "-") + cur.symbol + Math.abs(pnlVal).toFixed(cur.dec),
       c: pnlColor
-    }].map(function (_ref62) {
-      var l = _ref62.l,
-        v = _ref62.v,
-        c = _ref62.c;
+    }].map(function (_ref63) {
+      var l = _ref63.l,
+        v = _ref63.v,
+        c = _ref63.c;
       return /*#__PURE__*/React.createElement("div", {
         key: l,
         style: {
@@ -9468,11 +9575,11 @@ function App() {
           gap: 6,
           marginBottom: 8
         }
-      }, [["Wins", g.wins, "#4ade80"], ["Losses", g.losses, "#f87171"], ["Win Rate", winRate, "#86efac"]].map(function (_ref63) {
-        var _ref64 = _slicedToArray(_ref63, 3),
-          l = _ref64[0],
-          v = _ref64[1],
-          c = _ref64[2];
+      }, [["Wins", g.wins, "#4ade80"], ["Losses", g.losses, "#f87171"], ["Win Rate", winRate, "#86efac"]].map(function (_ref64) {
+        var _ref65 = _slicedToArray(_ref64, 3),
+          l = _ref65[0],
+          v = _ref65[1],
+          c = _ref65[2];
         return /*#__PURE__*/React.createElement("div", {
           key: l,
           style: {
@@ -9697,10 +9804,10 @@ function App() {
         display: "flex",
         gap: 8
       }
-    }, [["american", "🇺🇸 American (00)"], ["european", "🇪🇺 European"]].map(function (_ref65) {
-      var _ref66 = _slicedToArray(_ref65, 2),
-        v = _ref66[0],
-        label = _ref66[1];
+    }, [["american", "🇺🇸 American (00)"], ["european", "🇪🇺 European"]].map(function (_ref66) {
+      var _ref67 = _slicedToArray(_ref66, 2),
+        v = _ref67[0],
+        label = _ref67[1];
       return /*#__PURE__*/React.createElement("button", {
         key: v,
         onClick: function onClick() {
@@ -9790,10 +9897,10 @@ function App() {
       label: "Max Total (per spin)",
       key: "tableMaxTotal",
       color: "#f87171"
-    }].map(function (_ref67) {
-      var label = _ref67.label,
-        key = _ref67.key,
-        color = _ref67.color;
+    }].map(function (_ref68) {
+      var label = _ref68.label,
+        key = _ref68.key,
+        color = _ref68.color;
       var val = settings[key] || 1;
       function dec() {
         if (key === "tableMinBet") {
@@ -10140,8 +10247,8 @@ function App() {
   }
 
   // -- Bankroll Edit --
-  function BankrollEdit(_ref71) {
-    var onClose = _ref71.onClose;
+  function BankrollEdit(_ref72) {
+    var onClose = _ref72.onClose;
     var _useState109 = (0, _react.useState)(sess.bankrollCurrent),
       _useState110 = _slicedToArray(_useState109, 2),
       val = _useState110[0],
@@ -10376,7 +10483,6 @@ function App() {
     }
   }, "\uD83D\uDCB8 Cash Out")))), updateAvailable && /*#__PURE__*/React.createElement("button", {
     onClick: function onClick() {
-      // Save current state before reload
       saveApp(appState);
       window.location.reload();
     },
@@ -10395,16 +10501,28 @@ function App() {
       justifyContent: "space-between",
       gap: 8
     }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      textAlign: "left"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       fontWeight: 800
     }
-  }, "\uD83C\uDF89 Update Available \u2014 v", updateAvailable), /*#__PURE__*/React.createElement("div", {
+  }, "\uD83C\uDF89 Update Available \u2014 v", updateAvailable.version), updateAvailable.notes && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#e9d5ff",
+      marginTop: 4,
+      lineHeight: 1.4
+    }
+  }, updateAvailable.notes), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: "#c4b5fd",
-      marginTop: 2
+      marginTop: 3
     }
   }, "Tap to update. No data will be lost.")), /*#__PURE__*/React.createElement("span", {
     style: {
