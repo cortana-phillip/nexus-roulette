@@ -1466,7 +1466,20 @@ export default function App() {
         {updateAvailable && (
           <button onClick={()=>{
             saveApp(appState);
-            window.location.reload();
+            // Force-clear service worker cache, then reload
+            if('serviceWorker' in navigator) {
+              caches.keys().then(function(keys){
+                Promise.all(keys.map(function(k){return caches.delete(k);})).then(function(){
+                  navigator.serviceWorker.getRegistrations().then(function(regs){
+                    Promise.all(regs.map(function(r){return r.unregister();})).then(function(){
+                      window.location.href = window.location.pathname + "?update=" + Date.now();
+                    });
+                  });
+                });
+              });
+            } else {
+              window.location.href = window.location.pathname + "?update=" + Date.now();
+            }
           }} style={{width:"100%",padding:"12px 16px",borderRadius:12,border:"2px solid #7c3aed",background:"linear-gradient(135deg,#1e1040,#2d1060)",color:"white",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
             <div style={{flex:1,textAlign:"left"}}>
               <div style={{fontSize:13,fontWeight:800}}>🎉 Update Available — v{updateAvailable.version}</div>
