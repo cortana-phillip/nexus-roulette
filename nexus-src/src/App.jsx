@@ -22,6 +22,7 @@ export default function App() {
   const [editTrackId, setEditTrackId] = useState(null);
   const [gameSpinning, setGameSpinning] = useState(false);
   const [gameResult, setGameResult] = useState(null);
+  const [lastSpinDelta, setLastSpinDelta] = useState(null);
 
   const [buyInOpen, setBuyInOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
@@ -228,7 +229,7 @@ export default function App() {
         s.tracks.reduce((sum,t) => sum + t.pnl*(t.config.unit||1), 0)
       )*100)/100;
     });
-    if(trackResults.length>0) setResult({val,trackResults,totalDelta});
+    if(trackResults.length>0) { setResult({val,trackResults,totalDelta}); setLastSpinDelta(totalDelta); }
     // Visual flash
     setFlashNum(val);
     setTimeout(()=>setFlashNum(null), 400);
@@ -550,15 +551,41 @@ export default function App() {
           </div>
         )}
 
-        {/* Even money droughts */}
+        {/* P&L Display */}
         {sess.spins.length>0 && (
-          <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:3}}>
-            {emDroughts.map(em=>(
-              <div key={em.key} style={{borderRadius:7,border:"1px solid "+(em.drought>=8?"#dc2626":em.drought>=5?"#f59e0b":"#2d4057"),background:em.drought>=8?"#200505":em.drought>=5?"#1c1000":"#0f1923",padding:"4px 2px",textAlign:"center"}}>
-                <div style={{fontSize:8,color:em.color,fontWeight:700,textTransform:"uppercase"}}>{em.label}</div>
-                <div style={{fontSize:13,fontWeight:800,color:em.drought>=8?"#f87171":em.drought>=5?"#fbbf24":"#94a3b8"}}>{em.drought}</div>
+          <div style={{display:"flex",gap:8,width:"100%"}}>
+            <div style={{flex:1,background:pnlVal>=0?"#0a1f0a":"#200505",borderRadius:12,padding:"12px 10px",border:"1px solid "+(pnlVal>=0?"#16a34a":"#991b1b"),textAlign:"center"}}>
+              <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>Total P&L</div>
+              <div style={{fontSize:24,fontWeight:900,color:pnlVal>=0?"#4ade80":"#f87171"}}>{pnlVal>=0?"+":"-"}{cur.symbol}{Math.abs(pnlVal).toFixed(cur.dec)}</div>
+            </div>
+            {lastSpinDelta!==null && (
+              <div style={{width:100,background:lastSpinDelta>0?"#0a1f0a":lastSpinDelta<0?"#200505":"#0f1923",borderRadius:12,padding:"12px 10px",border:"1px solid "+(lastSpinDelta>0?"#16a34a":lastSpinDelta<0?"#991b1b":"#2d4057"),textAlign:"center"}}>
+                <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>Last Spin</div>
+                <div style={{fontSize:20,fontWeight:900,color:lastSpinDelta>0?"#4ade80":lastSpinDelta<0?"#f87171":"#94a3b8"}}>{lastSpinDelta>0?"+":lastSpinDelta<0?"-":""}{cur.symbol}{Math.abs(lastSpinDelta).toFixed(cur.dec)}</div>
               </div>
-            ))}
+            )}
+          </div>
+        )}
+
+        {/* Dozens & Columns droughts */}
+        {sess.spins.length>0 && (
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            <div style={{display:"flex",gap:4}}>
+              {[0,1,2].map(i=><DCard key={"d"+i} label={DZ_LABELS[i]} range={["1-12","13-24","25-36"][i]} drought={dozD[i]} colorBd={DZ_BD[i]} colorTx={DZ_TX[i]}/>)}
+            </div>
+            <div style={{display:"flex",gap:4}}>
+              {[0,1,2].map(i=><DCard key={"c"+i} label={COL_LABELS[i]} range={["1,4..34","2,5..35","3,6..36"][i]} drought={colD[i]} colorBd={COL_BD[i]} colorTx={COL_TX[i]}/>)}
+            </div>
+            <div style={{borderTop:"1px solid #2d4057",marginTop:2,paddingTop:6}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:3}}>
+                {emDroughts.map(em=>(
+                  <div key={em.key} style={{borderRadius:7,border:"1px solid "+(em.drought>=8?"#dc2626":em.drought>=5?"#f59e0b":"#2d4057"),background:em.drought>=8?"#200505":em.drought>=5?"#1c1000":"#0f1923",padding:"6px 2px",textAlign:"center"}}>
+                    <div style={{fontSize:9,color:em.color,fontWeight:700,textTransform:"uppercase"}}>{em.label}</div>
+                    <div style={{fontSize:15,fontWeight:800,color:em.drought>=8?"#f87171":em.drought>=5?"#fbbf24":"#94a3b8"}}>{em.drought}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -668,15 +695,25 @@ export default function App() {
           </div>
         )}
 
-        {/* Even money droughts */}
+        {/* Dozens, Columns & Even money droughts */}
         {sess.spins.length>0 && (
-          <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:3}}>
-            {emDroughts.map(em=>(
-              <div key={em.key} style={{borderRadius:7,border:"1px solid "+(em.drought>=8?"#dc2626":em.drought>=5?"#f59e0b":"#2d4057"),background:em.drought>=8?"#200505":em.drought>=5?"#1c1000":"#0f1923",padding:"4px 2px",textAlign:"center"}}>
-                <div style={{fontSize:8,color:em.color,fontWeight:700,textTransform:"uppercase"}}>{em.label}</div>
-                <div style={{fontSize:13,fontWeight:800,color:em.drought>=8?"#f87171":em.drought>=5?"#fbbf24":"#94a3b8"}}>{em.drought}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            <div style={{display:"flex",gap:4}}>
+              {[0,1,2].map(i=><DCard key={"d"+i} label={DZ_LABELS[i]} range={["1-12","13-24","25-36"][i]} drought={dozD[i]} colorBd={DZ_BD[i]} colorTx={DZ_TX[i]}/>)}
+            </div>
+            <div style={{display:"flex",gap:4}}>
+              {[0,1,2].map(i=><DCard key={"c"+i} label={COL_LABELS[i]} range={["1,4..34","2,5..35","3,6..36"][i]} drought={colD[i]} colorBd={COL_BD[i]} colorTx={COL_TX[i]}/>)}
+            </div>
+            <div style={{borderTop:"1px solid #2d4057",marginTop:2,paddingTop:6}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:3}}>
+                {emDroughts.map(em=>(
+                  <div key={em.key} style={{borderRadius:7,border:"1px solid "+(em.drought>=8?"#dc2626":em.drought>=5?"#f59e0b":"#2d4057"),background:em.drought>=8?"#200505":em.drought>=5?"#1c1000":"#0f1923",padding:"6px 2px",textAlign:"center"}}>
+                    <div style={{fontSize:9,color:em.color,fontWeight:700,textTransform:"uppercase"}}>{em.label}</div>
+                    <div style={{fontSize:15,fontWeight:800,color:em.drought>=8?"#f87171":em.drought>=5?"#fbbf24":"#94a3b8"}}>{em.drought}</div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         )}
 
@@ -1362,7 +1399,7 @@ export default function App() {
           <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:6,marginBottom:2}}>
             <button onClick={()=>setAppMode("game")} style={{padding:"5px 16px",borderRadius:20,border:"none",background:appMode==="game"?"#7c3aed":"#1e2d3d",color:appMode==="game"?"white":"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>🎮 Game</button>
             <button onClick={()=>setAppMode("live")} style={{padding:"5px 16px",borderRadius:20,border:"none",background:appMode==="live"?"#16a34a":"#1e2d3d",color:appMode==="live"?"white":"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>🎰 Live</button>
-            <button onClick={()=>setAppMode("sim")} style={{padding:"5px 16px",borderRadius:20,border:"none",background:appMode==="sim"?"#c2410c":"#1e2d3d",color:appMode==="sim"?"white":"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>🧪 Experimental{simRunning&&!simDone?" ⏳":simDone?" ✅":""}</button>
+            <button onClick={()=>setAppMode("sim")} style={{padding:"5px 16px",borderRadius:20,border:"none",background:appMode==="sim"?"#c2410c":"#1e2d3d",color:appMode==="sim"?"white":"#64748b",fontSize:11,fontWeight:700,cursor:"pointer"}}>🔬 Experimental{simRunning&&!simDone?" ⏳":simDone?" ✅":""}</button>
           </div>
           {(appMode==="live"||appMode==="game") && (
             <div>

@@ -6696,38 +6696,42 @@ function App() {
     _useState80 = _slicedToArray(_useState79, 2),
     gameResult = _useState80[0],
     setGameResult = _useState80[1];
-  var _useState81 = (0, _react.useState)(false),
+  var _useState81 = (0, _react.useState)(null),
     _useState82 = _slicedToArray(_useState81, 2),
-    buyInOpen = _useState82[0],
-    setBuyInOpen = _useState82[1];
+    lastSpinDelta = _useState82[0],
+    setLastSpinDelta = _useState82[1];
   var _useState83 = (0, _react.useState)(false),
     _useState84 = _slicedToArray(_useState83, 2),
-    currencyOpen = _useState84[0],
-    setCurrencyOpen = _useState84[1];
+    buyInOpen = _useState84[0],
+    setBuyInOpen = _useState84[1];
   var _useState85 = (0, _react.useState)(false),
     _useState86 = _slicedToArray(_useState85, 2),
-    changelogOpen = _useState86[0],
-    setChangelogOpen = _useState86[1];
+    currencyOpen = _useState86[0],
+    setCurrencyOpen = _useState86[1];
   var _useState87 = (0, _react.useState)(false),
     _useState88 = _slicedToArray(_useState87, 2),
-    editBankroll = _useState88[0],
-    setEditBankroll = _useState88[1];
+    changelogOpen = _useState88[0],
+    setChangelogOpen = _useState88[1];
   var _useState89 = (0, _react.useState)(false),
     _useState90 = _slicedToArray(_useState89, 2),
-    cashOutOpen = _useState90[0],
-    setCashOutOpen = _useState90[1];
+    editBankroll = _useState90[0],
+    setEditBankroll = _useState90[1];
   var _useState91 = (0, _react.useState)(false),
     _useState92 = _slicedToArray(_useState91, 2),
-    hardResetOpen = _useState92[0],
-    setHardResetOpen = _useState92[1];
-  var _useState93 = (0, _react.useState)("fibonacci"),
+    cashOutOpen = _useState92[0],
+    setCashOutOpen = _useState92[1];
+  var _useState93 = (0, _react.useState)(false),
     _useState94 = _slicedToArray(_useState93, 2),
-    pendingTrackType = _useState94[0],
-    setPendingTrackType = _useState94[1];
-  var _useState95 = (0, _react.useState)(defaultFibCfg()),
+    hardResetOpen = _useState94[0],
+    setHardResetOpen = _useState94[1];
+  var _useState95 = (0, _react.useState)("fibonacci"),
     _useState96 = _slicedToArray(_useState95, 2),
-    pendingTrackCfg = _useState96[0],
-    setPendingTrackCfg = _useState96[1];
+    pendingTrackType = _useState96[0],
+    setPendingTrackType = _useState96[1];
+  var _useState97 = (0, _react.useState)(defaultFibCfg()),
+    _useState98 = _slicedToArray(_useState97, 2),
+    pendingTrackCfg = _useState98[0],
+    setPendingTrackCfg = _useState98[1];
   var sess = appState.currentSession;
   var settings = appState.settings || defaultSettings();
   var saved = appState.savedSessions || [];
@@ -7089,11 +7093,14 @@ function App() {
         return sum + t.pnl * (t.config.unit || 1);
       }, 0)) * 100) / 100;
     });
-    if (trackResults.length > 0) setResult({
-      val: val,
-      trackResults: trackResults,
-      totalDelta: totalDelta
-    });
+    if (trackResults.length > 0) {
+      setResult({
+        val: val,
+        trackResults: trackResults,
+        totalDelta: totalDelta
+      });
+      setLastSpinDelta(totalDelta);
+    }
     // Visual flash
     setFlashNum(val);
     setTimeout(function () {
@@ -7601,6 +7608,98 @@ function App() {
       }, val);
     })), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
+        display: "flex",
+        gap: 8,
+        width: "100%"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        background: pnlVal >= 0 ? "#0a1f0a" : "#200505",
+        borderRadius: 12,
+        padding: "12px 10px",
+        border: "1px solid " + (pnlVal >= 0 ? "#16a34a" : "#991b1b"),
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        color: "#64748b",
+        textTransform: "uppercase",
+        letterSpacing: 1,
+        marginBottom: 2
+      }
+    }, "Total P&L"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 24,
+        fontWeight: 900,
+        color: pnlVal >= 0 ? "#4ade80" : "#f87171"
+      }
+    }, pnlVal >= 0 ? "+" : "-", cur.symbol, Math.abs(pnlVal).toFixed(cur.dec))), lastSpinDelta !== null && /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 100,
+        background: lastSpinDelta > 0 ? "#0a1f0a" : lastSpinDelta < 0 ? "#200505" : "#0f1923",
+        borderRadius: 12,
+        padding: "12px 10px",
+        border: "1px solid " + (lastSpinDelta > 0 ? "#16a34a" : lastSpinDelta < 0 ? "#991b1b" : "#2d4057"),
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        color: "#64748b",
+        textTransform: "uppercase",
+        letterSpacing: 1,
+        marginBottom: 2
+      }
+    }, "Last Spin"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 20,
+        fontWeight: 900,
+        color: lastSpinDelta > 0 ? "#4ade80" : lastSpinDelta < 0 ? "#f87171" : "#94a3b8"
+      }
+    }, lastSpinDelta > 0 ? "+" : lastSpinDelta < 0 ? "-" : "", cur.symbol, Math.abs(lastSpinDelta).toFixed(cur.dec)))), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 4
+      }
+    }, [0, 1, 2].map(function (i) {
+      return /*#__PURE__*/React.createElement(DCard, {
+        key: "d" + i,
+        label: DZ_LABELS[i],
+        range: ["1-12", "13-24", "25-36"][i],
+        drought: dozD[i],
+        colorBd: DZ_BD[i],
+        colorTx: DZ_TX[i]
+      });
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 4
+      }
+    }, [0, 1, 2].map(function (i) {
+      return /*#__PURE__*/React.createElement(DCard, {
+        key: "c" + i,
+        label: COL_LABELS[i],
+        range: ["1,4..34", "2,5..35", "3,6..36"][i],
+        drought: colD[i],
+        colorBd: COL_BD[i],
+        colorTx: COL_TX[i]
+      });
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        borderTop: "1px solid #2d4057",
+        marginTop: 2,
+        paddingTop: 6
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
         display: "grid",
         gridTemplateColumns: "repeat(6,1fr)",
         gap: 3
@@ -7612,24 +7711,24 @@ function App() {
           borderRadius: 7,
           border: "1px solid " + (em.drought >= 8 ? "#dc2626" : em.drought >= 5 ? "#f59e0b" : "#2d4057"),
           background: em.drought >= 8 ? "#200505" : em.drought >= 5 ? "#1c1000" : "#0f1923",
-          padding: "4px 2px",
+          padding: "6px 2px",
           textAlign: "center"
         }
       }, /*#__PURE__*/React.createElement("div", {
         style: {
-          fontSize: 8,
+          fontSize: 9,
           color: em.color,
           fontWeight: 700,
           textTransform: "uppercase"
         }
       }, em.label), /*#__PURE__*/React.createElement("div", {
         style: {
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: 800,
           color: em.drought >= 8 ? "#f87171" : em.drought >= 5 ? "#fbbf24" : "#94a3b8"
         }
       }, em.drought));
-    })), /*#__PURE__*/React.createElement(Lbl, null, "Strategy Tracks"), /*#__PURE__*/React.createElement("div", {
+    })))), /*#__PURE__*/React.createElement(Lbl, null, "Strategy Tracks"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -7966,6 +8065,46 @@ function App() {
       }, val);
     })), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 4
+      }
+    }, [0, 1, 2].map(function (i) {
+      return /*#__PURE__*/React.createElement(DCard, {
+        key: "d" + i,
+        label: DZ_LABELS[i],
+        range: ["1-12", "13-24", "25-36"][i],
+        drought: dozD[i],
+        colorBd: DZ_BD[i],
+        colorTx: DZ_TX[i]
+      });
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 4
+      }
+    }, [0, 1, 2].map(function (i) {
+      return /*#__PURE__*/React.createElement(DCard, {
+        key: "c" + i,
+        label: COL_LABELS[i],
+        range: ["1,4..34", "2,5..35", "3,6..36"][i],
+        drought: colD[i],
+        colorBd: COL_BD[i],
+        colorTx: COL_TX[i]
+      });
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        borderTop: "1px solid #2d4057",
+        marginTop: 2,
+        paddingTop: 6
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
         display: "grid",
         gridTemplateColumns: "repeat(6,1fr)",
         gap: 3
@@ -7977,24 +8116,24 @@ function App() {
           borderRadius: 7,
           border: "1px solid " + (em.drought >= 8 ? "#dc2626" : em.drought >= 5 ? "#f59e0b" : "#2d4057"),
           background: em.drought >= 8 ? "#200505" : em.drought >= 5 ? "#1c1000" : "#0f1923",
-          padding: "4px 2px",
+          padding: "6px 2px",
           textAlign: "center"
         }
       }, /*#__PURE__*/React.createElement("div", {
         style: {
-          fontSize: 8,
+          fontSize: 9,
           color: em.color,
           fontWeight: 700,
           textTransform: "uppercase"
         }
       }, em.label), /*#__PURE__*/React.createElement("div", {
         style: {
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: 800,
           color: em.drought >= 8 ? "#f87171" : em.drought >= 5 ? "#fbbf24" : "#94a3b8"
         }
       }, em.drought));
-    })), /*#__PURE__*/React.createElement(Lbl, null, "Active Strategy Tracks"), /*#__PURE__*/React.createElement("div", {
+    })))), /*#__PURE__*/React.createElement(Lbl, null, "Active Strategy Tracks"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -8859,10 +8998,10 @@ function App() {
 
   // -- Spin Log Page --
   function SpinPage() {
-    var _useState97 = (0, _react.useState)(false),
-      _useState98 = _slicedToArray(_useState97, 2),
-      showAll = _useState98[0],
-      setShowAll = _useState98[1];
+    var _useState99 = (0, _react.useState)(false),
+      _useState100 = _slicedToArray(_useState99, 2),
+      showAll = _useState100[0],
+      setShowAll = _useState100[1];
     var displaySpins = showAll ? _toConsumableArray(sess.spins).reverse() : _toConsumableArray(sess.spins).reverse().slice(0, 60);
     return /*#__PURE__*/React.createElement("div", {
       style: {
@@ -9394,10 +9533,10 @@ function App() {
 
   // -- Settings Page --
   function SettingsPage() {
-    var _useState99 = (0, _react.useState)(settings.defaultBuyIn || 100),
-      _useState100 = _slicedToArray(_useState99, 2),
-      localBuyIn = _useState100[0],
-      setLocalBuyIn = _useState100[1];
+    var _useState101 = (0, _react.useState)(settings.defaultBuyIn || 100),
+      _useState102 = _slicedToArray(_useState101, 2),
+      localBuyIn = _useState102[0],
+      setLocalBuyIn = _useState102[1];
     function saveBuyIn() {
       updSettings(function (s) {
         s.defaultBuyIn = localBuyIn;
@@ -9918,10 +10057,10 @@ function App() {
   // -- Bankroll Edit --
   function BankrollEdit(_ref71) {
     var onClose = _ref71.onClose;
-    var _useState101 = (0, _react.useState)(sess.bankrollCurrent),
-      _useState102 = _slicedToArray(_useState101, 2),
-      val = _useState102[0],
-      setVal = _useState102[1];
+    var _useState103 = (0, _react.useState)(sess.bankrollCurrent),
+      _useState104 = _slicedToArray(_useState103, 2),
+      val = _useState104[0],
+      setVal = _useState104[1];
     function save() {
       updSess(function (s) {
         s.bankrollCurrent = val;
@@ -10067,7 +10206,7 @@ function App() {
       fontWeight: 700,
       cursor: "pointer"
     }
-  }, "\uD83E\uDDEA Experimental", simRunning && !simDone ? " ⏳" : simDone ? " ✅" : "")), (appMode === "live" || appMode === "game") && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDD2C Experimental", simRunning && !simDone ? " ⏳" : simDone ? " ✅" : "")), (appMode === "live" || appMode === "game") && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "center",
