@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.35.2";
+  var MY_V="0.35.3";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -391,7 +391,7 @@ var TRACK_ICONS = {
   solution: "🎯"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.35.2";
+var APP_VERSION = "0.35.3";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2491,14 +2491,14 @@ function SessionClock(_ref15) {
 function RouletteBoard(_ref16) {
   var roulette = _ref16.roulette,
     winningNumber = _ref16.winningNumber,
-    betNumbers = _ref16.betNumbers,
+    stratBets = _ref16.stratBets,
     spinning = _ref16.spinning,
     onBet = _ref16.onBet,
     boardBets = _ref16.boardBets,
     chipColor = _ref16.chipColor,
     betResults = _ref16.betResults;
   var isAmerican = roulette === "american";
-  var bets = betNumbers || {};
+  var sb = stratBets || {};
   var bb = boardBets || {};
   var br = betResults || {};
   var canBet = !!onBet && !spinning && !betResults;
@@ -2518,21 +2518,11 @@ function RouletteBoard(_ref16) {
   var glow = function glow(on) {
     return on ? "0 0 8px #fbbf24, inset 0 0 6px #fbbf2444" : "none";
   };
-  var obdr = function obdr(on) {
-    return on ? "2px solid #fbbf24" : "1px solid #374151";
-  };
-  var otxt = function otxt(on) {
-    return on ? "#fbbf24" : "#94a3b8";
-  };
-  var obg = function obg(on, base) {
-    return on ? base || "#1c1000" : base || "#0f1923";
-  };
   function numStyle(num, isZero) {
     var numStr = String(isZero ? num === 0 ? "0" : "00" : num);
     var isRed = !isZero && RED.has(num);
-    var isWin = winStr === numStr && !spinning;
-    var isFlash = spinning && winStr === numStr;
-    var betColor = bets[numStr] || null;
+    var isWin = winStr === numStr;
+    var stratC = sb["s:" + numStr] || null;
     return {
       position: "relative",
       display: "flex",
@@ -2542,13 +2532,12 @@ function RouletteBoard(_ref16) {
       borderRadius: 3,
       cursor: "default",
       background: isZero ? "#166534" : isRed ? "#991b1b" : "#1e293b",
-      border: isWin ? "2px solid #fbbf24" : isFlash ? "2px solid #ffffff88" : betColor ? "2px solid " + betColor : "1px solid #374151",
-      color: isWin ? "#fbbf24" : isFlash ? "#fff" : "white",
+      border: isWin ? "2px solid #fbbf24" : stratC ? "2px solid " + stratC : "1px solid #374151",
+      color: isWin ? "#fbbf24" : "white",
       fontSize: isZero ? 10 : 11,
       fontWeight: 800,
-      boxShadow: isWin ? "0 0 10px #fbbf24, inset 0 0 6px #fbbf2444" : betColor && !isFlash ? "inset 0 0 5px " + betColor + "44" : "none",
-      zIndex: isWin ? 2 : 1,
-      transition: spinning ? "none" : "box-shadow 0.3s"
+      boxShadow: isWin ? "0 0 10px #fbbf24, inset 0 0 6px #fbbf2444" : stratC ? "inset 0 0 5px " + stratC + "44" : "none",
+      zIndex: isWin ? 2 : 1
     };
   }
   function Mkr() {
@@ -2664,6 +2653,7 @@ function RouletteBoard(_ref16) {
   }, [2, 1, 0].map(function (c) {
     var on = winGroups.col === c;
     var bk = "column:" + c;
+    var sc = sb[bk] || null;
     return React.createElement("div", {
       key: c,
       onClick: function onClick() {
@@ -2675,14 +2665,13 @@ function RouletteBoard(_ref16) {
         alignItems: "center",
         justifyContent: "center",
         borderRadius: 3,
-        border: bb[bk] ? "2px solid #fbbf24" : obdr(on),
-        color: otxt(on || !!bb[bk]),
-        background: obg(on),
-        boxShadow: bb[bk] ? "0 0 6px #fbbf2466" : glow(on),
+        border: bb[bk] ? "2px solid #fbbf24" : on ? "2px solid #fbbf24" : sc ? "2px solid " + sc : "1px solid #374151",
+        color: on ? "#fbbf24" : sc ? sc : bb[bk] ? "#fbbf24" : "#94a3b8",
+        background: on ? "#1c1000" : "#0f1923",
+        boxShadow: on ? glow(true) : sc ? "inset 0 0 6px " + sc + "44" : bb[bk] ? "0 0 6px #fbbf2466" : "none",
         fontSize: 8,
         fontWeight: 700,
         cursor: canBet ? "pointer" : "default",
-        transition: "all 0.3s",
         position: "relative"
       }
     }, "2:1", bb[bk] && React.createElement(BetChip, {
@@ -2707,6 +2696,7 @@ function RouletteBoard(_ref16) {
   }].map(function (d) {
     var on = winGroups.doz === d.i;
     var bk = "dozen:" + d.i;
+    var sc = sb[bk] || null;
     return React.createElement("div", {
       key: d.i,
       onClick: function onClick() {
@@ -2719,12 +2709,11 @@ function RouletteBoard(_ref16) {
         textAlign: "center",
         fontSize: 10,
         fontWeight: 700,
-        border: bb[bk] ? "2px solid #fbbf24" : obdr(on),
-        color: otxt(on || !!bb[bk]),
-        background: obg(on),
-        boxShadow: bb[bk] ? "0 0 6px #fbbf2466" : glow(on),
+        border: bb[bk] ? "2px solid #fbbf24" : on ? "2px solid #fbbf24" : sc ? "2px solid " + sc : "1px solid #374151",
+        color: on ? "#fbbf24" : sc ? sc : bb[bk] ? "#fbbf24" : "#94a3b8",
+        background: on ? "#1c1000" : "#0f1923",
+        boxShadow: on ? glow(true) : sc ? "inset 0 0 6px " + sc + "44" : bb[bk] ? "0 0 6px #fbbf2466" : "none",
         cursor: canBet ? "pointer" : "default",
-        transition: "all 0.3s",
         position: "relative"
       }
     }, d.l, bb[bk] && React.createElement(BetChip, {
@@ -2764,6 +2753,7 @@ function RouletteBoard(_ref16) {
   }].map(function (em) {
     var on = !!winGroups[em.k];
     var bk = em.k;
+    var sc = sb[bk] || null;
     return React.createElement("div", {
       key: em.k,
       onClick: function onClick() {
@@ -2776,12 +2766,11 @@ function RouletteBoard(_ref16) {
         textAlign: "center",
         fontSize: 9,
         fontWeight: 700,
-        border: bb[bk] ? "2px solid #fbbf24" : obdr(on),
-        color: on ? "#fbbf24" : bb[bk] ? "#fbbf24" : em.k === "red" ? "#f87171" : em.k === "black" ? "#94a3b8" : "#94a3b8",
+        border: bb[bk] ? "2px solid #fbbf24" : on ? "2px solid #fbbf24" : sc ? "2px solid " + sc : "1px solid #374151",
+        color: on ? "#fbbf24" : sc ? sc : bb[bk] ? "#fbbf24" : em.k === "red" ? "#f87171" : em.k === "black" ? "#94a3b8" : "#94a3b8",
         background: on ? "#1c1000" : em.bg,
-        boxShadow: bb[bk] ? "0 0 6px #fbbf2466" : glow(on),
+        boxShadow: on ? glow(true) : sc ? "inset 0 0 6px " + sc + "44" : bb[bk] ? "0 0 6px #fbbf2466" : "none",
         cursor: canBet ? "pointer" : "default",
-        transition: "all 0.3s",
         position: "relative"
       }
     }, em.l, bb[bk] && React.createElement(BetChip, {
@@ -8292,7 +8281,8 @@ function App() {
         color: "#fbbf24"
       }
     }, "Total Bet: ", cur.symbol, totalBetAmt.toFixed(cur.dec)), function () {
-      var betNums = {};
+      // Compute strategy outside bet highlights (labels, not individual numbers)
+      var stratBets = {};
       nonClosedTracks.filter(function (t) {
         return t.state === "active";
       }).forEach(function (t) {
@@ -8300,36 +8290,27 @@ function App() {
           var dts = t.config.dozenTargets || [],
             cts = t.config.colTargets || [],
             evts = t.config.evenTargets || [];
-          var _loop6 = function _loop6(n) {
-            var covered = false;
-            if (evts.length > 0) {
-              evts.forEach(function (key) {
-                var em = EVEN_MONEY.find(function (e) {
-                  return e.key === key;
-                });
-                if (em && em.pred(n)) covered = true;
-              });
-            } else {
-              if (dts.includes(dozenOf(String(n)))) covered = true;
-              if (cts.includes(colOf(String(n)))) covered = true;
-            }
-            if (covered && !betNums[String(n)]) betNums[String(n)] = t.color;
-          };
-          for (var n = 1; n <= 36; n++) {
-            _loop6(n);
-          }
+          dts.forEach(function (d) {
+            stratBets["dozen:" + d] = t.color;
+          });
+          cts.forEach(function (c) {
+            stratBets["column:" + c] = t.color;
+          });
+          evts.forEach(function (key) {
+            stratBets[key] = t.color;
+          });
         }
         if (t.type === "solution") {
           (t.config.activeBets || []).forEach(function (b) {
-            if (!betNums[b.number]) betNums[b.number] = t.color;
+            if (!stratBets["s:" + b.number]) stratBets["s:" + b.number] = t.color;
           });
         }
       });
       return /*#__PURE__*/React.createElement(RouletteBoard, {
         roulette: sess.roulette,
-        winningNumber: gameResult,
-        betNumbers: betNums,
-        spinning: gameSpinning,
+        winningNumber: gameSpinning ? null : gameResult,
+        stratBets: stratBets,
+        spinning: false,
         onBet: placeBet,
         boardBets: boardBets,
         chipColor: (CHIPS.find(function (c) {

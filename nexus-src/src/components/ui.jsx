@@ -98,12 +98,13 @@ function SessionClock({startedAt, endedAt, style}) {
 }
 
 // -- Roulette Table Board --
-function RouletteBoard({roulette, winningNumber, betNumbers, spinning, onBet, boardBets, chipColor, betResults}) {
+function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boardBets, chipColor, betResults}) {
   const isAmerican = roulette === "american";
-  const bets = betNumbers || {};
+  const sb = stratBets || {};
   const bb = boardBets || {};
   const br = betResults || {};
-  const canBet = !!onBet && !spinning && !betResults;  const BOARD_ROWS = [
+  const canBet = !!onBet && !spinning && !betResults;
+  const BOARD_ROWS = [
     [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
     [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
     [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
@@ -121,25 +122,21 @@ function RouletteBoard({roulette, winningNumber, betNumbers, spinning, onBet, bo
     if(winN<=18) winGroups.low=true; else winGroups.high=true;
   }
   var glow = function(on){return on?"0 0 8px #fbbf24, inset 0 0 6px #fbbf2444":"none";};
-  var obdr = function(on){return on?"2px solid #fbbf24":"1px solid #374151";};
-  var otxt = function(on){return on?"#fbbf24":"#94a3b8";};
-  var obg = function(on,base){return on?(base||"#1c1000"):(base||"#0f1923");};
 
   function numStyle(num, isZero) {
     var numStr = String(isZero ? (num===0?"0":"00") : num);
     var isRed = !isZero && RED.has(num);
-    var isWin = winStr===numStr && !spinning;
-    var isFlash = spinning && winStr===numStr;
-    var betColor = bets[numStr]||null;
+    var isWin = winStr===numStr;
+    var stratC = sb["s:"+numStr]||null;
     return {
       position:"relative", display:"flex", alignItems:"center", justifyContent:"center",
       height:32, borderRadius:3, cursor:"default",
       background: isZero?"#166534":isRed?"#991b1b":"#1e293b",
-      border: isWin?"2px solid #fbbf24":isFlash?"2px solid #ffffff88":betColor?"2px solid "+betColor:"1px solid #374151",
-      color: isWin?"#fbbf24":isFlash?"#fff":"white",
+      border: isWin?"2px solid #fbbf24":stratC?"2px solid "+stratC:"1px solid #374151",
+      color: isWin?"#fbbf24":"white",
       fontSize: isZero?10:11, fontWeight:800,
-      boxShadow: isWin?"0 0 10px #fbbf24, inset 0 0 6px #fbbf2444":betColor&&!isFlash?"inset 0 0 5px "+betColor+"44":"none",
-      zIndex: isWin?2:1, transition: spinning?"none":"box-shadow 0.3s",
+      boxShadow: isWin?"0 0 10px #fbbf24, inset 0 0 6px #fbbf2444":stratC?"inset 0 0 5px "+stratC+"44":"none",
+      zIndex: isWin?2:1,
     };
   }
 
@@ -176,11 +173,11 @@ function RouletteBoard({roulette, winningNumber, betNumbers, spinning, onBet, bo
           {BOARD_ROWS.map(function(row){return row.map(function(num){return cell(num,false);});})}
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:g,width:28,flexShrink:0}}>
-          {[2,1,0].map(function(c){var on=winGroups.col===c;var bk="column:"+c;return React.createElement("div",{key:c,onClick:function(){if(canBet)onBet("column",c);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,border:bb[bk]?"2px solid #fbbf24":obdr(on),color:otxt(on||!!bb[bk]),background:obg(on),boxShadow:bb[bk]?"0 0 6px #fbbf2466":glow(on),fontSize:8,fontWeight:700,cursor:canBet?"pointer":"default",transition:"all 0.3s",position:"relative"}},"2:1",bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
+          {[2,1,0].map(function(c){var on=winGroups.col===c;var bk="column:"+c;var sc=sb[bk]||null;return React.createElement("div",{key:c,onClick:function(){if(canBet)onBet("column",c);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",fontSize:8,fontWeight:700,cursor:canBet?"pointer":"default",position:"relative"}},"2:1",bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
         </div>
       </div>
       <div style={{display:"flex",gap:g,marginLeft:26+g}}>
-        {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){var on=winGroups.doz===d.i;var bk="dozen:"+d.i;return React.createElement("div",{key:d.i,onClick:function(){if(canBet)onBet("dozen",d.i);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:10,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":obdr(on),color:otxt(on||!!bb[bk]),background:obg(on),boxShadow:bb[bk]?"0 0 6px #fbbf2466":glow(on),cursor:canBet?"pointer":"default",transition:"all 0.3s",position:"relative"}},d.l,bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
+        {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){var on=winGroups.doz===d.i;var bk="dozen:"+d.i;var sc=sb[bk]||null;return React.createElement("div",{key:d.i,onClick:function(){if(canBet)onBet("dozen",d.i);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:10,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",cursor:canBet?"pointer":"default",position:"relative"}},d.l,bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
       </div>
       <div style={{display:"flex",gap:g,marginLeft:26+g}}>
         {[
@@ -190,7 +187,7 @@ function RouletteBoard({roulette, winningNumber, betNumbers, spinning, onBet, bo
           {l:"BLK",k:"black",bg:"#1e293b"},
           {l:"ODD",k:"odd",bg:"#0f1923"},
           {l:"19-36",k:"high",bg:"#0f1923"},
-        ].map(function(em){var on=!!winGroups[em.k];var bk=em.k;return React.createElement("div",{key:em.k,onClick:function(){if(canBet)onBet(em.k);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:9,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":obdr(on),color:on?"#fbbf24":bb[bk]?"#fbbf24":em.k==="red"?"#f87171":em.k==="black"?"#94a3b8":"#94a3b8",background:on?"#1c1000":em.bg,boxShadow:bb[bk]?"0 0 6px #fbbf2466":glow(on),cursor:canBet?"pointer":"default",transition:"all 0.3s",position:"relative"}},em.l,bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
+        ].map(function(em){var on=!!winGroups[em.k];var bk=em.k;var sc=sb[bk]||null;return React.createElement("div",{key:em.k,onClick:function(){if(canBet)onBet(em.k);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:9,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":em.k==="red"?"#f87171":em.k==="black"?"#94a3b8":"#94a3b8",background:on?"#1c1000":em.bg,boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",cursor:canBet?"pointer":"default",position:"relative"}},em.l,bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
       </div>
     </div>
   );

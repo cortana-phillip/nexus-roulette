@@ -680,22 +680,20 @@ export default function App() {
 
         {/* Roulette Table - interactive */}
         {(()=>{
-          const betNums = {};
+          // Compute strategy outside bet highlights (labels, not individual numbers)
+          const stratBets = {};
           nonClosedTracks.filter(t=>t.state==="active").forEach(t=>{
             if(t.type==="fibonacci") {
               const dts=t.config.dozenTargets||[], cts=t.config.colTargets||[], evts=t.config.evenTargets||[];
-              for(let n=1;n<=36;n++){
-                let covered=false;
-                if(evts.length>0) { evts.forEach(key=>{const em=EVEN_MONEY.find(e=>e.key===key);if(em&&em.pred(n))covered=true;}); }
-                else { if(dts.includes(dozenOf(String(n))))covered=true; if(cts.includes(colOf(String(n))))covered=true; }
-                if(covered && !betNums[String(n)]) betNums[String(n)]=t.color;
-              }
+              dts.forEach(d=>{ stratBets["dozen:"+d]=t.color; });
+              cts.forEach(c=>{ stratBets["column:"+c]=t.color; });
+              evts.forEach(key=>{ stratBets[key]=t.color; });
             }
             if(t.type==="solution") {
-              (t.config.activeBets||[]).forEach(b=>{ if(!betNums[b.number]) betNums[b.number]=t.color; });
+              (t.config.activeBets||[]).forEach(b=>{ if(!stratBets["s:"+b.number]) stratBets["s:"+b.number]=t.color; });
             }
           });
-          return <RouletteBoard roulette={sess.roulette} winningNumber={gameResult} betNumbers={betNums} spinning={gameSpinning} onBet={placeBet} boardBets={boardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={betResults}/>;
+          return <RouletteBoard roulette={sess.roulette} winningNumber={gameSpinning?null:gameResult} stratBets={stratBets} spinning={false} onBet={placeBet} boardBets={boardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={betResults}/>;
         })()}
 
         {/* Recent spins ticker */}
