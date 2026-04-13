@@ -17,7 +17,7 @@ body{background:#0f1923;color:#e2e8f0;font-family:system-ui;display:flex;align-i
 <script>
 (function(){
   var done = 0, total = 2;
-  function check(){ done++; if(done>=total) window.location.href="./"; }
+  function check(){ done++; if(done>=total) setTimeout(function(){ window.location.href="https://cortana-phillip.github.io/nexus-roulette/?cleared="+Date.now(); }, 1000); }
   if('serviceWorker' in navigator){
     navigator.serviceWorker.getRegistrations().then(function(regs){
       Promise.all(regs.map(function(r){return r.unregister();})).then(check);
