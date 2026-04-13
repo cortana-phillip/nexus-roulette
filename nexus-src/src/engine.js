@@ -1,6 +1,4 @@
 // -- Game Engine: Math, Droughts, Table Calculations --
-  {key:"low",   label:"1-18",  color:"#86efac", pred: n=>n<=18},
-];
 
 function countDrought(spins, predicate) {
   let count=0;

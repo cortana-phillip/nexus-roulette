@@ -16,7 +16,26 @@
 html,body{background:#0f1923;min-height:100%;}
 button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-family:inherit;cursor:pointer;}
 #root{min-height:100vh;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 </style>
+<script>
+// Pre-app update check — runs before React, works even when HTML is cached
+(function(){
+  var MY_V="0.33.2";
+  try{
+    fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
+      if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
+        sessionStorage.setItem("nexus_updating","1");
+        if('caches' in window) caches.keys().then(function(k){k.forEach(function(c){caches.delete(c);});});
+        if('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(sw){sw.unregister();});});
+        setTimeout(function(){window.location.href=window.location.pathname+"?v="+Date.now();},500);
+      } else {
+        sessionStorage.removeItem("nexus_updating");
+      }
+    });
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 <div id="root"></div>
@@ -372,7 +391,7 @@ var TRACK_ICONS = {
   solution: "🎯"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.33.0";
+var APP_VERSION = "0.33.2";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -684,10 +703,7 @@ var EVEN_MONEY = [{
   pred: function pred(n) {
     return n >= 19;
   }
-},
-// ===== engine.js =====
-// -- Game Engine: Math, Droughts, Table Calculations --
-{
+}, {
   key: "low",
   label: "1-18",
   color: "#86efac",
@@ -695,6 +711,10 @@ var EVEN_MONEY = [{
     return n <= 18;
   }
 }];
+
+// ===== engine.js =====
+// -- Game Engine: Math, Droughts, Table Calculations --
+
 function countDrought(spins, predicate) {
   var count = 0;
   for (var i = spins.length - 1; i >= 0; i--) {
@@ -2460,8 +2480,10 @@ function SessionClock(_ref15) {
 // -- Roulette Table Board --
 function RouletteBoard(_ref16) {
   var roulette = _ref16.roulette,
-    winningNumber = _ref16.winningNumber;
+    winningNumber = _ref16.winningNumber,
+    betNumbers = _ref16.betNumbers;
   var isAmerican = roulette === "american";
+  var bets = betNumbers || {};
   var BOARD_ROWS = [[3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36], [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35], [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]];
   var cellH = 34;
   var cellW = "1fr";
@@ -2469,8 +2491,10 @@ function RouletteBoard(_ref16) {
   var gap = 2;
   var winStr = winningNumber ? String(winningNumber) : null;
   function cellStyle(num, isZero) {
+    var numStr = String(isZero ? num === 0 ? "0" : "00" : num);
     var isRed = !isZero && RED.has(num);
-    var isWin = winStr === String(isZero ? num === 0 ? "0" : "00" : num);
+    var isWin = winStr === numStr;
+    var betColor = bets[numStr] || null;
     return {
       position: "relative",
       display: "flex",
@@ -2480,11 +2504,11 @@ function RouletteBoard(_ref16) {
       borderRadius: 4,
       cursor: "default",
       background: isZero ? "#166534" : isRed ? "#991b1b" : "#1e293b",
-      border: isWin ? "2px solid #fbbf24" : "1px solid #374151",
+      border: isWin ? "2px solid #fbbf24" : betColor ? "2px solid " + betColor : "1px solid #374151",
       color: isWin ? "#fbbf24" : "white",
       fontSize: isZero ? 11 : 12,
       fontWeight: 800,
-      boxShadow: isWin ? "0 0 12px #fbbf24, inset 0 0 8px #fbbf2444" : "none",
+      boxShadow: isWin ? "0 0 12px #fbbf24, inset 0 0 8px #fbbf2444" : betColor ? "inset 0 0 6px " + betColor + "44" : "none",
       zIndex: isWin ? 2 : 1,
       transition: "box-shadow 0.3s, border 0.3s"
     };
@@ -7841,10 +7865,46 @@ function App() {
         fontWeight: 900,
         color: lastSpinDelta > 0 ? "#4ade80" : lastSpinDelta < 0 ? "#f87171" : "#94a3b8"
       }
-    }, lastSpinDelta > 0 ? "+" : lastSpinDelta < 0 ? "-" : "", cur.symbol, Math.abs(lastSpinDelta).toFixed(cur.dec)))), /*#__PURE__*/React.createElement(RouletteBoard, {
-      roulette: sess.roulette,
-      winningNumber: gameResult
-    }), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
+    }, lastSpinDelta > 0 ? "+" : lastSpinDelta < 0 ? "-" : "", cur.symbol, Math.abs(lastSpinDelta).toFixed(cur.dec)))), function () {
+      var betNums = {};
+      nonClosedTracks.filter(function (t) {
+        return t.state === "active";
+      }).forEach(function (t) {
+        if (t.type === "fibonacci") {
+          var dts = t.config.dozenTargets || [],
+            cts = t.config.colTargets || [],
+            evts = t.config.evenTargets || [];
+          var _loop6 = function _loop6(n) {
+            var covered = false;
+            if (evts.length > 0) {
+              evts.forEach(function (key) {
+                var em = EVEN_MONEY.find(function (e) {
+                  return e.key === key;
+                });
+                if (em && em.pred(n)) covered = true;
+              });
+            } else {
+              if (dts.includes(dozenOf(String(n)))) covered = true;
+              if (cts.includes(colOf(String(n)))) covered = true;
+            }
+            if (covered && !betNums[String(n)]) betNums[String(n)] = t.color;
+          };
+          for (var n = 1; n <= 36; n++) {
+            _loop6(n);
+          }
+        }
+        if (t.type === "solution") {
+          (t.config.activeBets || []).forEach(function (b) {
+            if (!betNums[b.number]) betNums[b.number] = t.color;
+          });
+        }
+      });
+      return /*#__PURE__*/React.createElement(RouletteBoard, {
+        roulette: sess.roulette,
+        winningNumber: gameResult,
+        betNumbers: betNums
+      });
+    }(), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -10484,7 +10544,24 @@ function App() {
   }, "\uD83D\uDCB8 Cash Out")))), updateAvailable && /*#__PURE__*/React.createElement("button", {
     onClick: function onClick() {
       saveApp(appState);
-      window.location.reload();
+      // Force-clear service worker cache, then reload
+      if ('serviceWorker' in navigator) {
+        caches.keys().then(function (keys) {
+          Promise.all(keys.map(function (k) {
+            return caches.delete(k);
+          })).then(function () {
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+              Promise.all(regs.map(function (r) {
+                return r.unregister();
+              })).then(function () {
+                window.location.href = window.location.pathname + "?update=" + Date.now();
+              });
+            });
+          });
+        });
+      } else {
+        window.location.href = window.location.pathname + "?update=" + Date.now();
+      }
     },
     style: {
       width: "100%",
