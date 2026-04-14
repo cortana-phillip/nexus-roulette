@@ -256,24 +256,24 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     var anchorR, anchorC, chipStyle;
     if(bType==="corner") {
       anchorR=minR; anchorC=minC;
-      chipStyle={position:"absolute",bottom:-4,right:-4,transform:"translate(50%,50%)",zIndex:10};
+      chipStyle={position:"absolute",bottom:0,right:0,transform:"translate(50%,50%)",zIndex:10};
     } else if(bType==="split") {
       if(minR!==maxR) { // vertical split
         anchorR=minR; anchorC=minC;
-        chipStyle={position:"absolute",bottom:-4,left:"50%",transform:"translate(-50%,50%)",zIndex:10};
+        chipStyle={position:"absolute",bottom:0,left:"50%",transform:"translate(-50%,50%)",zIndex:10};
       } else { // horizontal split
         anchorR=minR; anchorC=minC;
-        chipStyle={position:"absolute",top:"50%",right:-4,transform:"translate(50%,-50%)",zIndex:10};
+        chipStyle={position:"absolute",top:"50%",right:0,transform:"translate(50%,-50%)",zIndex:10};
       }
     } else if(bType==="street") {
       anchorR=1; anchorC=minC; // middle row
-      chipStyle={position:"absolute",top:"50%",left:-4,transform:"translate(-50%,-50%)",zIndex:10};
+      chipStyle={position:"absolute",top:"50%",left:0,transform:"translate(-50%,-50%)",zIndex:10};
     } else if(bType==="line") {
       anchorR=1; anchorC=minC; // middle of left column
-      chipStyle={position:"absolute",top:"50%",right:-4,transform:"translate(50%,-50%)",zIndex:10};
+      chipStyle={position:"absolute",top:"50%",right:0,transform:"translate(50%,-50%)",zIndex:10};
     } else if(bType==="basket") {
       anchorR=1; anchorC=0;
-      chipStyle={position:"absolute",top:"50%",left:-4,transform:"translate(-50%,-50%)",zIndex:10};
+      chipStyle={position:"absolute",top:"50%",left:0,transform:"translate(-50%,-50%)",zIndex:10};
     }
     var anchorNum = (anchorR!==undefined&&anchorC!==undefined&&BOARD_ROWS[anchorR]) ? String(BOARD_ROWS[anchorR][anchorC]) : betNums[0];
     if(!insideBetChips[anchorNum]) insideBetChips[anchorNum]=[];

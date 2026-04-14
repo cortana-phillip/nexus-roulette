@@ -1,1 +1,1 @@
-{"version":"0.40.3","date":"2026-04-13","notes":"Bet chips now appear exactly where you tap - at the intersection for corners, on the line for splits, at the edge for streets. No more bottom-left positioning."}
+{"version":"0.40.4","date":"2026-04-13","notes":"Fixed bet chip positioning - chips now sit exactly at intersection points, on cell edges for splits, centered on corners."}
