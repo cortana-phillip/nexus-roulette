@@ -170,11 +170,28 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     var numStr=isZero?(zeroLabel||"0"):String(num);
     var betKey="s:"+numStr;
     var sChips=sChipsMap[betKey]||null;
-    return React.createElement("div",{key:numStr,onClick:function(){if(canBet)onBet("straight",numStr);},style:{...numStyle(num,isZero),cursor:canBet?"pointer":"default"}},
+    // Find any inside bet that covers this number (show on first number of group)
+    var insideBetAmt=0, insideBetKey=null, insideCovered=false;
+    Object.keys(bb).forEach(function(k){
+      if(k.startsWith("s:")) return; // skip straights, handled separately
+      if(k==="basket"||k.startsWith("split:")||k.startsWith("street:")||k.startsWith("corner:")||k.startsWith("line:")) {
+        var parts=k.split(":");
+        var bType=parts[0], bTarget=parts.slice(1).join(":");
+        var nums=bTarget.split("-");
+        if(nums.indexOf(numStr)>=0) {
+          insideCovered=true;
+          if(nums[0]===numStr) { insideBetAmt+=bb[k]; insideBetKey=k; } // show chip on first number only
+        }
+      }
+    });
+    var hasBet=bb[betKey]||insideBetAmt;
+    var betBorder=insideCovered&&!bb[betKey]?"2px solid #c084fc":null;
+    return React.createElement("div",{key:numStr,onClick:function(){if(canBet)onBet("straight",numStr);},style:{...numStyle(num,isZero),cursor:canBet?"pointer":"default",border:betBorder||numStyle(num,isZero).border}},
       numStr,
       winStr===numStr&&!spinning&&React.createElement(Mkr),
       sChips&&React.createElement(StratChipBadge,{chips:sChips}),
-      bb[betKey]&&React.createElement(BetChip,{amount:bb[betKey],posKey:betKey})
+      bb[betKey]&&React.createElement(BetChip,{amount:bb[betKey],posKey:betKey}),
+      insideBetAmt>0&&!bb[betKey]&&React.createElement(BetChip,{amount:insideBetAmt,posKey:insideBetKey})
     );
   }
 

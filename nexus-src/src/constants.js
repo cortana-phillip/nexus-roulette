@@ -12,7 +12,7 @@ const COL_TX = ["#5eead4","#f9a8d4","#bef264"];
 const TRACK_COLORS = ["#f59e0b","#2dd4bf","#a855f7","#f97316","#38bdf8"];
 const TRACK_ICONS = { fibonacci:"🎲", solution:"🎯", custom:"🃏" };
 const KEY = "nexus-roulette-v1";
-const APP_VERSION = "0.39.0";
+const APP_VERSION = "0.40.0";
 const ROI_PRESETS = [5,10,15,20,25,30];
 const UNITS = [0.25, 0.50, 1.00];
 
@@ -179,6 +179,77 @@ function fmtSmart(amount, cur) {
 function fmtNum(amount) {
   var abs = Math.abs(amount);
   return abs % 1 !== 0 ? abs.toFixed(2) : abs.toFixed(0);
+}
+
+// -- Bet Types & Helpers --
+const BET_TYPES = [
+  {key:"straight",label:"#",name:"Straight",pay:36,desc:"1 number"},
+  {key:"split",label:"||",name:"Split",pay:18,desc:"2 numbers"},
+  {key:"street",label:"|||",name:"Street",pay:12,desc:"3 numbers"},
+  {key:"corner",label:"⊞",name:"Corner",pay:9,desc:"4 numbers"},
+  {key:"line",label:"═",name:"Line",pay:6,desc:"6 numbers"},
+  {key:"basket",label:"B",name:"Basket",pay:7,desc:"0,00,1,2,3"},
+];
+
+function getStreet(n) {
+  var row = Math.ceil(n/3);
+  return [(row-1)*3+1,(row-1)*3+2,(row-1)*3+3];
+}
+function getVerticalSplit(n) {
+  var st = getStreet(n);
+  var idx = st.indexOf(n);
+  if(idx<2) return [n, n+1]; // up
+  return [n-1, n]; // down
+}
+function getHorizontalSplit(n) {
+  if(n<=3) return [n, n+3]; // right
+  return [n-3, n]; // left
+}
+function getCornerNums(n) {
+  var st = getStreet(n);
+  var idx = st.indexOf(n);
+  var base = idx<2 ? n : n-1; // use left two in row
+  if(base+3<=36) return [base, base+1, base+3, base+4];
+  return [base-3, base-2, base, base+1]; // use row above
+}
+function getLineNums(n) {
+  var st = getStreet(n);
+  var first = st[0];
+  if(first+3<=34) return [first,first+1,first+2,first+3,first+4,first+5];
+  return [first-3,first-2,first-1,first,first+1,first+2]; // use row above
+}
+
+function betCoveredNumbers(type, target) {
+  if(type==="straight") return [target];
+  if(type==="basket") return ["0","00","1","2","3"];
+  if(type==="split") return target.split("-");
+  if(type==="street") return target.split("-");
+  if(type==="corner") return target.split("-");
+  if(type==="line") return target.split("-");
+  if(type==="dozen") { var d=+target; return Array.from({length:12},function(_,i){return String(d*12+i+1);}); }
+  if(type==="column") { var c=+target; var nums=[]; for(var i=1;i<=36;i++){if((i%3===1&&c===0)||(i%3===2&&c===1)||(i%3===0&&c===2))nums.push(String(i));} return nums; }
+  if(type==="red") return Array.from(RED).map(String);
+  if(type==="black") { var b=[]; for(var i=1;i<=36;i++){if(!RED.has(i))b.push(String(i));} return b; }
+  if(type==="odd") { var o=[]; for(var i=1;i<=36;i+=2)o.push(String(i)); return o; }
+  if(type==="even") { var e=[]; for(var i=2;i<=36;i+=2)e.push(String(i)); return e; }
+  if(type==="low") { var l=[]; for(var i=1;i<=18;i++)l.push(String(i)); return l; }
+  if(type==="high") { var h=[]; for(var i=19;i<=36;i++)h.push(String(i)); return h; }
+  return [];
+}
+
+function betPayoutMult(type) {
+  if(type==="straight") return 36;
+  if(type==="split") return 18;
+  if(type==="street") return 12;
+  if(type==="corner") return 9;
+  if(type==="line") return 6;
+  if(type==="basket") return 7;
+  if(type==="dozen"||type==="column") return 3;
+  return 2; // even money
+}
+
+function isInsideBet(type) {
+  return type==="straight"||type==="split"||type==="street"||type==="corner"||type==="line"||type==="basket";
 }
 
 function signChips(chips, unit, currCode) {

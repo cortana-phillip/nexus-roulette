@@ -40,6 +40,7 @@ export default function App() {
   const [gameResult, setGameResult] = useState(null);
   const [lastSpinDelta, setLastSpinDelta] = useState(null);
   const [selectedChip, setSelectedChip] = useState(1);
+  const [betMode, setBetMode] = useState("straight"); // straight|split|street|corner|line|basket
   const [liveSelectingWinner, setLiveSelectingWinner] = useState(true);
   const [liveWinNumber, setLiveWinNumber] = useState(null);
   const [liveManualBets, setLiveManualBets] = useState([]);
@@ -273,24 +274,10 @@ export default function App() {
           const row=tbl[Math.min(t.level,tbl.length-1)];
           const mult=row?row.c:1;
           const baseTotalBet=positions.reduce(function(s,p){return s+p.baseAmount;},0);
-          const isZ=val==="0"||val==="00";
-          const n=isZ?null:+val;
-          // Compute payout for this number
           var payout=0;
           positions.forEach(function(p){
-            var won=false;
-            if(p.type==="straight"&&p.target===val) won=true;
-            if(!isZ&&n){
-              if(p.type==="dozen"){if((n<=12?0:n<=24?1:2)===p.target)won=true;}
-              if(p.type==="column"){if((n%3===0?2:n%3===1?0:1)===p.target)won=true;}
-              if(p.type==="red"&&RED.has(n))won=true;
-              if(p.type==="black"&&!RED.has(n))won=true;
-              if(p.type==="odd"&&n%2===1)won=true;
-              if(p.type==="even"&&n%2===0)won=true;
-              if(p.type==="low"&&n<=18)won=true;
-              if(p.type==="high"&&n>=19)won=true;
-            }
-            if(won) payout+=p.baseAmount*(p.type==="straight"?36:(p.type==="dozen"||p.type==="column")?3:2);
+            var covered=betCoveredNumbers(p.type,p.target);
+            if(covered.indexOf(val)>=0) payout+=p.baseAmount*betPayoutMult(p.type);
           });
           var totalReturn=payout*mult;
           var betMode=t.config.betMode||"flat";
@@ -617,8 +604,15 @@ export default function App() {
       }
       if(t.type==="custom") {
         (t.config.positions||[]).forEach(function(p){
-          var posKey = p.type==="straight"?"s:"+p.target:p.type+(p.target!==undefined?":"+p.target:"");
-          addChip(posKey, p.baseAmount*row.c*(t.config.unit||1), t.color);
+          var chipAmt = p.baseAmount*row.c*(t.config.unit||1);
+          if(isInsideBet(p.type)) {
+            // For inside bets, place chip on first number of the group
+            var nums = betCoveredNumbers(p.type, p.target);
+            if(nums.length>0) addChip("s:"+nums[0], chipAmt, t.color);
+          } else {
+            var posKey = p.type+(p.target!==undefined?":"+p.target:"");
+            addChip(posKey, chipAmt, t.color);
+          }
         });
       }
     });
@@ -657,7 +651,24 @@ export default function App() {
     function placeBet(type, target) {
       if(gameSpinning) return;
       if(betResults) cancelPendingClear();
-      setManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type,target,amount:selectedChip}]);
+      var finalType=type, finalTarget=target;
+      // For number taps, apply the selected betMode
+      if(type==="straight" && betMode!=="straight") {
+        var numStr=target;
+        if(numStr==="0"||numStr==="00") {
+          if(betMode==="basket") { finalType="basket"; finalTarget="0-00-1-2-3"; }
+          else if(betMode==="split") { finalType="split"; finalTarget=numStr==="0"?"0-00":"00-0"; }
+          else return; // can't do street/corner/line on zeros
+        } else {
+          var n=+numStr;
+          if(betMode==="split") { var sp=getVerticalSplit(n); finalType="split"; finalTarget=sp.join("-"); }
+          else if(betMode==="street") { var st=getStreet(n); finalType="street"; finalTarget=st.join("-"); }
+          else if(betMode==="corner") { var cn=getCornerNums(n); finalType="corner"; finalTarget=cn.join("-"); }
+          else if(betMode==="line") { var ln=getLineNums(n); finalType="line"; finalTarget=ln.join("-"); }
+          else if(betMode==="basket") { finalType="basket"; finalTarget="0-00-1-2-3"; }
+        }
+      }
+      setManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type:finalType,target:finalTarget,amount:selectedChip}]);
       setUndoStack(prev=>[...prev,1]);
       if(settings.vibration!==false && navigator.vibrate) navigator.vibrate(10);
     }
@@ -695,28 +706,14 @@ export default function App() {
     });
 
     function resolveManualBets(winVal) {
-      const isZ = winVal==="0"||winVal==="00";
-      const n = isZ?null:+winVal;
-      var totalWin=0, totalBet=0;
-      var posResults = {};
+      var totalWin=0, totalBet=0, posResults={};
       manualBets.forEach(function(b){
         totalBet+=b.amount;
-        var won=false;
         var posKey = b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
-        if(b.type==="straight"&&String(b.target)===winVal) won=true;
-        if(!isZ&&n){
-          if(b.type==="dozen") { var d=n<=12?0:n<=24?1:2; if(b.target===d) won=true; }
-          if(b.type==="column") { var c=n%3===0?2:n%3===1?0:1; if(b.target===c) won=true; }
-          if(b.type==="red"&&RED.has(n)) won=true;
-          if(b.type==="black"&&!RED.has(n)) won=true;
-          if(b.type==="odd"&&n%2===1) won=true;
-          if(b.type==="even"&&n%2===0) won=true;
-          if(b.type==="low"&&n<=18) won=true;
-          if(b.type==="high"&&n>=19) won=true;
-        }
+        var covered = betCoveredNumbers(b.type, b.target);
+        var won = covered.indexOf(winVal)>=0;
         if(won){
-          var pay = b.type==="straight"?b.amount*36:(b.type==="dozen"||b.type==="column")?b.amount*3:b.amount*2;
-          totalWin+=pay;
+          totalWin += b.amount * betPayoutMult(b.type);
           posResults[posKey]="won";
         } else {
           if(!posResults[posKey]) posResults[posKey]="lost";
@@ -789,6 +786,16 @@ export default function App() {
           ))}
         </div>
 
+        {/* Bet type selector */}
+        <div style={{display:"flex",gap:3,justifyContent:"center"}}>
+          {BET_TYPES.map(bt=>(
+            <button key={bt.key} onClick={()=>setBetMode(bt.key)} style={{padding:"5px 6px",borderRadius:6,border:"1px solid "+(betMode===bt.key?"#7c3aed":"#2d4057"),background:betMode===bt.key?"#1e1040":"#0f1923",color:betMode===bt.key?"#c4b5fd":"#64748b",fontSize:8,fontWeight:700,cursor:"pointer",lineHeight:1.2,textAlign:"center"}}>
+              <div style={{fontSize:12}}>{bt.label}</div>
+              <div>{bt.name}</div>
+            </button>
+          ))}
+        </div>
+
         {/* Bet controls */}
         <div style={{display:"flex",gap:4,alignItems:"center"}}>
           <button onClick={undoBet} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#60a5fa":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0&&!betResults?"pointer":"default"}}>↩ Undo</button>
@@ -799,7 +806,6 @@ export default function App() {
         {totalBetAmt>0 && <div style={{textAlign:"center",fontSize:12,fontWeight:800,color:"#fbbf24"}}>Total Bet: {cur.symbol}{fmtNum(totalBetAmt)}</div>}
         {totalBetAmt>0 && !betResults && (
           <button onClick={()=>{
-            // Aggregate manual bets into positions
             const posMap={};
             manualBets.forEach(function(b){
               const key=b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
@@ -807,14 +813,29 @@ export default function App() {
               posMap[key].baseAmount+=b.amount;
             });
             const positions=Object.values(posMap);
-            const cfg={type:"custom",unit:1,roi:15,betMode:"flat",stopLoss:200,positions:positions};
-            updSess(s=>{
-              s.tracks.push({
-                id:uid(),type:"custom",color:TRACK_COLORS[s.tracks.length%TRACK_COLORS.length],
-                state:"active",config:cfg,level:0,pnl:0,bets:[],
-                createdAtSpin:s.spins.length,closedAtSpin:null,wins:0,sequences:0,
+            const hasInside=positions.some(function(p){return isInsideBet(p.type);});
+            if(!hasInside) {
+              // Outside-only bets — create as fibonacci track in flat mode
+              var dts=[],cts=[],evts=[];
+              positions.forEach(function(p){
+                if(p.type==="dozen") dts.push(p.target);
+                else if(p.type==="column") cts.push(p.target);
+                else evts.push(p.type); // red,black,odd,even,low,high
               });
-            });
+              var cfg=defaultFibCfg();
+              cfg.betMode="flat"; cfg.dozenTargets=dts; cfg.colTargets=cts; cfg.evenTargets=evts;
+              updSess(s=>{s.tracks.push(newTrack("fibonacci",s.tracks.length,cfg));});
+            } else {
+              // Has inside bets — create custom strategy
+              var cfg={type:"custom",unit:1,roi:15,betMode:"flat",stopLoss:200,positions:positions};
+              updSess(s=>{
+                s.tracks.push({
+                  id:uid(),type:"custom",color:TRACK_COLORS[s.tracks.length%TRACK_COLORS.length],
+                  state:"active",config:cfg,level:0,pnl:0,bets:[],
+                  createdAtSpin:s.spins.length,closedAtSpin:null,wins:0,sequences:0,
+                });
+              });
+            }
             clearBets();
             if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate([20,10,20]);
           }} style={{width:"100%",padding:"10px 0",borderRadius:10,border:"2px dashed #7c3aed",background:"#1e1040",color:"#c4b5fd",fontSize:12,fontWeight:700,cursor:"pointer"}}>
@@ -1254,32 +1275,17 @@ export default function App() {
 
           function livePlaceBet(type, target) {
             if(liveSelectingWinner) {
-              // In winner selection mode - process the spin
               const val = type==="straight"?target:null;
-              if(!val) return; // Can only select numbers as winners
+              if(!val) return;
               setLiveWinNumber(val);
               tapNumber(val, nonClosedTracks.some(t=>t.state==="active"));
-              // Resolve manual bets
               if(liveManualBets.length>0){
-                const isZ=val==="0"||val==="00";
-                const n=isZ?null:+val;
                 var totalWin=0,totalBet=0,posResults={};
                 liveManualBets.forEach(function(b){
                   totalBet+=b.amount;
-                  var won=false;
                   var posKey=b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
-                  if(b.type==="straight"&&String(b.target)===val) won=true;
-                  if(!isZ&&n){
-                    if(b.type==="dozen"){var d=n<=12?0:n<=24?1:2;if(b.target===d)won=true;}
-                    if(b.type==="column"){var c=n%3===0?2:n%3===1?0:1;if(b.target===c)won=true;}
-                    if(b.type==="red"&&RED.has(n))won=true;
-                    if(b.type==="black"&&!RED.has(n))won=true;
-                    if(b.type==="odd"&&n%2===1)won=true;
-                    if(b.type==="even"&&n%2===0)won=true;
-                    if(b.type==="low"&&n<=18)won=true;
-                    if(b.type==="high"&&n>=19)won=true;
-                  }
-                  if(won){totalWin+=b.type==="straight"?b.amount*36:(b.type==="dozen"||b.type==="column")?b.amount*3:b.amount*2;posResults[posKey]="won";}
+                  var covered=betCoveredNumbers(b.type,b.target);
+                  if(covered.indexOf(val)>=0){totalWin+=b.amount*betPayoutMult(b.type);posResults[posKey]="won";}
                   else{if(!posResults[posKey])posResults[posKey]="lost";}
                 });
                 updSess(s=>{s.bankrollCurrent=Math.round((s.bankrollCurrent+(totalWin-totalBet))*100)/100;});
@@ -1297,7 +1303,24 @@ export default function App() {
               setLiveBetResults(null);setLiveManualBets([]);
             }
             setLiveWinNumber(null);
-            setLiveManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type,target,amount:selectedChip}]);
+            // Apply betMode for number taps
+            var finalType=type, finalTarget=target;
+            if(type==="straight" && betMode!=="straight") {
+              var numStr=target;
+              if(numStr==="0"||numStr==="00") {
+                if(betMode==="basket") { finalType="basket"; finalTarget="0-00-1-2-3"; }
+                else if(betMode==="split") { finalType="split"; finalTarget=numStr==="0"?"0-00":"00-0"; }
+                else return;
+              } else {
+                var n=+numStr;
+                if(betMode==="split") { var sp=getVerticalSplit(n); finalType="split"; finalTarget=sp.join("-"); }
+                else if(betMode==="street") { var st=getStreet(n); finalType="street"; finalTarget=st.join("-"); }
+                else if(betMode==="corner") { var cn=getCornerNums(n); finalType="corner"; finalTarget=cn.join("-"); }
+                else if(betMode==="line") { var ln=getLineNums(n); finalType="line"; finalTarget=ln.join("-"); }
+                else if(betMode==="basket") { finalType="basket"; finalTarget="0-00-1-2-3"; }
+              }
+            }
+            setLiveManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type:finalType,target:finalTarget,amount:selectedChip}]);
             setLiveUndoStack(prev=>[...prev,1]);
             if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate(10);
           }
@@ -1337,6 +1360,15 @@ export default function App() {
                   </button>
                 ))}
               </div>
+              {/* Bet type selector */}
+              {!liveSelectingWinner && <div style={{display:"flex",gap:3,justifyContent:"center"}}>
+                {BET_TYPES.map(bt=>(
+                  <button key={bt.key} onClick={()=>setBetMode(bt.key)} style={{padding:"4px 5px",borderRadius:6,border:"1px solid "+(betMode===bt.key?"#7c3aed":"#2d4057"),background:betMode===bt.key?"#1e1040":"#0f1923",color:betMode===bt.key?"#c4b5fd":"#64748b",fontSize:7,fontWeight:700,cursor:"pointer",lineHeight:1.2,textAlign:"center"}}>
+                    <div style={{fontSize:11}}>{bt.label}</div>
+                    <div>{bt.name}</div>
+                  </button>
+                ))}
+              </div>}
               {/* Bet controls */}
               <div style={{display:"flex",gap:4,alignItems:"center"}}>
                 <button onClick={liveUndoBet} disabled={liveManualBets.length===0||!!liveBetResults} style={{flex:1,padding:"7px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:liveManualBets.length>0&&!liveBetResults?"#60a5fa":"#374151",fontSize:9,fontWeight:700}}>↩ Undo</button>
@@ -1354,14 +1386,27 @@ export default function App() {
                     posMap[key].baseAmount+=b.amount;
                   });
                   const positions=Object.values(posMap);
-                  const cfg={type:"custom",unit:1,roi:15,betMode:"flat",stopLoss:200,positions:positions};
-                  updSess(s=>{
-                    s.tracks.push({
-                      id:uid(),type:"custom",color:TRACK_COLORS[s.tracks.length%TRACK_COLORS.length],
-                      state:"active",config:cfg,level:0,pnl:0,bets:[],
-                      createdAtSpin:s.spins.length,closedAtSpin:null,wins:0,sequences:0,
+                  const hasInside=positions.some(function(p){return isInsideBet(p.type);});
+                  if(!hasInside) {
+                    var dts=[],cts=[],evts=[];
+                    positions.forEach(function(p){
+                      if(p.type==="dozen") dts.push(p.target);
+                      else if(p.type==="column") cts.push(p.target);
+                      else evts.push(p.type);
                     });
-                  });
+                    var cfg=defaultFibCfg();
+                    cfg.betMode="flat"; cfg.dozenTargets=dts; cfg.colTargets=cts; cfg.evenTargets=evts;
+                    updSess(s=>{s.tracks.push(newTrack("fibonacci",s.tracks.length,cfg));});
+                  } else {
+                    var cfg={type:"custom",unit:1,roi:15,betMode:"flat",stopLoss:200,positions:positions};
+                    updSess(s=>{
+                      s.tracks.push({
+                        id:uid(),type:"custom",color:TRACK_COLORS[s.tracks.length%TRACK_COLORS.length],
+                        state:"active",config:cfg,level:0,pnl:0,bets:[],
+                        createdAtSpin:s.spins.length,closedAtSpin:null,wins:0,sequences:0,
+                      });
+                    });
+                  }
                   liveClearBets();
                   if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate([20,10,20]);
                 }} style={{width:"100%",padding:"10px 0",borderRadius:10,border:"2px dashed #7c3aed",background:"#1e1040",color:"#c4b5fd",fontSize:12,fontWeight:700,cursor:"pointer"}}>
