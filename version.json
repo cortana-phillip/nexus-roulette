@@ -1,1 +1,1 @@
-{"version":"0.40.10","date":"2026-04-14","notes":"Double street (line) bets work. Fixed chip positions for streets and lines."}
+{"version":"0.40.11","date":"2026-04-14","notes":"Street and line bets only at bottom edge. No bets placed at top of table."}

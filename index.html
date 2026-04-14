@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.10";
+  var MY_V="0.40.11";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.10";
+var APP_VERSION = "0.40.11";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2887,7 +2887,7 @@ function RouletteBoard(_ref16) {
         target: nums.join("-")
       };
     }
-    // Line (double street): at outer boundary where two columns meet
+    // Line (double street): at bottom boundary where two columns meet
     if (nearBottom && !hasBelow && nearRight && hasRight) {
       var line = [BOARD_ROWS[0][c], BOARD_ROWS[1][c], BOARD_ROWS[2][c], BOARD_ROWS[0][c + 1], BOARD_ROWS[1][c + 1], BOARD_ROWS[2][c + 1]].sort(function (a, b) {
         return a - b;
@@ -2906,35 +2906,8 @@ function RouletteBoard(_ref16) {
         target: line.join("-")
       };
     }
-    if (nearTop && !hasAbove && nearRight && hasRight) {
-      var line = [BOARD_ROWS[0][c], BOARD_ROWS[1][c], BOARD_ROWS[2][c], BOARD_ROWS[0][c + 1], BOARD_ROWS[1][c + 1], BOARD_ROWS[2][c + 1]].sort(function (a, b) {
-        return a - b;
-      });
-      return {
-        type: "line",
-        target: line.join("-")
-      };
-    }
-    if (nearTop && !hasAbove && nearLeft && hasLeft) {
-      var line = [BOARD_ROWS[0][c - 1], BOARD_ROWS[1][c - 1], BOARD_ROWS[2][c - 1], BOARD_ROWS[0][c], BOARD_ROWS[1][c], BOARD_ROWS[2][c]].sort(function (a, b) {
-        return a - b;
-      });
-      return {
-        type: "line",
-        target: line.join("-")
-      };
-    }
-    // Street: ONLY at outer boundary of the grid
+    // Street: ONLY at outer boundary of the grid (bottom of row 2, left of col 0)
     if (nearLeft && !hasLeft) {
-      var st = [BOARD_ROWS[0][c], BOARD_ROWS[1][c], BOARD_ROWS[2][c]].sort(function (a, b) {
-        return a - b;
-      });
-      return {
-        type: "street",
-        target: st.join("-")
-      };
-    }
-    if (nearTop && !hasAbove) {
       var st = [BOARD_ROWS[0][c], BOARD_ROWS[1][c], BOARD_ROWS[2][c]].sort(function (a, b) {
         return a - b;
       });
@@ -3180,7 +3153,7 @@ function RouletteBoard(_ref16) {
         }
       } else if (bType === "street") {
         leftPct = (minC + 0.5) / 12 * 100;
-        topPx = 0;
+        topPx = (30 + g) * 3 - g;
       } else if (bType === "line") {
         leftPct = (minC + 1) / 12 * 100;
         topPx = (30 + g) * 3 - g;
