@@ -199,7 +199,7 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
       var nums=[BOARD_ROWS[r-1][c-1],BOARD_ROWS[r-1][c],BOARD_ROWS[r][c-1],BOARD_ROWS[r][c]].sort(function(a,b){return a-b;});
       return {type:"corner",target:nums.join("-")};
     }
-    // Street: edges of the grid (left of col 0, top of row 0, bottom of row 2)
+    // Street: ONLY at outer boundary of the grid
     if(nearLeft && !hasLeft) {
       var st=[BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c]].sort(function(a,b){return a-b;});
       return {type:"street",target:st.join("-")};
@@ -212,10 +212,10 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
       var st=[BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c]].sort(function(a,b){return a-b;});
       return {type:"street",target:st.join("-")};
     }
-    // Line: between two columns
+    // Split horizontal: left edge with left neighbor
     if(nearLeft && hasLeft) {
-      var line=[BOARD_ROWS[0][c-1],BOARD_ROWS[1][c-1],BOARD_ROWS[2][c-1],BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c]].sort(function(a,b){return a-b;});
-      return {type:"line",target:line.join("-")};
+      var nums=[BOARD_ROWS[r][c-1],BOARD_ROWS[r][c]].sort(function(a,b){return a-b;});
+      return {type:"split",target:nums.join("-")};
     }
     // Split horizontal: right edge
     if(nearRight && hasRight) {

@@ -1,1 +1,1 @@
-{"version":"0.40.8","date":"2026-04-13","notes":"Bet chips now render in an overlay layer ON TOP of the entire grid. No more chips hidden behind cells."}
+{"version":"0.40.9","date":"2026-04-14","notes":"Fixed split bet detection. Left edge now correctly places a split (2 numbers) instead of a line bet (6 numbers). Much more consistent."}
