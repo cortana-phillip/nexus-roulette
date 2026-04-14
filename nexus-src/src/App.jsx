@@ -722,13 +722,12 @@ export default function App() {
           if(manualBets.length>0){
             const res = resolveManualBets(val);
             updSess(s=>{s.bankrollCurrent=Math.round((s.bankrollCurrent+res.profit)*100)/100;});
-            setLastSpinDelta(prev=>(prev||0)+res.profit);
+            if(hasActiveTracks) setLastSpinDelta(prev=>(prev||0)+res.profit);
+            else setLastSpinDelta(res.profit);
             setBetResults(res.posResults);
             setLastBets([...manualBets]);
             setUndoStack([]);
             clearTimerRef.current = setTimeout(()=>{ setBetResults(null); setManualBets([]); clearTimerRef.current=null; },3000);
-          } else {
-            setLastBets([]);
           }
           if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate(30);
           setTimeout(()=>setGameSpinning(false),300);
