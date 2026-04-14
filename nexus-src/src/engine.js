@@ -36,6 +36,44 @@ function computeTable(subsets, payoutMult, roiPct, maxChips) {
 }
 
 function computeTableForTrack(t) {
+  if(t.type==="custom") {
+    var positions = t.config.positions||[];
+    if(positions.length===0) return [];
+    var baseTotalBet = positions.reduce(function(s,p){return s+p.baseAmount;},0);
+    if(baseTotalBet===0) return [];
+    // Compute min win payout across all winning numbers
+    var minWinPayout = Infinity;
+    var nums = ["0","00"];
+    for(var i=1;i<=36;i++) nums.push(String(i));
+    nums.forEach(function(numStr){
+      var isZ = numStr==="0"||numStr==="00";
+      var n = isZ?null:+numStr;
+      var payout = 0;
+      positions.forEach(function(p){
+        var won=false;
+        if(p.type==="straight"&&p.target===numStr) won=true;
+        if(!isZ&&n){
+          if(p.type==="dozen"){if((n<=12?0:n<=24?1:2)===p.target)won=true;}
+          if(p.type==="column"){if((n%3===0?2:n%3===1?0:1)===p.target)won=true;}
+          if(p.type==="red"&&RED.has(n))won=true;
+          if(p.type==="black"&&!RED.has(n))won=true;
+          if(p.type==="odd"&&n%2===1)won=true;
+          if(p.type==="even"&&n%2===0)won=true;
+          if(p.type==="low"&&n<=18)won=true;
+          if(p.type==="high"&&n>=19)won=true;
+        }
+        if(won) payout += p.baseAmount*(p.type==="straight"?36:(p.type==="dozen"||p.type==="column")?3:2);
+      });
+      if(payout>0 && payout<minWinPayout) minWinPayout=payout;
+    });
+    if(minWinPayout===Infinity) return [];
+    var betMode = t.config.betMode||"flat";
+    var maxChips = t.config.stopLoss/(t.config.unit||1);
+    if(betMode==="flat") {
+      return [{level:1,c:1,totalBet:baseTotalBet,totalInvest:baseTotalBet,ret:minWinPayout,profit:minWinPayout-baseTotalBet,roi:(minWinPayout-baseTotalBet)/baseTotalBet*100,flat:true}];
+    }
+    return computeTable(baseTotalBet, minWinPayout, t.config.roi, maxChips);
+  }
   if(t.type==="fibonacci") {
     const dts=t.config.dozenTargets||[], cts=t.config.colTargets||[], evts=t.config.evenTargets||[];
     const betMode=t.config.betMode||"progression";

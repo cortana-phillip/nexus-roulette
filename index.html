@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.38.0";
+  var MY_V="0.39.0";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -388,10 +388,11 @@ var COL_TX = ["#5eead4", "#f9a8d4", "#bef264"];
 var TRACK_COLORS = ["#f59e0b", "#2dd4bf", "#a855f7", "#f97316", "#38bdf8"];
 var TRACK_ICONS = {
   fibonacci: "🎲",
-  solution: "🎯"
+  solution: "🎯",
+  custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.38.0";
+var APP_VERSION = "0.39.0";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -784,13 +785,66 @@ function computeTable(subsets, payoutMult, roiPct, maxChips) {
   return rows;
 }
 function computeTableForTrack(t) {
+  if (t.type === "custom") {
+    var positions = t.config.positions || [];
+    if (positions.length === 0) return [];
+    var baseTotalBet = positions.reduce(function (s, p) {
+      return s + p.baseAmount;
+    }, 0);
+    if (baseTotalBet === 0) return [];
+    // Compute min win payout across all winning numbers
+    var minWinPayout = Infinity;
+    var nums = ["0", "00"];
+    for (var i = 1; i <= 36; i++) nums.push(String(i));
+    nums.forEach(function (numStr) {
+      var isZ = numStr === "0" || numStr === "00";
+      var n = isZ ? null : +numStr;
+      var payout = 0;
+      positions.forEach(function (p) {
+        var won = false;
+        if (p.type === "straight" && p.target === numStr) won = true;
+        if (!isZ && n) {
+          if (p.type === "dozen") {
+            if ((n <= 12 ? 0 : n <= 24 ? 1 : 2) === p.target) won = true;
+          }
+          if (p.type === "column") {
+            if ((n % 3 === 0 ? 2 : n % 3 === 1 ? 0 : 1) === p.target) won = true;
+          }
+          if (p.type === "red" && RED.has(n)) won = true;
+          if (p.type === "black" && !RED.has(n)) won = true;
+          if (p.type === "odd" && n % 2 === 1) won = true;
+          if (p.type === "even" && n % 2 === 0) won = true;
+          if (p.type === "low" && n <= 18) won = true;
+          if (p.type === "high" && n >= 19) won = true;
+        }
+        if (won) payout += p.baseAmount * (p.type === "straight" ? 36 : p.type === "dozen" || p.type === "column" ? 3 : 2);
+      });
+      if (payout > 0 && payout < minWinPayout) minWinPayout = payout;
+    });
+    if (minWinPayout === Infinity) return [];
+    var betMode = t.config.betMode || "flat";
+    var maxChips = t.config.stopLoss / (t.config.unit || 1);
+    if (betMode === "flat") {
+      return [{
+        level: 1,
+        c: 1,
+        totalBet: baseTotalBet,
+        totalInvest: baseTotalBet,
+        ret: minWinPayout,
+        profit: minWinPayout - baseTotalBet,
+        roi: (minWinPayout - baseTotalBet) / baseTotalBet * 100,
+        flat: true
+      }];
+    }
+    return computeTable(baseTotalBet, minWinPayout, t.config.roi, maxChips);
+  }
   if (t.type === "fibonacci") {
     var dts = t.config.dozenTargets || [],
       cts = t.config.colTargets || [],
       evts = t.config.evenTargets || [];
-    var betMode = t.config.betMode || "progression";
-    var effectiveBetMode = betMode === "flat" ? "flat" : evts.length > 0 ? "martingale" : "progression";
-    var maxChips = t.config.stopLoss / (t.config.unit || 1);
+    var _betMode = t.config.betMode || "progression";
+    var effectiveBetMode = _betMode === "flat" ? "flat" : evts.length > 0 ? "martingale" : "progression";
+    var _maxChips = t.config.stopLoss / (t.config.unit || 1);
     if (effectiveBetMode === "flat") {
       var payMult = evts.length > 0 ? 2 : 3;
       var _subs = evts.length > 0 ? evts.length : dts.length + cts.length || 1;
@@ -806,12 +860,12 @@ function computeTableForTrack(t) {
       }];
     }
     if (evts.length > 0) {
-      if (effectiveBetMode === "martingale") return computeMartingaleTable(maxChips);
-      return computeTable(evts.length, 2, t.config.roi, maxChips);
+      if (effectiveBetMode === "martingale") return computeMartingaleTable(_maxChips);
+      return computeTable(evts.length, 2, t.config.roi, _maxChips);
     }
     var subs = dts.length + cts.length,
       hasMix = dts.length > 0 && cts.length > 0;
-    return computeTable(subs || 1, hasMix ? 6 : 3, t.config.roi, maxChips);
+    return computeTable(subs || 1, hasMix ? 6 : 3, t.config.roi, _maxChips);
   }
   return computeTable(1, 36, t.config.roi, t.config.stopLoss / (t.config.unit || 1));
 }
@@ -3710,7 +3764,40 @@ function EditTrackCfg(_ref27) {
         cursor: "pointer"
       }
     }, COL_LABELS[i]);
-  })))), /*#__PURE__*/React.createElement("div", {
+  })))), track.type === "custom" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(Lbl, null, "Bet Mode"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6
+    }
+  }, ["flat", "progression"].map(function (m) {
+    var sel = (cfg.betMode || "flat") === m;
+    return /*#__PURE__*/React.createElement("button", {
+      key: m,
+      onClick: function onClick() {
+        return upCfg("betMode", m);
+      },
+      style: {
+        flex: 1,
+        padding: "7px 0",
+        borderRadius: 8,
+        border: "2px solid " + (sel ? "#7c3aed" : "#2d4057"),
+        background: sel ? "#1e1040" : "transparent",
+        color: sel ? "#c4b5fd" : "#64748b",
+        fontSize: 11,
+        fontWeight: 700,
+        cursor: "pointer",
+        textTransform: "capitalize"
+      }
+    }, m);
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9,
+      color: "#64748b",
+      marginTop: 4
+    }
+  }, (cfg.positions || []).length, " positions \xB7 ", (cfg.positions || []).reduce(function (s, p) {
+    return s + p.baseAmount;
+  }, 0), " base bet")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
@@ -7437,9 +7524,9 @@ function App() {
           var dts = t.config.dozenTargets || [],
             cts = t.config.colTargets || [],
             evts = t.config.evenTargets || [];
-          var betMode = t.config.betMode || "progression";
+          var _betMode2 = t.config.betMode || "progression";
           // Auto-martingale when even money targets selected
-          var effectiveBetMode = betMode === "flat" ? "flat" : evts.length > 0 ? "martingale" : "progression";
+          var effectiveBetMode = _betMode2 === "flat" ? "flat" : evts.length > 0 ? "martingale" : "progression";
           var row = tbl[Math.min(t.level, tbl.length - 1)];
           var isZ = val === "0" || val === "00";
 
@@ -7507,8 +7594,8 @@ function App() {
             var cat = isZ ? "loss" : getCategory(val, dts, cts, row, evts);
             if (cat !== "loss") {
               var _profit4 = hitCount * payMult * (row ? row.c : 1) - (row ? row.totalInvest : 0);
-              var spinDelta = hitCount * payMult * (row ? row.c : 1) - (row ? row.c : 1) * numTargets;
-              t.pnl += spinDelta;
+              var _spinDelta = hitCount * payMult * (row ? row.c : 1) - (row ? row.c : 1) * numTargets;
+              t.pnl += _spinDelta;
               t.wins++;
               t.sequences++;
               t.level = 0;
@@ -7519,7 +7606,7 @@ function App() {
                 profit: _profit4,
                 cat: cat
               });
-              totalDelta += spinDelta * (t.config.unit || 1);
+              totalDelta += _spinDelta * (t.config.unit || 1);
               trackResults.push({
                 name: TRACK_ICONS[t.type] + (effectiveBetMode === "martingale" ? " Martingale" : effectiveBetMode === "flat" ? " Flat" : " Prog"),
                 color: t.color,
@@ -7584,23 +7671,126 @@ function App() {
                 cat: "win"
               });
             } else {
-              var lossCost = tbl[Math.min(b.level, tbl.length - 1)] ? tbl[Math.min(b.level, tbl.length - 1)].c : 1;
-              t.pnl -= lossCost;
+              var _lossCost = tbl[Math.min(b.level, tbl.length - 1)] ? tbl[Math.min(b.level, tbl.length - 1)].c : 1;
+              t.pnl -= _lossCost;
               b.level = Math.min(b.level + 1, tbl.length - 1);
               trackResults.push({
                 name: TRACK_ICONS[t.type] + " #" + b.number,
                 color: t.color,
-                profit: -lossCost,
+                profit: -_lossCost,
                 unit: t.config.unit || 1,
                 outcome: "Miss",
                 cat: "loss"
               });
-              totalDelta -= lossCost * (t.config.unit || 1);
+              totalDelta -= _lossCost * (t.config.unit || 1);
             }
           });
           t.config.activeBets = bets.filter(function (b) {
             return !resolved.includes(b.number);
           });
+        }
+        if (t.type === "custom") {
+          var positions = t.config.positions || [];
+          var _row5 = tbl[Math.min(t.level, tbl.length - 1)];
+          var mult = _row5 ? _row5.c : 1;
+          var baseTotalBet = positions.reduce(function (s, p) {
+            return s + p.baseAmount;
+          }, 0);
+          var _isZ = val === "0" || val === "00";
+          var n = _isZ ? null : +val;
+          // Compute payout for this number
+          var payout = 0;
+          positions.forEach(function (p) {
+            var won = false;
+            if (p.type === "straight" && p.target === val) won = true;
+            if (!_isZ && n) {
+              if (p.type === "dozen") {
+                if ((n <= 12 ? 0 : n <= 24 ? 1 : 2) === p.target) won = true;
+              }
+              if (p.type === "column") {
+                if ((n % 3 === 0 ? 2 : n % 3 === 1 ? 0 : 1) === p.target) won = true;
+              }
+              if (p.type === "red" && RED.has(n)) won = true;
+              if (p.type === "black" && !RED.has(n)) won = true;
+              if (p.type === "odd" && n % 2 === 1) won = true;
+              if (p.type === "even" && n % 2 === 0) won = true;
+              if (p.type === "low" && n <= 18) won = true;
+              if (p.type === "high" && n >= 19) won = true;
+            }
+            if (won) payout += p.baseAmount * (p.type === "straight" ? 36 : p.type === "dozen" || p.type === "column" ? 3 : 2);
+          });
+          var totalReturn = payout * mult;
+          var betMode = t.config.betMode || "flat";
+          if (payout > 0) {
+            var spinDelta = totalReturn - baseTotalBet * mult;
+            if (betMode === "flat") {
+              t.pnl += spinDelta;
+              t.wins++;
+              t.bets.push({
+                spinIdx: s.spins.length - 1,
+                level: 0,
+                outcome: "win",
+                profit: spinDelta,
+                cat: "win"
+              });
+              totalDelta += spinDelta * (t.config.unit || 1);
+              trackResults.push({
+                name: "🃏 Custom",
+                color: t.color,
+                profit: spinDelta,
+                unit: t.config.unit || 1,
+                outcome: "Win",
+                cat: "win"
+              });
+            } else {
+              var seqProfit = totalReturn - (_row5 ? _row5.totalInvest : baseTotalBet);
+              t.pnl += spinDelta;
+              t.wins++;
+              t.sequences++;
+              t.level = 0;
+              t.bets.push({
+                spinIdx: s.spins.length - 1,
+                level: t.level,
+                outcome: "win",
+                profit: seqProfit,
+                cat: "win"
+              });
+              totalDelta += spinDelta * (t.config.unit || 1);
+              trackResults.push({
+                name: "🃏 Custom Prog",
+                color: t.color,
+                profit: seqProfit,
+                unit: t.config.unit || 1,
+                outcome: "Win",
+                cat: "win"
+              });
+            }
+          } else {
+            var lossCost = baseTotalBet * mult;
+            t.pnl -= lossCost;
+            t.bets.push({
+              spinIdx: s.spins.length - 1,
+              level: t.level,
+              outcome: "loss",
+              profit: -lossCost,
+              cat: "loss"
+            });
+            totalDelta -= lossCost * (t.config.unit || 1);
+            if (betMode !== "flat") {
+              if (t.level < tbl.length - 1) t.level++;else {
+                t.state = "closed";
+                t.closedAtSpin = s.spins.length - 1;
+              }
+            }
+            trackResults.push({
+              name: "🃏 Custom" + (betMode !== "flat" ? " Prog" : ""),
+              color: t.color,
+              profit: -lossCost,
+              unit: t.config.unit || 1,
+              outcome: "Miss",
+              cat: "loss"
+            });
+          }
         }
       });
       s.bankrollCurrent = Math.round((s.bankrollCurrent + totalDelta) * 100) / 100;
@@ -8058,6 +8248,12 @@ function App() {
           if (bRow) addChip("s:" + b.number, bRow.c * (t.config.unit || 1), t.color);
         });
       }
+      if (t.type === "custom") {
+        (t.config.positions || []).forEach(function (p) {
+          var posKey = p.type === "straight" ? "s:" + p.target : p.type + (p.target !== undefined ? ":" + p.target : "");
+          addChip(posKey, p.baseAmount * row.c * (t.config.unit || 1), t.color);
+        });
+      }
     });
     return chips;
   }
@@ -8456,7 +8652,59 @@ function App() {
         fontWeight: 800,
         color: "#fbbf24"
       }
-    }, "Total Bet: ", cur.symbol, fmtNum(totalBetAmt)), function () {
+    }, "Total Bet: ", cur.symbol, fmtNum(totalBetAmt)), totalBetAmt > 0 && !betResults && /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        // Aggregate manual bets into positions
+        var posMap = {};
+        manualBets.forEach(function (b) {
+          var key = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
+          if (!posMap[key]) posMap[key] = {
+            type: b.type,
+            target: b.target,
+            baseAmount: 0
+          };
+          posMap[key].baseAmount += b.amount;
+        });
+        var positions = Object.values(posMap);
+        var cfg = {
+          type: "custom",
+          unit: 1,
+          roi: 15,
+          betMode: "flat",
+          stopLoss: 200,
+          positions: positions
+        };
+        updSess(function (s) {
+          s.tracks.push({
+            id: uid(),
+            type: "custom",
+            color: TRACK_COLORS[s.tracks.length % TRACK_COLORS.length],
+            state: "active",
+            config: cfg,
+            level: 0,
+            pnl: 0,
+            bets: [],
+            createdAtSpin: s.spins.length,
+            closedAtSpin: null,
+            wins: 0,
+            sequences: 0
+          });
+        });
+        clearBets();
+        if (settings.vibration !== false && navigator.vibrate) navigator.vibrate([20, 10, 20]);
+      },
+      style: {
+        width: "100%",
+        padding: "10px 0",
+        borderRadius: 10,
+        border: "2px dashed #7c3aed",
+        background: "#1e1040",
+        color: "#c4b5fd",
+        fontSize: 12,
+        fontWeight: 700,
+        cursor: "pointer"
+      }
+    }, "\uD83C\uDCCF Create Strategy from Current Bets"), function () {
       // Compute strategy outside bet highlights (labels, not individual numbers)
       var stratBets = {};
       nonClosedTracks.filter(function (t) {
@@ -8479,6 +8727,12 @@ function App() {
         if (t.type === "solution") {
           (t.config.activeBets || []).forEach(function (b) {
             if (!stratBets["s:" + b.number]) stratBets["s:" + b.number] = t.color;
+          });
+        }
+        if (t.type === "custom") {
+          (t.config.positions || []).forEach(function (p) {
+            var pk = p.type === "straight" ? "s:" + p.target : p.type + (p.target !== undefined ? ":" + p.target : "");
+            if (!stratBets[pk]) stratBets[pk] = t.color;
           });
         }
       });
@@ -8694,7 +8948,7 @@ function App() {
           color: t.color,
           flex: 1
         }
-      }, TRACK_ICONS[t.type], " ", t.type === "fibonacci" ? "Progression" : "The Solution"), /*#__PURE__*/React.createElement("span", {
+      }, TRACK_ICONS[t.type], " ", t.type === "fibonacci" ? "Progression" : t.type === "custom" ? "Custom Bet" : "The Solution"), /*#__PURE__*/React.createElement("span", {
         style: {
           fontSize: 9,
           color: t.state === "active" ? "#4ade80" : "#fbbf24",
@@ -8726,7 +8980,12 @@ function App() {
           fontSize: 10,
           color: "#60a5fa"
         }
-      }, "Bet: ", fmtChips(row.totalBet, t.config.unit, currency), "/spin")), /*#__PURE__*/React.createElement("div", {
+      }, "Bet: ", fmtChips(row.totalBet, t.config.unit, currency), "/spin"), t.type === "custom" && /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 9,
+          color: "#8b5cf6"
+        }
+      }, (t.config.betMode || "flat") === "flat" ? "Flat" : "Prog", " \xB7 ", (t.config.positions || []).length, " pos")), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           gap: 5
@@ -9141,7 +9400,7 @@ function App() {
           color: t.color,
           flex: 1
         }
-      }, TRACK_ICONS[t.type], " ", t.type === "fibonacci" ? "Progression Bet" : "The Solution"), /*#__PURE__*/React.createElement("span", {
+      }, TRACK_ICONS[t.type], " ", t.type === "fibonacci" ? "Progression Bet" : t.type === "custom" ? "Custom Bet" : "The Solution"), /*#__PURE__*/React.createElement("span", {
         style: {
           fontSize: 9,
           color: t.state === "active" ? "#4ade80" : t.state === "parked" ? "#fbbf24" : "#94a3b8",
@@ -9802,6 +10061,12 @@ function App() {
             if (!stratBets["s:" + b.number]) stratBets["s:" + b.number] = t.color;
           });
         }
+        if (t.type === "custom") {
+          (t.config.positions || []).forEach(function (p) {
+            var pk = p.type === "straight" ? "s:" + p.target : p.type + (p.target !== undefined ? ":" + p.target : "");
+            if (!stratBets[pk]) stratBets[pk] = t.color;
+          });
+        }
       });
       function livePlaceBet(type, target) {
         if (liveSelectingWinner) {
@@ -10032,7 +10297,58 @@ function App() {
           fontWeight: 800,
           color: "#fbbf24"
         }
-      }, "Total Bet: ", cur.symbol, fmtNum(liveTotalBet)), /*#__PURE__*/React.createElement("button", {
+      }, "Total Bet: ", cur.symbol, fmtNum(liveTotalBet)), liveTotalBet > 0 && !liveBetResults && /*#__PURE__*/React.createElement("button", {
+        onClick: function onClick() {
+          var posMap = {};
+          liveManualBets.forEach(function (b) {
+            var key = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
+            if (!posMap[key]) posMap[key] = {
+              type: b.type,
+              target: b.target,
+              baseAmount: 0
+            };
+            posMap[key].baseAmount += b.amount;
+          });
+          var positions = Object.values(posMap);
+          var cfg = {
+            type: "custom",
+            unit: 1,
+            roi: 15,
+            betMode: "flat",
+            stopLoss: 200,
+            positions: positions
+          };
+          updSess(function (s) {
+            s.tracks.push({
+              id: uid(),
+              type: "custom",
+              color: TRACK_COLORS[s.tracks.length % TRACK_COLORS.length],
+              state: "active",
+              config: cfg,
+              level: 0,
+              pnl: 0,
+              bets: [],
+              createdAtSpin: s.spins.length,
+              closedAtSpin: null,
+              wins: 0,
+              sequences: 0
+            });
+          });
+          liveClearBets();
+          if (settings.vibration !== false && navigator.vibrate) navigator.vibrate([20, 10, 20]);
+        },
+        style: {
+          width: "100%",
+          padding: "10px 0",
+          borderRadius: 10,
+          border: "2px dashed #7c3aed",
+          background: "#1e1040",
+          color: "#c4b5fd",
+          fontSize: 12,
+          fontWeight: 700,
+          cursor: "pointer"
+        }
+      }, "\uD83C\uDCCF Create Strategy from Current Bets"), /*#__PURE__*/React.createElement("button", {
         onClick: function onClick() {
           return setLiveSelectingWinner(!liveSelectingWinner);
         },
@@ -10560,7 +10876,7 @@ function App() {
       var activeInGroup = g.tracks.filter(function (t) {
         return t.state === "active";
       });
-      var typeLabel = g.type === "fibonacci" ? "🎲 Progression Bet" : "🎯 Solution";
+      var typeLabel = g.type === "fibonacci" ? "🎲 Progression Bet" : g.type === "custom" ? "🃏 Custom Bet" : "🎯 Solution";
       var targetLabel = g.type === "fibonacci" && g.lastTargets ? (g.lastTargets.doz || []).map(function (d) {
         return DZ_LABELS[d];
       }).join("+") + (g.lastTargets.col && g.lastTargets.col.length > 0 ? " + " + g.lastTargets.col.map(function (c) {

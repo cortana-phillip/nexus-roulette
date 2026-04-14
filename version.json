@@ -1,1 +1,1 @@
-{"version":"0.38.0","date":"2026-04-13","notes":"Active strategies now auto-place their bets on the table! Chips show in strategy colors. Park or remove a strategy to clear its bets."}
+{"version":"0.39.0","date":"2026-04-13","notes":"Create custom strategies from your table bets! Place bets, then tap Create Strategy. Strategies auto-place their chips on the board. Edit to switch between flat and progression mode."}

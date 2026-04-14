@@ -10,9 +10,9 @@ const DZ_TX = ["#fbbf24","#60a5fa","#c084fc"];
 const COL_BD = ["#2dd4bf","#f472b6","#a3e635"];
 const COL_TX = ["#5eead4","#f9a8d4","#bef264"];
 const TRACK_COLORS = ["#f59e0b","#2dd4bf","#a855f7","#f97316","#38bdf8"];
-const TRACK_ICONS = { fibonacci:"🎲", solution:"🎯" };
+const TRACK_ICONS = { fibonacci:"🎲", solution:"🎯", custom:"🃏" };
 const KEY = "nexus-roulette-v1";
-const APP_VERSION = "0.38.0";
+const APP_VERSION = "0.39.0";
 const ROI_PRESETS = [5,10,15,20,25,30];
 const UNITS = [0.25, 0.50, 1.00];
 

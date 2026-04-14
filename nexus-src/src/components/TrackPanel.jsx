@@ -45,6 +45,15 @@ function EditTrackCfg({track, currency, tableMinBet, onSave, onCancel}) {
           </div>
         </>
       )}
+      {track.type==="custom" && (
+        <div>
+          <Lbl>Bet Mode</Lbl>
+          <div style={{display:"flex",gap:6}}>
+            {["flat","progression"].map(m=>{const sel=(cfg.betMode||"flat")===m;return <button key={m} onClick={()=>upCfg("betMode",m)} style={{flex:1,padding:"7px 0",borderRadius:8,border:"2px solid "+(sel?"#7c3aed":"#2d4057"),background:sel?"#1e1040":"transparent",color:sel?"#c4b5fd":"#64748b",fontSize:11,fontWeight:700,cursor:"pointer",textTransform:"capitalize"}}>{m}</button>;})}
+          </div>
+          <div style={{fontSize:9,color:"#64748b",marginTop:4}}>{(cfg.positions||[]).length} positions · {(cfg.positions||[]).reduce(function(s,p){return s+p.baseAmount;},0)} base bet</div>
+        </div>
+      )}
       <div style={{display:"flex",gap:8}}>
         <button onClick={()=>onSave(cfg)} style={{flex:1,padding:"10px 0",borderRadius:10,border:"none",background:"#16a34a",color:"white",fontSize:13,fontWeight:700,cursor:"pointer"}}>Save</button>
         <button onClick={onCancel} style={{flex:1,padding:"10px 0",borderRadius:10,border:"1px solid #2d4057",background:"transparent",color:"#94a3b8",fontSize:13,cursor:"pointer"}}>Cancel</button>

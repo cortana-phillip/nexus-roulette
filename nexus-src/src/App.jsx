@@ -268,6 +268,57 @@ export default function App() {
           });
           t.config.activeBets=bets.filter(b=>!resolved.includes(b.number));
         }
+        if(t.type==="custom") {
+          const positions=t.config.positions||[];
+          const row=tbl[Math.min(t.level,tbl.length-1)];
+          const mult=row?row.c:1;
+          const baseTotalBet=positions.reduce(function(s,p){return s+p.baseAmount;},0);
+          const isZ=val==="0"||val==="00";
+          const n=isZ?null:+val;
+          // Compute payout for this number
+          var payout=0;
+          positions.forEach(function(p){
+            var won=false;
+            if(p.type==="straight"&&p.target===val) won=true;
+            if(!isZ&&n){
+              if(p.type==="dozen"){if((n<=12?0:n<=24?1:2)===p.target)won=true;}
+              if(p.type==="column"){if((n%3===0?2:n%3===1?0:1)===p.target)won=true;}
+              if(p.type==="red"&&RED.has(n))won=true;
+              if(p.type==="black"&&!RED.has(n))won=true;
+              if(p.type==="odd"&&n%2===1)won=true;
+              if(p.type==="even"&&n%2===0)won=true;
+              if(p.type==="low"&&n<=18)won=true;
+              if(p.type==="high"&&n>=19)won=true;
+            }
+            if(won) payout+=p.baseAmount*(p.type==="straight"?36:(p.type==="dozen"||p.type==="column")?3:2);
+          });
+          var totalReturn=payout*mult;
+          var betMode=t.config.betMode||"flat";
+          if(payout>0) {
+            var spinDelta=totalReturn-baseTotalBet*mult;
+            if(betMode==="flat") {
+              t.pnl+=spinDelta; t.wins++;
+              t.bets.push({spinIdx:s.spins.length-1,level:0,outcome:"win",profit:spinDelta,cat:"win"});
+              totalDelta+=spinDelta*(t.config.unit||1);
+              trackResults.push({name:"🃏 Custom",color:t.color,profit:spinDelta,unit:t.config.unit||1,outcome:"Win",cat:"win"});
+            } else {
+              var seqProfit=totalReturn-(row?row.totalInvest:baseTotalBet);
+              t.pnl+=spinDelta; t.wins++; t.sequences++; t.level=0;
+              t.bets.push({spinIdx:s.spins.length-1,level:t.level,outcome:"win",profit:seqProfit,cat:"win"});
+              totalDelta+=spinDelta*(t.config.unit||1);
+              trackResults.push({name:"🃏 Custom Prog",color:t.color,profit:seqProfit,unit:t.config.unit||1,outcome:"Win",cat:"win"});
+            }
+          } else {
+            var lossCost=baseTotalBet*mult;
+            t.pnl-=lossCost;
+            t.bets.push({spinIdx:s.spins.length-1,level:t.level,outcome:"loss",profit:-lossCost,cat:"loss"});
+            totalDelta-=lossCost*(t.config.unit||1);
+            if(betMode!=="flat") {
+              if(t.level<tbl.length-1) t.level++; else{ t.state="closed"; t.closedAtSpin=s.spins.length-1; }
+            }
+            trackResults.push({name:"🃏 Custom"+(betMode!=="flat"?" Prog":""),color:t.color,profit:-lossCost,unit:t.config.unit||1,outcome:"Miss",cat:"loss"});
+          }
+        }
       });
       s.bankrollCurrent = Math.round((s.bankrollCurrent + totalDelta)*100)/100;
     });
@@ -564,6 +615,12 @@ export default function App() {
           if(bRow) addChip("s:"+b.number, bRow.c*(t.config.unit||1), t.color);
         });
       }
+      if(t.type==="custom") {
+        (t.config.positions||[]).forEach(function(p){
+          var posKey = p.type==="straight"?"s:"+p.target:p.type+(p.target!==undefined?":"+p.target:"");
+          addChip(posKey, p.baseAmount*row.c*(t.config.unit||1), t.color);
+        });
+      }
     });
     return chips;
   }
@@ -740,6 +797,30 @@ export default function App() {
           <button onClick={repeatBets} disabled={lastBets.length===0} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:lastBets.length>0?"#86efac":"#374151",fontSize:10,fontWeight:700,cursor:lastBets.length>0?"pointer":"default"}}>♻ Repeat</button>
         </div>
         {totalBetAmt>0 && <div style={{textAlign:"center",fontSize:12,fontWeight:800,color:"#fbbf24"}}>Total Bet: {cur.symbol}{fmtNum(totalBetAmt)}</div>}
+        {totalBetAmt>0 && !betResults && (
+          <button onClick={()=>{
+            // Aggregate manual bets into positions
+            const posMap={};
+            manualBets.forEach(function(b){
+              const key=b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
+              if(!posMap[key]) posMap[key]={type:b.type,target:b.target,baseAmount:0};
+              posMap[key].baseAmount+=b.amount;
+            });
+            const positions=Object.values(posMap);
+            const cfg={type:"custom",unit:1,roi:15,betMode:"flat",stopLoss:200,positions:positions};
+            updSess(s=>{
+              s.tracks.push({
+                id:uid(),type:"custom",color:TRACK_COLORS[s.tracks.length%TRACK_COLORS.length],
+                state:"active",config:cfg,level:0,pnl:0,bets:[],
+                createdAtSpin:s.spins.length,closedAtSpin:null,wins:0,sequences:0,
+              });
+            });
+            clearBets();
+            if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate([20,10,20]);
+          }} style={{width:"100%",padding:"10px 0",borderRadius:10,border:"2px dashed #7c3aed",background:"#1e1040",color:"#c4b5fd",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+            🃏 Create Strategy from Current Bets
+          </button>
+        )}
 
         {/* Roulette Table - interactive */}
         {(()=>{
@@ -754,6 +835,9 @@ export default function App() {
             }
             if(t.type==="solution") {
               (t.config.activeBets||[]).forEach(b=>{ if(!stratBets["s:"+b.number]) stratBets["s:"+b.number]=t.color; });
+            }
+            if(t.type==="custom") {
+              (t.config.positions||[]).forEach(function(p){ var pk=p.type==="straight"?"s:"+p.target:p.type+(p.target!==undefined?":"+p.target:""); if(!stratBets[pk]) stratBets[pk]=t.color; });
             }
           });
           return <RouletteBoard roulette={sess.roulette} winningNumber={gameSpinning?null:gameResult} stratBets={stratBets} spinning={false} onBet={placeBet} boardBets={boardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={betResults} stratChips={computeStratChips()}/>;
@@ -824,13 +908,14 @@ export default function App() {
                 <div style={{background:"#0f1923",borderRadius:12,padding:"10px 12px",border:"2px solid "+(isEditing?"#60a5fa":t.color+"66")}}>
                   <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                     <div style={{width:10,height:10,borderRadius:"50%",background:t.color,flexShrink:0}}/>
-                    <span style={{fontSize:11,fontWeight:700,color:t.color,flex:1}}>{TRACK_ICONS[t.type]} {t.type==="fibonacci"?"Progression":"The Solution"}</span>
+                    <span style={{fontSize:11,fontWeight:700,color:t.color,flex:1}}>{TRACK_ICONS[t.type]} {t.type==="fibonacci"?"Progression":t.type==="custom"?"Custom Bet":"The Solution"}</span>
                     <span style={{fontSize:9,color:t.state==="active"?"#4ade80":"#fbbf24",fontWeight:700}}>[{t.state.toUpperCase()}]</span>
                     <span style={{fontSize:12,fontWeight:800,color:dolPnl>=0?"#4ade80":"#f87171"}}>{dolPnl>=0?"+":"-"}{cur.symbol}{fmtNum(dolPnl)}</span>
                   </div>
                   <div style={{display:"flex",gap:8,marginBottom:6}}>
                     <span style={{fontSize:10,color:"#94a3b8"}}>Lvl <strong style={{color:t.level>=10?"#f87171":t.level>=6?"#fbbf24":"#e2e8f0"}}>{t.level}</strong>/{tbl.length}</span>
                     {row && <span style={{fontSize:10,color:"#60a5fa"}}>Bet: {fmtChips(row.totalBet,t.config.unit,currency)}/spin</span>}
+                    {t.type==="custom" && <span style={{fontSize:9,color:"#8b5cf6"}}>{(t.config.betMode||"flat")==="flat"?"Flat":"Prog"} · {(t.config.positions||[]).length} pos</span>}
                   </div>
                   <div style={{display:"flex",gap:5}}>
                     <button onClick={()=>parkToggle(t.id)} style={{flex:1,padding:"4px 0",borderRadius:6,border:"1px solid #2d4057",background:t.state==="parked"?"#134e2a":"#1e2d3d",color:t.state==="parked"?"#4ade80":"#94a3b8",fontSize:9,fontWeight:700,cursor:"pointer"}}>{t.state==="parked"?"▶ Resume":"⏸ Park"}</button>
@@ -961,7 +1046,7 @@ export default function App() {
                   <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                     <span data-handle="1" style={{fontSize:14,color:"#374151",cursor:"grab",userSelect:"none",touchAction:"none",flexShrink:0}}>⠿</span>
                     <div style={{width:10,height:10,borderRadius:"50%",background:t.color,flexShrink:0}}/>
-                    <span style={{fontSize:11,fontWeight:700,color:t.color,flex:1}}>{TRACK_ICONS[t.type]} {t.type==="fibonacci"?"Progression Bet":"The Solution"}</span>
+                    <span style={{fontSize:11,fontWeight:700,color:t.color,flex:1}}>{TRACK_ICONS[t.type]} {t.type==="fibonacci"?"Progression Bet":t.type==="custom"?"Custom Bet":"The Solution"}</span>
                     <span style={{fontSize:9,color:t.state==="active"?"#4ade80":t.state==="parked"?"#fbbf24":"#94a3b8",fontWeight:700}}>[{t.state.toUpperCase()}]</span>
                     <span style={{fontSize:12,fontWeight:800,color:dolPnl>=0?"#4ade80":"#f87171"}}>{dolPnl>=0?"+":"-"}{cur.symbol}{fmtNum(dolPnl)}</span>
                   </div>
@@ -1162,6 +1247,9 @@ export default function App() {
             if(t.type==="solution") {
               (t.config.activeBets||[]).forEach(b=>{ if(!stratBets["s:"+b.number]) stratBets["s:"+b.number]=t.color; });
             }
+            if(t.type==="custom") {
+              (t.config.positions||[]).forEach(function(p){ var pk=p.type==="straight"?"s:"+p.target:p.type+(p.target!==undefined?":"+p.target:""); if(!stratBets[pk]) stratBets[pk]=t.color; });
+            }
           });
 
           function livePlaceBet(type, target) {
@@ -1257,6 +1345,29 @@ export default function App() {
                 <button onClick={liveRepeatBets} disabled={liveLastBets.length===0} style={{flex:1,padding:"7px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:liveLastBets.length>0?"#86efac":"#374151",fontSize:9,fontWeight:700}}>♻ Rpt</button>
               </div>
               {liveTotalBet>0 && <div style={{textAlign:"center",fontSize:11,fontWeight:800,color:"#fbbf24"}}>Total Bet: {cur.symbol}{fmtNum(liveTotalBet)}</div>}
+              {liveTotalBet>0 && !liveBetResults && (
+                <button onClick={()=>{
+                  const posMap={};
+                  liveManualBets.forEach(function(b){
+                    const key=b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
+                    if(!posMap[key]) posMap[key]={type:b.type,target:b.target,baseAmount:0};
+                    posMap[key].baseAmount+=b.amount;
+                  });
+                  const positions=Object.values(posMap);
+                  const cfg={type:"custom",unit:1,roi:15,betMode:"flat",stopLoss:200,positions:positions};
+                  updSess(s=>{
+                    s.tracks.push({
+                      id:uid(),type:"custom",color:TRACK_COLORS[s.tracks.length%TRACK_COLORS.length],
+                      state:"active",config:cfg,level:0,pnl:0,bets:[],
+                      createdAtSpin:s.spins.length,closedAtSpin:null,wins:0,sequences:0,
+                    });
+                  });
+                  liveClearBets();
+                  if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate([20,10,20]);
+                }} style={{width:"100%",padding:"10px 0",borderRadius:10,border:"2px dashed #7c3aed",background:"#1e1040",color:"#c4b5fd",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                  🃏 Create Strategy from Current Bets
+                </button>
+              )}
               {/* Choose Winning Number button */}
               <button onClick={()=>setLiveSelectingWinner(!liveSelectingWinner)} style={{width:"100%",padding:"14px 0",borderRadius:12,border:liveSelectingWinner?"2px solid #fbbf24":"2px solid #2d4057",background:liveSelectingWinner?"linear-gradient(135deg,#92400e,#78350f)":"#0f1923",color:liveSelectingWinner?"#fbbf24":"#94a3b8",fontSize:14,fontWeight:800,cursor:"pointer"}}>
                 {liveSelectingWinner?"👆 Tap the winning number...":"🎯 Choose Winning Number"}
@@ -1448,7 +1559,7 @@ export default function App() {
               const closedInGroup=g.tracks.filter(t=>t.state==="closed");
               const parkedInGroup=g.tracks.filter(t=>t.state==="parked");
               const activeInGroup=g.tracks.filter(t=>t.state==="active");
-              const typeLabel=g.type==="fibonacci"?"🎲 Progression Bet":"🎯 Solution";
+              const typeLabel=g.type==="fibonacci"?"🎲 Progression Bet":g.type==="custom"?"🃏 Custom Bet":"🎯 Solution";
               const targetLabel=g.type==="fibonacci"&&g.lastTargets
                 ?((g.lastTargets.doz||[]).map(d=>DZ_LABELS[d]).join("+")+(g.lastTargets.col&&g.lastTargets.col.length>0?" + "+(g.lastTargets.col.map(c=>COL_LABELS[c]).join("+")):""))
                 :"";
