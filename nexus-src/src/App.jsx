@@ -537,6 +537,37 @@ export default function App() {
     document.body.removeChild(input);
   }
 
+  // Compute strategy bet chips for display on roulette board
+  function computeStratChips() {
+    const chips = {};
+    function addChip(posKey, amount, color) {
+      if(!chips[posKey]) chips[posKey] = [];
+      // Merge with existing chip of same color
+      var existing = chips[posKey].find(function(c){return c.color===color;});
+      if(existing) existing.amount += amount;
+      else chips[posKey].push({amount:amount, color:color});
+    }
+    nonClosedTracks.filter(function(t){return t.state==="active";}).forEach(function(t){
+      var tbl = computeTableForTrack(t);
+      var row = tbl[Math.min(t.level, tbl.length-1)];
+      if(!row) return;
+      var betAmt = row.c * (t.config.unit||1);
+      if(t.type==="fibonacci") {
+        var dts=t.config.dozenTargets||[], cts=t.config.colTargets||[], evts=t.config.evenTargets||[];
+        dts.forEach(function(d){ addChip("dozen:"+d, betAmt, t.color); });
+        cts.forEach(function(c){ addChip("column:"+c, betAmt, t.color); });
+        evts.forEach(function(key){ addChip(key, betAmt, t.color); });
+      }
+      if(t.type==="solution") {
+        (t.config.activeBets||[]).forEach(function(b){
+          var bRow = tbl[Math.min(b.level, tbl.length-1)];
+          if(bRow) addChip("s:"+b.number, bRow.c*(t.config.unit||1), t.color);
+        });
+      }
+    });
+    return chips;
+  }
+
   // -- Game Page --
   function GamePage() {
     const recentSpins = [...sess.spins].reverse().slice(0,30);
@@ -725,7 +756,7 @@ export default function App() {
               (t.config.activeBets||[]).forEach(b=>{ if(!stratBets["s:"+b.number]) stratBets["s:"+b.number]=t.color; });
             }
           });
-          return <RouletteBoard roulette={sess.roulette} winningNumber={gameSpinning?null:gameResult} stratBets={stratBets} spinning={false} onBet={placeBet} boardBets={boardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={betResults}/>;
+          return <RouletteBoard roulette={sess.roulette} winningNumber={gameSpinning?null:gameResult} stratBets={stratBets} spinning={false} onBet={placeBet} boardBets={boardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={betResults} stratChips={computeStratChips()}/>;
         })()}
 
         {/* Recent spins ticker */}
@@ -1231,7 +1262,7 @@ export default function App() {
                 {liveSelectingWinner?"👆 Tap the winning number...":"🎯 Choose Winning Number"}
               </button>
               {/* Roulette Board */}
-              <RouletteBoard roulette={sess.roulette} winningNumber={liveWinNumber} stratBets={stratBets} spinning={false} onBet={livePlaceBet} boardBets={liveBoardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={liveBetResults}/>
+              <RouletteBoard roulette={sess.roulette} winningNumber={liveWinNumber} stratBets={stratBets} spinning={false} onBet={livePlaceBet} boardBets={liveBoardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={liveBetResults} stratChips={computeStratChips()}/>
               <div style={{textAlign:"center",fontSize:9,color:"#475569"}}>{liveSelectingWinner?"Tap a number on the table to record the spin result":"Tap table to place bets, then Choose Winning Number"}</div>
             </div>
           );

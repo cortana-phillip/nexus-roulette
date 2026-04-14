@@ -99,11 +99,12 @@ function SessionClock({startedAt, endedAt, style, pauseOffset}) {
 }
 
 // -- Roulette Table Board --
-function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boardBets, chipColor, betResults}) {
+function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boardBets, chipColor, betResults, stratChips}) {
   const isAmerican = roulette === "american";
   const sb = stratBets || {};
   const bb = boardBets || {};
   const br = betResults || {};
+  const sChipsMap = stratChips || {};
   const canBet = !!onBet && !spinning && !betResults;
   const BOARD_ROWS = [
     [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
@@ -154,12 +155,25 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     return React.createElement("div",{style:{position:"absolute",bottom:-2,left:"50%",transform:"translateX(-50%)",minWidth:16,height:16,borderRadius:8,background:bgC,border:"1.5px solid "+bdC,fontSize:fs,fontWeight:900,color:result?"#fff":"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 2px",zIndex:5,boxShadow:shadow,animation:result==="won"?"pulse 0.8s infinite":"none",whiteSpace:"nowrap"}},lbl);
   }
 
+  function StratChipBadge({chips}){
+    if(!chips||chips.length===0) return null;
+    return React.createElement("div",{style:{position:"absolute",top:-3,left:-3,display:"flex",gap:1,zIndex:6}},
+      chips.map(function(ch,i){
+        var lbl=ch.amount>=100?ch.amount.toFixed(0):ch.amount>=1?(ch.amount%1!==0?ch.amount.toFixed(2):ch.amount.toFixed(0)):ch.amount<1?(ch.amount*100)+"¢":"";
+        var fs=lbl.length>3?5:lbl.length>2?6:7;
+        return React.createElement("div",{key:i,style:{minWidth:14,height:14,borderRadius:7,background:ch.color,border:"1.5px solid #ffffff44",fontSize:fs,fontWeight:900,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 2px",boxShadow:"0 1px 3px rgba(0,0,0,0.5)"}},lbl);
+      })
+    );
+  }
+
   function cell(num,isZero,zeroLabel){
     var numStr=isZero?(zeroLabel||"0"):String(num);
     var betKey="s:"+numStr;
+    var sChips=sChipsMap[betKey]||null;
     return React.createElement("div",{key:numStr,onClick:function(){if(canBet)onBet("straight",numStr);},style:{...numStyle(num,isZero),cursor:canBet?"pointer":"default"}},
       numStr,
       winStr===numStr&&!spinning&&React.createElement(Mkr),
+      sChips&&React.createElement(StratChipBadge,{chips:sChips}),
       bb[betKey]&&React.createElement(BetChip,{amount:bb[betKey],posKey:betKey})
     );
   }
@@ -175,11 +189,11 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
           {BOARD_ROWS.map(function(row){return row.map(function(num){return cell(num,false);});})}
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:g,width:28,flexShrink:0}}>
-          {[2,1,0].map(function(c){var on=winGroups.col===c;var bk="column:"+c;var sc=sb[bk]||null;return React.createElement("div",{key:c,onClick:function(){if(canBet)onBet("column",c);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",fontSize:8,fontWeight:700,cursor:canBet?"pointer":"default",position:"relative"}},"2:1",bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
+          {[2,1,0].map(function(c){var on=winGroups.col===c;var bk="column:"+c;var sc=sb[bk]||null;var sCh=sChipsMap[bk]||null;return React.createElement("div",{key:c,onClick:function(){if(canBet)onBet("column",c);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",fontSize:8,fontWeight:700,cursor:canBet?"pointer":"default",position:"relative"}},"2:1",sCh&&React.createElement(StratChipBadge,{chips:sCh}),bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
         </div>
       </div>
       <div style={{display:"flex",gap:g,marginLeft:26+g}}>
-        {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){var on=winGroups.doz===d.i;var bk="dozen:"+d.i;var sc=sb[bk]||null;return React.createElement("div",{key:d.i,onClick:function(){if(canBet)onBet("dozen",d.i);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:10,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",cursor:canBet?"pointer":"default",position:"relative"}},d.l,bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
+        {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){var on=winGroups.doz===d.i;var bk="dozen:"+d.i;var sc=sb[bk]||null;var sCh=sChipsMap[bk]||null;return React.createElement("div",{key:d.i,onClick:function(){if(canBet)onBet("dozen",d.i);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:10,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",cursor:canBet?"pointer":"default",position:"relative"}},d.l,sCh&&React.createElement(StratChipBadge,{chips:sCh}),bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
       </div>
       <div style={{display:"flex",gap:g,marginLeft:26+g}}>
         {[
@@ -189,7 +203,7 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
           {l:"BLK",k:"black",bg:"#1e293b"},
           {l:"ODD",k:"odd",bg:"#0f1923"},
           {l:"19-36",k:"high",bg:"#0f1923"},
-        ].map(function(em){var on=!!winGroups[em.k];var bk=em.k;var sc=sb[bk]||null;return React.createElement("div",{key:em.k,onClick:function(){if(canBet)onBet(em.k);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:9,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":em.k==="red"?"#f87171":em.k==="black"?"#94a3b8":"#94a3b8",background:on?"#1c1000":em.bg,boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",cursor:canBet?"pointer":"default",position:"relative"}},em.l,bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
+        ].map(function(em){var on=!!winGroups[em.k];var bk=em.k;var sc=sb[bk]||null;var sCh=sChipsMap[bk]||null;return React.createElement("div",{key:em.k,onClick:function(){if(canBet)onBet(em.k);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:9,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":em.k==="red"?"#f87171":em.k==="black"?"#94a3b8":"#94a3b8",background:on?"#1c1000":em.bg,boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",cursor:canBet?"pointer":"default",position:"relative"}},em.l,sCh&&React.createElement(StratChipBadge,{chips:sCh}),bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
       </div>
     </div>
   );
