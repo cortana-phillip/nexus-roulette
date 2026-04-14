@@ -737,104 +737,53 @@ export default function App() {
     }
 
     return (
-      <div style={{display:"flex",flexDirection:"column",gap:10,width:"100%"}}>
+      <div style={{display:"flex",flexDirection:"column",gap:8,width:"100%"}}>
 
-        {/* Spin result display */}
-        <div style={{textAlign:"center",padding:"16px 0 8px"}}>
+        {/* Compact spin result + button row */}
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
           {gameResult ? (()=>{
             const isZ=gameResult==="0"||gameResult==="00";
             const r=!isZ&&RED.has(+gameResult);
-            return (
-              <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:72,height:72,borderRadius:"50%",background:isZ?"#166534":r?"#991b1b":"#1e293b",border:"4px solid "+(isZ?"#4ade80":r?"#f87171":"#64748b"),fontSize:28,fontWeight:900,color:"white",animation:gameSpinning?"pulse 0.15s infinite":"none",boxShadow:"0 0 20px "+(isZ?"#16a34a55":r?"#ef444455":"#64748b33")}}>
-                {gameResult}
-              </div>
-            );
-          })() : (
-            <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:72,height:72,borderRadius:"50%",background:"#1e2d3d",border:"4px solid #2d4057",fontSize:14,fontWeight:700,color:"#64748b"}}>--</div>
-          )}
-        </div>
-
-        {/* Spin button */}
-        <button onClick={doGameSpin} disabled={gameSpinning||!canSpin} style={{width:"100%",padding:"16px 0",borderRadius:14,border:"none",background:gameSpinning?"#374151":canSpin?"linear-gradient(135deg,#16a34a,#059669)":"#374151",color:"white",fontSize:18,fontWeight:900,cursor:gameSpinning||!canSpin?"not-allowed":"pointer",letterSpacing:1,opacity:gameSpinning?0.7:1}}>
-          {gameSpinning?"Spinning...":"🎰 SPIN"}
-        </button>
-
-        {/* Chip selector */}
-        <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap"}}>
-          {CHIPS.map(c=>(
-            <button key={c.val} onClick={()=>setSelectedChip(c.val)} style={{width:44,height:44,borderRadius:"50%",border:"3px solid "+(selectedChip===c.val?"#fbbf24":c.border),background:c.color,color:c.val>=100?"#ffffff":c.val<=0.5?"#1e293b":"#1e293b",fontSize:c.val<1?8:10,fontWeight:900,cursor:"pointer",boxShadow:selectedChip===c.val?"0 0 10px #fbbf24":"0 2px 4px rgba(0,0,0,0.3)",display:"flex",alignItems:"center",justifyContent:"center",transition:"box-shadow 0.2s"}}>
-              {c.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Bet controls */}
-        <div style={{display:"flex",gap:4,alignItems:"center"}}>
-          <button onClick={undoBet} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#60a5fa":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0&&!betResults?"pointer":"default"}}>↩ Undo</button>
-          <button onClick={clearBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#f87171":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0&&!betResults?"pointer":"default"}}>✕ Clear</button>
-          <button onClick={doubleBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#fbbf24":"#374151",fontSize:10,fontWeight:700,cursor:manualBets.length>0&&!betResults?"pointer":"default"}}>2× Double</button>
-          <button onClick={repeatBets} disabled={lastBets.length===0} style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:lastBets.length>0?"#86efac":"#374151",fontSize:10,fontWeight:700,cursor:lastBets.length>0?"pointer":"default"}}>♻ Repeat</button>
-        </div>
-        {totalBetAmt>0 && <div style={{textAlign:"center",fontSize:12,fontWeight:800,color:"#fbbf24"}}>Total Bet: {cur.symbol}{fmtNum(totalBetAmt)}</div>}
-        {totalBetAmt>0 && !betResults && (
-          <button onClick={()=>{
-            const posMap={};
-            manualBets.forEach(function(b){
-              const key=b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
-              if(!posMap[key]) posMap[key]={type:b.type,target:b.target,baseAmount:0};
-              posMap[key].baseAmount+=b.amount;
-            });
-            const positions=Object.values(posMap);
-            const hasInside=positions.some(function(p){return isInsideBet(p.type);});
-            if(!hasInside) {
-              // Outside-only bets — create as fibonacci track in flat mode
-              var dts=[],cts=[],evts=[];
-              positions.forEach(function(p){
-                if(p.type==="dozen") dts.push(p.target);
-                else if(p.type==="column") cts.push(p.target);
-                else evts.push(p.type); // red,black,odd,even,low,high
-              });
-              var cfg=defaultFibCfg();
-              cfg.betMode="flat"; cfg.dozenTargets=dts; cfg.colTargets=cts; cfg.evenTargets=evts;
-              updSess(s=>{s.tracks.push(newTrack("fibonacci",s.tracks.length,cfg));});
-            } else {
-              // Has inside bets — create custom strategy
-              var cfg={type:"custom",unit:1,roi:15,betMode:"flat",stopLoss:200,positions:positions};
-              updSess(s=>{
-                s.tracks.push({
-                  id:uid(),type:"custom",color:TRACK_COLORS[s.tracks.length%TRACK_COLORS.length],
-                  state:"active",config:cfg,level:0,pnl:0,bets:[],
-                  createdAtSpin:s.spins.length,closedAtSpin:null,wins:0,sequences:0,
-                });
-              });
-            }
-            clearBets();
-            if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate([20,10,20]);
-          }} style={{width:"100%",padding:"10px 0",borderRadius:10,border:"2px dashed #7c3aed",background:"#1e1040",color:"#c4b5fd",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-            🃏 Create Strategy from Current Bets
+            return <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:48,height:48,borderRadius:"50%",background:isZ?"#166534":r?"#991b1b":"#1e293b",border:"3px solid "+(isZ?"#4ade80":r?"#f87171":"#64748b"),fontSize:20,fontWeight:900,color:"white",animation:gameSpinning?"pulse 0.15s infinite":"none",flexShrink:0}}>{gameResult}</div>;
+          })() : <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:48,height:48,borderRadius:"50%",background:"#1e2d3d",border:"3px solid #2d4057",fontSize:12,fontWeight:700,color:"#64748b",flexShrink:0}}>--</div>}
+          <button onClick={doGameSpin} disabled={gameSpinning||!canSpin} style={{flex:1,padding:"12px 0",borderRadius:10,border:"none",background:gameSpinning?"#374151":canSpin?"linear-gradient(135deg,#16a34a,#059669)":"#374151",color:"white",fontSize:16,fontWeight:900,cursor:gameSpinning||!canSpin?"not-allowed":"pointer",opacity:gameSpinning?0.7:1}}>
+            {gameSpinning?"Spinning...":"🎰 SPIN"}
           </button>
-        )}
+          {lastSpinDelta!==null && <div style={{textAlign:"center",flexShrink:0,minWidth:55}}><div style={{fontSize:7,color:"#64748b",textTransform:"uppercase"}}>Last</div><div style={{fontSize:14,fontWeight:900,color:lastSpinDelta>0?"#4ade80":lastSpinDelta<0?"#f87171":"#94a3b8"}}>{lastSpinDelta>0?"+":lastSpinDelta<0?"-":""}{cur.symbol}{fmtNum(lastSpinDelta)}</div></div>}
+        </div>
 
-        {/* Roulette Table - interactive */}
+        {/* Roulette Table */}
         {(()=>{
-          // Compute strategy outside bet highlights (labels, not individual numbers)
           const stratBets = {};
           nonClosedTracks.filter(t=>t.state==="active").forEach(t=>{
-            if(t.type==="fibonacci") {
-              const dts=t.config.dozenTargets||[], cts=t.config.colTargets||[], evts=t.config.evenTargets||[];
-              dts.forEach(d=>{ stratBets["dozen:"+d]=t.color; });
-              cts.forEach(c=>{ stratBets["column:"+c]=t.color; });
-              evts.forEach(key=>{ stratBets[key]=t.color; });
-            }
-            if(t.type==="solution") {
-              (t.config.activeBets||[]).forEach(b=>{ if(!stratBets["s:"+b.number]) stratBets["s:"+b.number]=t.color; });
-            }
-            if(t.type==="custom") {
-              (t.config.positions||[]).forEach(function(p){ var pk=p.type==="straight"?"s:"+p.target:p.type+(p.target!==undefined?":"+p.target:""); if(!stratBets[pk]) stratBets[pk]=t.color; });
-            }
+            if(t.type==="fibonacci") { const dts=t.config.dozenTargets||[],cts=t.config.colTargets||[],evts=t.config.evenTargets||[]; dts.forEach(d=>{stratBets["dozen:"+d]=t.color;});cts.forEach(c=>{stratBets["column:"+c]=t.color;});evts.forEach(key=>{stratBets[key]=t.color;}); }
+            if(t.type==="solution") { (t.config.activeBets||[]).forEach(b=>{if(!stratBets["s:"+b.number])stratBets["s:"+b.number]=t.color;}); }
+            if(t.type==="custom") { (t.config.positions||[]).forEach(function(p){var pk=p.type==="straight"?"s:"+p.target:p.type+(p.target!==undefined?":"+p.target:"");if(!stratBets[pk])stratBets[pk]=t.color;}); }
           });
           return <RouletteBoard roulette={sess.roulette} winningNumber={gameSpinning?null:gameResult} stratBets={stratBets} spinning={false} onBet={placeBet} boardBets={boardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={betResults} stratChips={computeStratChips()}/>;
         })()}
+
+        {/* Chips + controls (compact, matching Live mode) */}
+        <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap"}}>
+          {CHIPS.map(c=>(<button key={c.val} onClick={()=>setSelectedChip(c.val)} style={{width:34,height:34,borderRadius:"50%",border:"2px solid "+(selectedChip===c.val?"#fbbf24":c.border),background:c.color,color:c.val>=100?"#fff":c.val<=0.5?"#1e293b":"#1e293b",fontSize:c.val<1?7:8,fontWeight:900,cursor:"pointer",boxShadow:selectedChip===c.val?"0 0 8px #fbbf24":"none",display:"flex",alignItems:"center",justifyContent:"center"}}>{c.label}</button>))}
+        </div>
+        <div style={{display:"flex",gap:3}}>
+          <button onClick={undoBet} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#60a5fa":"#374151",fontSize:8,fontWeight:700}}>↩Undo</button>
+          <button onClick={clearBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#f87171":"#374151",fontSize:8,fontWeight:700}}>✕Clear</button>
+          <button onClick={doubleBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#fbbf24":"#374151",fontSize:8,fontWeight:700}}>2×</button>
+          <button onClick={repeatBets} disabled={lastBets.length===0} style={{flex:1,padding:"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:lastBets.length>0?"#86efac":"#374151",fontSize:8,fontWeight:700}}>♻Rpt</button>
+        </div>
+        {totalBetAmt>0 && <div style={{textAlign:"center",fontSize:10,fontWeight:800,color:"#fbbf24"}}>Bet: {cur.symbol}{fmtNum(totalBetAmt)}</div>}
+        {totalBetAmt>0 && !betResults && (
+          <button onClick={()=>{
+            const posMap={}; manualBets.forEach(function(b){ const key=b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:""); if(!posMap[key])posMap[key]={type:b.type,target:b.target,baseAmount:0}; posMap[key].baseAmount+=b.amount; });
+            const positions=Object.values(posMap); const hasInside=positions.some(function(p){return isInsideBet(p.type);});
+            if(!hasInside){ var dts=[],cts=[],evts=[]; positions.forEach(function(p){ if(p.type==="dozen")dts.push(p.target);else if(p.type==="column")cts.push(p.target);else evts.push(p.type); }); var cfg=defaultFibCfg(); cfg.betMode="flat";cfg.dozenTargets=dts;cfg.colTargets=cts;cfg.evenTargets=evts; updSess(s=>{s.tracks.push(newTrack("fibonacci",s.tracks.length,cfg));}); }
+            else{ var cfg={type:"custom",unit:1,roi:15,betMode:"flat",stopLoss:200,positions:positions}; updSess(s=>{ s.tracks.push({id:uid(),type:"custom",color:TRACK_COLORS[s.tracks.length%TRACK_COLORS.length],state:"active",config:cfg,level:0,pnl:0,bets:[],createdAtSpin:s.spins.length,closedAtSpin:null,wins:0,sequences:0}); }); }
+            clearBets(); if(settings.vibration!==false&&navigator.vibrate)navigator.vibrate([20,10,20]);
+          }} style={{width:"100%",padding:"8px 0",borderRadius:8,border:"2px dashed #7c3aed",background:"#1e1040",color:"#c4b5fd",fontSize:11,fontWeight:700,cursor:"pointer"}}>🃏 Create Strategy from Bets</button>
+        )}
+        <div style={{textAlign:"center",fontSize:8,color:"#374151"}}>center=straight · edge=split · corner=corner</div>
 
         {/* Recent spins ticker */}
         {sess.spins.length>0 && (
@@ -850,19 +799,11 @@ export default function App() {
           </div>
         )}
 
-        {/* P&L Display */}
+        {/* Session Profit */}
         {sess.spins.length>0 && (
-          <div style={{display:"flex",gap:8,width:"100%"}}>
-            <div style={{flex:1,background:pnlVal>=0?"#0a1f0a":"#200505",borderRadius:12,padding:"12px 10px",border:"1px solid "+(pnlVal>=0?"#16a34a":"#991b1b"),textAlign:"center"}}>
-              <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>Session Profit</div>
-              <div style={{fontSize:24,fontWeight:900,color:pnlVal>=0?"#4ade80":"#f87171"}}>{pnlVal>=0?"+":"-"}{cur.symbol}{fmtNum(pnlVal)}</div>
-            </div>
-            {lastSpinDelta!==null && (
-              <div style={{width:100,background:lastSpinDelta>0?"#0a1f0a":lastSpinDelta<0?"#200505":"#0f1923",borderRadius:12,padding:"12px 10px",border:"1px solid "+(lastSpinDelta>0?"#16a34a":lastSpinDelta<0?"#991b1b":"#2d4057"),textAlign:"center"}}>
-                <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>Last Spin</div>
-                <div style={{fontSize:20,fontWeight:900,color:lastSpinDelta>0?"#4ade80":lastSpinDelta<0?"#f87171":"#94a3b8"}}>{lastSpinDelta>0?"+":lastSpinDelta<0?"-":""}{cur.symbol}{fmtNum(lastSpinDelta)}</div>
-              </div>
-            )}
+          <div style={{background:pnlVal>=0?"#0a1f0a":"#200505",borderRadius:10,padding:"8px 12px",border:"1px solid "+(pnlVal>=0?"#16a34a":"#991b1b"),textAlign:"center"}}>
+            <div style={{fontSize:8,color:"#64748b",textTransform:"uppercase",letterSpacing:1}}>Session Profit</div>
+            <div style={{fontSize:20,fontWeight:900,color:pnlVal>=0?"#4ade80":"#f87171"}}>{pnlVal>=0?"+":"-"}{cur.symbol}{fmtNum(pnlVal)}</div>
           </div>
         )}
 

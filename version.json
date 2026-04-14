@@ -1,1 +1,1 @@
-{"version":"0.40.5","date":"2026-04-13","notes":"Fixed table clipping on right side. Narrower zero/column cells so everything fits on screen. Chip positioning fixed at intersections."}
+{"version":"0.40.6","date":"2026-04-13","notes":"Game Mode redesigned to match Live Mode layout. Compact spin button + result, table at top, small chips below. Much more compact."}
