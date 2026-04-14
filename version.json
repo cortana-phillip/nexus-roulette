@@ -1,1 +1,1 @@
-{"version":"0.40.16","date":"2026-04-14","notes":"Fixed chips disappearing during spin. Animation now only updates the spin ball, not the table. Board stays completely static with chips visible during spin."}
+{"version":"0.40.17","date":"2026-04-14","notes":"Fixed chips disappearing - moved bet state to App level so React hooks run unconditionally on every render."}

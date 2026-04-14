@@ -40,6 +40,12 @@ export default function App() {
   const [gameResult, setGameResult] = useState(null);
   const [lastSpinDelta, setLastSpinDelta] = useState(null);
   const [selectedChip, setSelectedChip] = useState(1);
+  const [manualBets, setManualBets] = useState([]);
+  const [lastBets, setLastBets] = useState([]);
+  const [betResults, setBetResults] = useState(null);
+  const [undoStack, setUndoStack] = useState([]);
+  const [animNumber, setAnimNumber] = useState(null);
+  const clearTimerRef = React.useRef(null);
   const [liveSelectingWinner, setLiveSelectingWinner] = useState(true);
   const [liveWinNumber, setLiveWinNumber] = useState(null);
   const [liveManualBets, setLiveManualBets] = useState([]);
@@ -622,12 +628,6 @@ export default function App() {
   function GamePage() {
     const recentSpins = [...sess.spins].reverse().slice(0,30);
     const hasActiveTracks = nonClosedTracks.some(t=>t.state==="active");
-    const [manualBets, setManualBets] = useState([]);
-    const [lastBets, setLastBets] = useState([]);
-    const [betResults, setBetResults] = useState(null);
-    const [undoStack, setUndoStack] = useState([]);
-    const [animNumber, setAnimNumber] = useState(null); // spin animation display only
-    const clearTimerRef = React.useRef(null);
     const tMin = settings.tableMinBet||1;
 
     const CHIPS = [
