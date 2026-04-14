@@ -1,1 +1,1 @@
-{"version":"0.40.32","date":"2026-04-14","notes":"All zero area bets: splits 0-3, 0-2, 00-2, 00-1. Streets 0-2-3, 0-00-2, 00-1-2. Basket 0-00-1-2-3. Correct chip positions for each."}
+{"version":"0.40.33","date":"2026-04-14","notes":"Bigger zero bet zones - streets at corners, splits on edges. Much easier to tap the right bet."}

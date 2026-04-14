@@ -384,31 +384,20 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     <div style={{width:"100%",borderRadius:8,border:"1px solid #2d4057",background:"#0a1218",padding:3,display:"flex",flexDirection:"column",gap:g,overflow:"hidden",boxSizing:"border-box"}}>
       <div style={{display:"flex",gap:g}}>
         <div style={{display:"flex",flexDirection:"column",gap:g,width:zeroW,flexShrink:0}}>
-          {React.createElement("div",{key:"0",onClick:function(e){if(!canBet)return;var rect=e.currentTarget.getBoundingClientRect();var ox=e.clientX-rect.left,oy=e.clientY-rect.top;var pX=ox/rect.width,pY=oy/rect.height;
-            // Bottom-right corner: street 0-00-2
-            if(pX>0.6&&pY>0.7&&isAmerican){onBet("street","0-00-2");return;}
-            // Bottom edge: split 0-00
+          {React.createElement("div",{key:"0",onClick:function(e){if(!canBet)return;var rect=e.currentTarget.getBoundingClientRect();var pX=(e.clientX-rect.left)/rect.width,pY=(e.clientY-rect.top)/rect.height;
+            if(pX>0.5&&pY>0.65&&isAmerican){onBet("street","0-00-2");return;}
+            if(pX>0.5&&pY<0.35){onBet("street","0-2-3");return;}
             if(pY>0.7&&isAmerican){onBet("split","0-00");return;}
-            // Right edge top third: split 0-3
-            if(pX>0.6&&pY<0.35){onBet("split","0-3");return;}
-            // Right edge middle: street 0-2-3
-            if(pX>0.6&&pY>=0.35&&pY<=0.65){onBet("street","0-2-3");return;}
-            // Right edge bottom third: split 0-2
-            if(pX>0.6){onBet("split","0-2");return;}
+            if(pX>0.5&&pY<0.5){onBet("split","0-3");return;}
+            if(pX>0.5){onBet("split","0-2");return;}
             onBet("straight","0");
           },style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,background:"#166534",border:insideCoveredNums["0"]?"2px solid #c084fc":(winStr==="0"?"2px solid #fbbf24":"1px solid #374151"),color:winStr==="0"?"#fbbf24":"white",fontSize:cellFs-1,fontWeight:800,position:"relative",boxShadow:winStr==="0"?"0 0 10px #fbbf24":"none",cursor:canBet?"pointer":"default"}},"0",winStr==="0"&&!spinning&&React.createElement(Mkr),bb["s:0"]&&React.createElement(BetChip,{amount:bb["s:0"],posKey:"s:0"}))}
-          {isAmerican&&React.createElement("div",{key:"00",onClick:function(e){if(!canBet)return;var rect=e.currentTarget.getBoundingClientRect();var ox=e.clientX-rect.left,oy=e.clientY-rect.top;var pX=ox/rect.width,pY=oy/rect.height;
-            if(pX>0.6) {
-              // Right edge zones (top to bottom)
-              if(pY<0.2){onBet("street","0-00-2");return;}
-              if(pY<0.4){onBet("split","00-2");return;}
-              if(pY<0.6){onBet("street","00-1-2");return;}
-              if(pY<0.8){onBet("split","00-1");return;}
-              onBet("basket","0-00-1-2-3");return;
-            }
-            // Top edge: split 0-00
+          {isAmerican&&React.createElement("div",{key:"00",onClick:function(e){if(!canBet)return;var rect=e.currentTarget.getBoundingClientRect();var pX=(e.clientX-rect.left)/rect.width,pY=(e.clientY-rect.top)/rect.height;
+            if(pX>0.5&&pY<0.3){onBet("street","00-1-2");return;}
+            if(pX>0.5&&pY>0.7){onBet("basket","0-00-1-2-3");return;}
             if(pY<0.25){onBet("split","0-00");return;}
-            onBet("straight","00");
+            if(pX>0.5&&pY<0.5){onBet("split","00-2");return;}
+            if(pX>0.5){onBet("split","00-1");return;}
             onBet("straight","00");
           },style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,background:"#166534",border:insideCoveredNums["00"]?"2px solid #c084fc":(winStr==="00"?"2px solid #fbbf24":"1px solid #374151"),color:winStr==="00"?"#fbbf24":"white",fontSize:cellFs-1,fontWeight:800,position:"relative",boxShadow:winStr==="00"?"0 0 10px #fbbf24":"none",cursor:canBet?"pointer":"default"}},"00",winStr==="00"&&!spinning&&React.createElement(Mkr),bb["s:00"]&&React.createElement(BetChip,{amount:bb["s:00"],posKey:"s:00"}))}
         </div>
