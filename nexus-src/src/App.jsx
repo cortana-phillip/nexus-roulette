@@ -44,19 +44,29 @@ export default function App() {
   const [highlightTrackId, setHighlightTrackId] = useState(null);
   const [editTrackId, setEditTrackId] = useState(null);
   const [gameSpinning, setGameSpinning] = useState(false);
-  const [gameResult, setGameResult] = useState(null);
+  const [gameResult, setGameResult] = useState(()=>{try{var s=localStorage.getItem("nexus_ui");if(s){var d=JSON.parse(s);return d.gameResult||null;}}catch(e){}return null;});
   const [lastSpinDelta, setLastSpinDelta] = useState(null);
-  const [selectedChip, setSelectedChip] = useState(1);
-  const [manualBets, setManualBets] = useState([]);
-  const [lastBets, setLastBets] = useState([]);
+  const [selectedChip, setSelectedChip] = useState(()=>{try{var s=localStorage.getItem("nexus_ui");if(s){var d=JSON.parse(s);return d.selectedChip||1;}}catch(e){}return 1;});
+  const [manualBets, setManualBets] = useState(()=>{try{var s=localStorage.getItem("nexus_ui");if(s){var d=JSON.parse(s);return d.manualBets||[];}}catch(e){}return [];});
+  const [lastBets, setLastBets] = useState(()=>{try{var s=localStorage.getItem("nexus_ui");if(s){var d=JSON.parse(s);return d.lastBets||[];}}catch(e){}return [];});
   const [betResults, setBetResults] = useState(null);
   const [undoStack, setUndoStack] = useState([]);
   const [animNumber, setAnimNumber] = useState(null);
   const clearTimerRef = React.useRef(null);
   const [liveSelectingWinner, setLiveSelectingWinner] = useState(true);
   const [liveWinNumber, setLiveWinNumber] = useState(null);
-  const [liveManualBets, setLiveManualBets] = useState([]);
-  const [liveLastBets, setLiveLastBets] = useState([]);
+  const [liveManualBets, setLiveManualBets] = useState(()=>{try{var s=localStorage.getItem("nexus_ui");if(s){var d=JSON.parse(s);return d.liveManualBets||[];}}catch(e){}return [];});
+  const [liveLastBets, setLiveLastBets] = useState(()=>{try{var s=localStorage.getItem("nexus_ui");if(s){var d=JSON.parse(s);return d.liveLastBets||[];}}catch(e){}return [];});
+
+  // Save UI state when page is hidden (tab switch, app background)
+  React.useEffect(()=>{
+    function saveUIState(){
+      try{localStorage.setItem("nexus_ui",JSON.stringify({manualBets,lastBets,liveManualBets,liveLastBets,selectedChip,gameResult}));}catch(e){}
+    }
+    document.addEventListener("visibilitychange",function(){if(document.hidden)saveUIState();});
+    window.addEventListener("beforeunload",saveUIState);
+    return ()=>{window.removeEventListener("beforeunload",saveUIState);};
+  },[manualBets,lastBets,liveManualBets,liveLastBets,selectedChip,gameResult]);
   const [liveBetResults, setLiveBetResults] = useState(null);
   const [liveUndoStack, setLiveUndoStack] = useState([]);
   const liveClearTimerRef = React.useRef(null);

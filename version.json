@@ -1,1 +1,1 @@
-{"version":"0.40.30","date":"2026-04-14","notes":"Basket bet chip positioned between 00 and 1 at the left edge, like a double street."}
+{"version":"0.40.31","date":"2026-04-14","notes":"Basket chip at bottom-left of grid. Bets preserved when tabbing away - saved to localStorage on page hide."}

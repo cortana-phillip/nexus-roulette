@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.30";
+  var MY_V="0.40.31";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.30";
+var APP_VERSION = "0.40.31";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -3150,9 +3150,9 @@ function RouletteBoard(_ref16) {
           leftPct = 0;
           topPx = 1 * (cellH + g) + cellH / 2;
         } else if (bType === "basket") {
-          // Between 00 and 1, at left edge of grid
+          // Bottom-left of grid, where 00 meets 1 and dozens start
           leftPct = 0;
-          topPx = 2 * (cellH + g);
+          topPx = 3 * (cellH + g) - g;
         } else {
           leftPct = 0;
           topPx = 1 * (cellH + g) + cellH / 2;
@@ -7857,7 +7857,16 @@ function App() {
     _useState84 = _slicedToArray(_useState83, 2),
     gameSpinning = _useState84[0],
     setGameSpinning = _useState84[1];
-  var _useState85 = (0, _react.useState)(null),
+  var _useState85 = (0, _react.useState)(function () {
+      try {
+        var s = localStorage.getItem("nexus_ui");
+        if (s) {
+          var d = JSON.parse(s);
+          return d.gameResult || null;
+        }
+      } catch (e) {}
+      return null;
+    }),
     _useState86 = _slicedToArray(_useState85, 2),
     gameResult = _useState86[0],
     setGameResult = _useState86[1];
@@ -7865,15 +7874,42 @@ function App() {
     _useState88 = _slicedToArray(_useState87, 2),
     lastSpinDelta = _useState88[0],
     setLastSpinDelta = _useState88[1];
-  var _useState89 = (0, _react.useState)(1),
+  var _useState89 = (0, _react.useState)(function () {
+      try {
+        var s = localStorage.getItem("nexus_ui");
+        if (s) {
+          var d = JSON.parse(s);
+          return d.selectedChip || 1;
+        }
+      } catch (e) {}
+      return 1;
+    }),
     _useState90 = _slicedToArray(_useState89, 2),
     selectedChip = _useState90[0],
     setSelectedChip = _useState90[1];
-  var _useState91 = (0, _react.useState)([]),
+  var _useState91 = (0, _react.useState)(function () {
+      try {
+        var s = localStorage.getItem("nexus_ui");
+        if (s) {
+          var d = JSON.parse(s);
+          return d.manualBets || [];
+        }
+      } catch (e) {}
+      return [];
+    }),
     _useState92 = _slicedToArray(_useState91, 2),
     manualBets = _useState92[0],
     setManualBets = _useState92[1];
-  var _useState93 = (0, _react.useState)([]),
+  var _useState93 = (0, _react.useState)(function () {
+      try {
+        var s = localStorage.getItem("nexus_ui");
+        if (s) {
+          var d = JSON.parse(s);
+          return d.lastBets || [];
+        }
+      } catch (e) {}
+      return [];
+    }),
     _useState94 = _slicedToArray(_useState93, 2),
     lastBets = _useState94[0],
     setLastBets = _useState94[1];
@@ -7898,14 +7934,55 @@ function App() {
     _useState104 = _slicedToArray(_useState103, 2),
     liveWinNumber = _useState104[0],
     setLiveWinNumber = _useState104[1];
-  var _useState105 = (0, _react.useState)([]),
+  var _useState105 = (0, _react.useState)(function () {
+      try {
+        var s = localStorage.getItem("nexus_ui");
+        if (s) {
+          var d = JSON.parse(s);
+          return d.liveManualBets || [];
+        }
+      } catch (e) {}
+      return [];
+    }),
     _useState106 = _slicedToArray(_useState105, 2),
     liveManualBets = _useState106[0],
     setLiveManualBets = _useState106[1];
-  var _useState107 = (0, _react.useState)([]),
+  var _useState107 = (0, _react.useState)(function () {
+      try {
+        var s = localStorage.getItem("nexus_ui");
+        if (s) {
+          var d = JSON.parse(s);
+          return d.liveLastBets || [];
+        }
+      } catch (e) {}
+      return [];
+    }),
     _useState108 = _slicedToArray(_useState107, 2),
     liveLastBets = _useState108[0],
     setLiveLastBets = _useState108[1];
+
+  // Save UI state when page is hidden (tab switch, app background)
+  React.useEffect(function () {
+    function saveUIState() {
+      try {
+        localStorage.setItem("nexus_ui", JSON.stringify({
+          manualBets: manualBets,
+          lastBets: lastBets,
+          liveManualBets: liveManualBets,
+          liveLastBets: liveLastBets,
+          selectedChip: selectedChip,
+          gameResult: gameResult
+        }));
+      } catch (e) {}
+    }
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) saveUIState();
+    });
+    window.addEventListener("beforeunload", saveUIState);
+    return function () {
+      window.removeEventListener("beforeunload", saveUIState);
+    };
+  }, [manualBets, lastBets, liveManualBets, liveLastBets, selectedChip, gameResult]);
   var _useState109 = (0, _react.useState)(null),
     _useState110 = _slicedToArray(_useState109, 2),
     liveBetResults = _useState110[0],

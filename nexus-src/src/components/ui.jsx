@@ -352,9 +352,9 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
           leftPct = 0;
           topPx = 1*(cellH+g) + cellH/2;
         } else if(bType==="basket") {
-          // Between 00 and 1, at left edge of grid
+          // Bottom-left of grid, where 00 meets 1 and dozens start
           leftPct = 0;
-          topPx = 2*(cellH+g);
+          topPx = 3*(cellH+g) - g;
         } else {
           leftPct = 0;
           topPx = 1*(cellH+g) + cellH/2;
