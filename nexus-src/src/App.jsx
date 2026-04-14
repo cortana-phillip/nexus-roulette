@@ -40,7 +40,7 @@ export default function App() {
   const [gameResult, setGameResult] = useState(null);
   const [lastSpinDelta, setLastSpinDelta] = useState(null);
   const [selectedChip, setSelectedChip] = useState(1);
-  const [liveSelectingWinner, setLiveSelectingWinner] = useState(false);
+  const [liveSelectingWinner, setLiveSelectingWinner] = useState(true);
   const [liveManualBets, setLiveManualBets] = useState([]);
   const [liveLastBets, setLiveLastBets] = useState([]);
   const [liveBetResults, setLiveBetResults] = useState(null);
@@ -1167,7 +1167,7 @@ export default function App() {
                 setLiveUndoStack([]);
                 liveClearTimerRef.current=setTimeout(()=>{setLiveBetResults(null);setLiveManualBets([]);liveClearTimerRef.current=null;},3000);
               }
-              setLiveSelectingWinner(false);
+              setLiveSelectingWinner(true);
               return;
             }
             // Normal bet placement mode
@@ -1210,7 +1210,7 @@ export default function App() {
               {/* Chip selector */}
               <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap"}}>
                 {CHIPS.map(c=>(
-                  <button key={c.val} onClick={()=>setSelectedChip(c.val)} style={{width:40,height:40,borderRadius:"50%",border:"3px solid "+(selectedChip===c.val?"#fbbf24":c.border),background:c.color,color:c.val>=100?"#fff":c.val<=0.5?"#1e293b":"#1e293b",fontSize:c.val<1?7:9,fontWeight:900,cursor:"pointer",boxShadow:selectedChip===c.val?"0 0 10px #fbbf24":"0 2px 4px rgba(0,0,0,0.3)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <button key={c.val} onClick={()=>{setSelectedChip(c.val);setLiveSelectingWinner(false);}} style={{width:40,height:40,borderRadius:"50%",border:"3px solid "+(selectedChip===c.val&&!liveSelectingWinner?"#fbbf24":c.border),background:c.color,color:c.val>=100?"#fff":c.val<=0.5?"#1e293b":"#1e293b",fontSize:c.val<1?7:9,fontWeight:900,cursor:"pointer",boxShadow:selectedChip===c.val&&!liveSelectingWinner?"0 0 10px #fbbf24":"0 2px 4px rgba(0,0,0,0.3)",display:"flex",alignItems:"center",justifyContent:"center"}}>
                     {c.label}
                   </button>
                 ))}

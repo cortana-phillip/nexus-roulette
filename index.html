@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.36.1";
+  var MY_V="0.37.0";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -391,7 +391,7 @@ var TRACK_ICONS = {
   solution: "🎯"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.36.1";
+var APP_VERSION = "0.37.0";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -7100,7 +7100,7 @@ function App() {
     _useState88 = _slicedToArray(_useState87, 2),
     selectedChip = _useState88[0],
     setSelectedChip = _useState88[1];
-  var _useState89 = (0, _react.useState)(false),
+  var _useState89 = (0, _react.useState)(true),
     _useState90 = _slicedToArray(_useState89, 2),
     liveSelectingWinner = _useState90[0],
     setLiveSelectingWinner = _useState90[1];
@@ -9759,7 +9759,7 @@ function App() {
               liveClearTimerRef.current = null;
             }, 3000);
           }
-          setLiveSelectingWinner(false);
+          setLiveSelectingWinner(true);
           return;
         }
         // Normal bet placement mode
@@ -9847,19 +9847,20 @@ function App() {
         return /*#__PURE__*/React.createElement("button", {
           key: c.val,
           onClick: function onClick() {
-            return setSelectedChip(c.val);
+            setSelectedChip(c.val);
+            setLiveSelectingWinner(false);
           },
           style: {
             width: 40,
             height: 40,
             borderRadius: "50%",
-            border: "3px solid " + (selectedChip === c.val ? "#fbbf24" : c.border),
+            border: "3px solid " + (selectedChip === c.val && !liveSelectingWinner ? "#fbbf24" : c.border),
             background: c.color,
             color: c.val >= 100 ? "#fff" : c.val <= 0.5 ? "#1e293b" : "#1e293b",
             fontSize: c.val < 1 ? 7 : 9,
             fontWeight: 900,
             cursor: "pointer",
-            boxShadow: selectedChip === c.val ? "0 0 10px #fbbf24" : "0 2px 4px rgba(0,0,0,0.3)",
+            boxShadow: selectedChip === c.val && !liveSelectingWinner ? "0 0 10px #fbbf24" : "0 2px 4px rgba(0,0,0,0.3)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center"
