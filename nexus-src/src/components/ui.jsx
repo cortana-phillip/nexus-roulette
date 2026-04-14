@@ -199,6 +199,23 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
       var nums=[BOARD_ROWS[r-1][c-1],BOARD_ROWS[r-1][c],BOARD_ROWS[r][c-1],BOARD_ROWS[r][c]].sort(function(a,b){return a-b;});
       return {type:"corner",target:nums.join("-")};
     }
+    // Line (double street): at outer boundary where two columns meet
+    if(nearBottom && !hasBelow && nearRight && hasRight) {
+      var line=[BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c],BOARD_ROWS[0][c+1],BOARD_ROWS[1][c+1],BOARD_ROWS[2][c+1]].sort(function(a,b){return a-b;});
+      return {type:"line",target:line.join("-")};
+    }
+    if(nearBottom && !hasBelow && nearLeft && hasLeft) {
+      var line=[BOARD_ROWS[0][c-1],BOARD_ROWS[1][c-1],BOARD_ROWS[2][c-1],BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c]].sort(function(a,b){return a-b;});
+      return {type:"line",target:line.join("-")};
+    }
+    if(nearTop && !hasAbove && nearRight && hasRight) {
+      var line=[BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c],BOARD_ROWS[0][c+1],BOARD_ROWS[1][c+1],BOARD_ROWS[2][c+1]].sort(function(a,b){return a-b;});
+      return {type:"line",target:line.join("-")};
+    }
+    if(nearTop && !hasAbove && nearLeft && hasLeft) {
+      var line=[BOARD_ROWS[0][c-1],BOARD_ROWS[1][c-1],BOARD_ROWS[2][c-1],BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c]].sort(function(a,b){return a-b;});
+      return {type:"line",target:line.join("-")};
+    }
     // Street: ONLY at outer boundary of the grid
     if(nearLeft && !hasLeft) {
       var st=[BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c]].sort(function(a,b){return a-b;});
@@ -332,8 +349,8 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
         if(minR!==maxR) { leftPct=(minC+0.5)/12*100; topPx=(minR+1)*(30+g)-g; }
         else { leftPct=(minC+1)/12*100; topPx=minR*(30+g)+15; }
       }
-      else if(bType==="street") { leftPct=0; topPx=1*(30+g)+15; }
-      else if(bType==="line") { leftPct=(maxC)/12*100; topPx=1*(30+g)+15; }
+      else if(bType==="street") { leftPct=(minC+0.5)/12*100; topPx=0; }
+      else if(bType==="line") { leftPct=(minC+1)/12*100; topPx=(30+g)*3-g; }
       else { leftPct=(minC+0.5)/12*100; topPx=1*(30+g)+15; }
       overlayChips.push({left:leftPct,top:topPx,amount:ac.amount,posKey:ac.posKey});
     });
