@@ -112,10 +112,10 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
   ];
   const g = 2;
-  const cellH = landscape ? Math.floor(Math.min(window.innerHeight - 40, 500) / 3.8) : 30;
-  const zeroW = landscape ? 42 : 22;
-  const colW = landscape ? 40 : 24;
-  const cellFs = landscape ? Math.max(16, Math.floor(cellH/3)) : 11;
+  const cellH = landscape ? Math.floor(Math.min(window.innerHeight - 160, 300) / 3.2) : 30;
+  const zeroW = landscape ? 40 : 22;
+  const colW = landscape ? 36 : 24;
+  const cellFs = landscape ? Math.max(14, Math.floor(cellH/3)) : 11;
   const winStr = winningNumber ? String(winningNumber) : null;
   const winN = winStr && winStr!=="0" && winStr!=="00" ? +winStr : null;
   // Only highlight outside bets on FINAL result, not during spin

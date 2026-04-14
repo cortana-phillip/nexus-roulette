@@ -1,1 +1,1 @@
-{"version":"0.40.23","date":"2026-04-14","notes":"Landscape: removed 460px max-width constraint, table fills full screen width. Reduced padding."}
+{"version":"0.40.24","date":"2026-04-14","notes":"Landscape: table sized to fit with chips and controls visible on screen."}
