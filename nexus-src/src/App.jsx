@@ -625,9 +625,9 @@ export default function App() {
     const [manualBets, setManualBets] = useState([]);
     const [lastBets, setLastBets] = useState([]);
     const [betResults, setBetResults] = useState(null);
-    const [undoStack, setUndoStack] = useState([]); // how many bets each action added
+    const [undoStack, setUndoStack] = useState([]);
+    const [animNumber, setAnimNumber] = useState(null); // spin animation display only
     const clearTimerRef = React.useRef(null);
-    const frozenBetsRef = React.useRef(null); // preserve bets during spin animation
     const tMin = settings.tableMinBet||1;
 
     const CHIPS = [
@@ -645,7 +645,7 @@ export default function App() {
 
     function cancelPendingClear() {
       if(clearTimerRef.current) { clearTimeout(clearTimerRef.current); clearTimerRef.current=null; }
-      if(betResults) { setBetResults(null); setManualBets([]); frozenBetsRef.current=null; }
+      if(betResults) { setBetResults(null); setManualBets([]); }
     }
 
     function placeBet(type, target) {
@@ -682,10 +682,8 @@ export default function App() {
     }
 
     // Aggregate bets by position for display
-    // Use frozen bets during spin animation and result display so chips don't disappear
-    const activeBets = frozenBetsRef.current || manualBets;
     const boardBets = {};
-    activeBets.forEach(b=>{
+    manualBets.forEach(b=>{
       const key = b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
       boardBets[key] = (boardBets[key]||0) + b.amount;
     });
@@ -709,24 +707,24 @@ export default function App() {
 
     function doGameSpin() {
       if(gameSpinning||betResults) return;
-      // Freeze current bets so they persist through spin animation
-      frozenBetsRef.current = [...manualBets];
       setGameSpinning(true);
+      setAnimNumber(null);
       if(!sess.sessionStartedAt) updSess(s=>{s.sessionStartedAt=Date.now();});
       const nums = wheelNums;
-      const spinBets = [...manualBets]; // capture bets for resolution
+      const spinBets = [...manualBets];
       var ticks=0;
       const iv = setInterval(()=>{
         ticks++;
-        setGameResult(nums[Math.floor(Math.random()*nums.length)]);
+        // Only update the animation display number, NOT gameResult
+        setAnimNumber(nums[Math.floor(Math.random()*nums.length)]);
         if(ticks>=15){
           clearInterval(iv);
           const val = nums[Math.floor(Math.random()*nums.length)];
-          setGameResult(val);
+          setAnimNumber(null);
+          setGameResult(val); // final result - board highlights winning number
           if(hasActiveTracks) tapNumber(val, true);
           else { updSess(s=>{s.spins.push(val);const nd={...s.droughts};Object.keys(nd).forEach(k=>nd[k]++);nd[val]=0;s.droughts=nd;}); }
           if(spinBets.length>0){
-            // Resolve using captured bets
             var totalWin=0, totalBet=0, posResults={};
             spinBets.forEach(function(b){
               totalBet+=b.amount;
@@ -742,9 +740,7 @@ export default function App() {
             setBetResults(posResults);
             setLastBets([...spinBets]);
             setUndoStack([]);
-            clearTimerRef.current = setTimeout(()=>{ setBetResults(null); setManualBets([]); frozenBetsRef.current=null; clearTimerRef.current=null; },3000);
-          } else {
-            frozenBetsRef.current=null;
+            clearTimerRef.current = setTimeout(()=>{ setBetResults(null); setManualBets([]); clearTimerRef.current=null; },3000);
           }
           if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate(30);
           setGameSpinning(false);
@@ -757,11 +753,13 @@ export default function App() {
 
         {/* Compact spin result + button row */}
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          {gameResult ? (()=>{
-            const isZ=gameResult==="0"||gameResult==="00";
-            const r=!isZ&&RED.has(+gameResult);
-            return <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:48,height:48,borderRadius:"50%",background:isZ?"#166534":r?"#991b1b":"#1e293b",border:"3px solid "+(isZ?"#4ade80":r?"#f87171":"#64748b"),fontSize:20,fontWeight:900,color:"white",animation:gameSpinning?"pulse 0.15s infinite":"none",flexShrink:0}}>{gameResult}</div>;
-          })() : <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:48,height:48,borderRadius:"50%",background:"#1e2d3d",border:"3px solid #2d4057",fontSize:12,fontWeight:700,color:"#64748b",flexShrink:0}}>--</div>}
+          {(()=>{
+            const displayNum = gameSpinning ? animNumber : gameResult;
+            if(!displayNum) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:48,height:48,borderRadius:"50%",background:"#1e2d3d",border:"3px solid #2d4057",fontSize:12,fontWeight:700,color:"#64748b",flexShrink:0}}>--</div>;
+            const isZ=displayNum==="0"||displayNum==="00";
+            const r=!isZ&&RED.has(+displayNum);
+            return <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:48,height:48,borderRadius:"50%",background:isZ?"#166534":r?"#991b1b":"#1e293b",border:"3px solid "+(isZ?"#4ade80":r?"#f87171":"#64748b"),fontSize:20,fontWeight:900,color:"white",animation:gameSpinning?"pulse 0.15s infinite":"none",flexShrink:0}}>{displayNum}</div>;
+          })()}
           <button onClick={doGameSpin} disabled={gameSpinning||!!betResults} style={{flex:1,padding:"12px 0",borderRadius:10,border:"none",background:gameSpinning||betResults?"#374151":"linear-gradient(135deg,#16a34a,#059669)",color:"white",fontSize:16,fontWeight:900,cursor:gameSpinning||betResults?"not-allowed":"pointer",opacity:gameSpinning?0.7:1}}>
             {gameSpinning?"Spinning...":"🎰 SPIN"}
           </button>

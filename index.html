@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.15";
+  var MY_V="0.40.16";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.15";
+var APP_VERSION = "0.40.16";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -8761,9 +8761,12 @@ function App() {
     var _useState129 = (0, _react.useState)([]),
       _useState130 = _slicedToArray(_useState129, 2),
       undoStack = _useState130[0],
-      setUndoStack = _useState130[1]; // how many bets each action added
+      setUndoStack = _useState130[1];
+    var _useState131 = (0, _react.useState)(null),
+      _useState132 = _slicedToArray(_useState131, 2),
+      animNumber = _useState132[0],
+      setAnimNumber = _useState132[1]; // spin animation display only
     var clearTimerRef = React.useRef(null);
-    var frozenBetsRef = React.useRef(null); // preserve bets during spin animation
     var tMin = settings.tableMinBet || 1;
     var CHIPS = [{
       val: 0.25,
@@ -8815,7 +8818,6 @@ function App() {
       if (betResults) {
         setBetResults(null);
         setManualBets([]);
-        frozenBetsRef.current = null;
       }
     }
     function placeBet(type, target) {
@@ -8876,10 +8878,8 @@ function App() {
     }
 
     // Aggregate bets by position for display
-    // Use frozen bets during spin animation and result display so chips don't disappear
-    var activeBets = frozenBetsRef.current || manualBets;
     var boardBets = {};
-    activeBets.forEach(function (b) {
+    manualBets.forEach(function (b) {
       var key = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
       boardBets[key] = (boardBets[key] || 0) + b.amount;
     });
@@ -8908,22 +8908,23 @@ function App() {
     }
     function doGameSpin() {
       if (gameSpinning || betResults) return;
-      // Freeze current bets so they persist through spin animation
-      frozenBetsRef.current = _toConsumableArray(manualBets);
       setGameSpinning(true);
+      setAnimNumber(null);
       if (!sess.sessionStartedAt) updSess(function (s) {
         s.sessionStartedAt = Date.now();
       });
       var nums = wheelNums;
-      var spinBets = _toConsumableArray(manualBets); // capture bets for resolution
+      var spinBets = _toConsumableArray(manualBets);
       var ticks = 0;
       var iv = setInterval(function () {
         ticks++;
-        setGameResult(nums[Math.floor(Math.random() * nums.length)]);
+        // Only update the animation display number, NOT gameResult
+        setAnimNumber(nums[Math.floor(Math.random() * nums.length)]);
         if (ticks >= 15) {
           clearInterval(iv);
           var val = nums[Math.floor(Math.random() * nums.length)];
-          setGameResult(val);
+          setAnimNumber(null);
+          setGameResult(val); // final result - board highlights winning number
           if (hasActiveTracks) tapNumber(val, true);else {
             updSess(function (s) {
               s.spins.push(val);
@@ -8936,7 +8937,6 @@ function App() {
             });
           }
           if (spinBets.length > 0) {
-            // Resolve using captured bets
             var totalWin = 0,
               totalBet = 0,
               posResults = {};
@@ -8964,11 +8964,8 @@ function App() {
             clearTimerRef.current = setTimeout(function () {
               setBetResults(null);
               setManualBets([]);
-              frozenBetsRef.current = null;
               clearTimerRef.current = null;
             }, 3000);
-          } else {
-            frozenBetsRef.current = null;
           }
           if (settings.vibration !== false && navigator.vibrate) navigator.vibrate(30);
           setGameSpinning(false);
@@ -8988,9 +8985,26 @@ function App() {
         gap: 8,
         alignItems: "center"
       }
-    }, gameResult ? function () {
-      var isZ = gameResult === "0" || gameResult === "00";
-      var r = !isZ && RED.has(+gameResult);
+    }, function () {
+      var displayNum = gameSpinning ? animNumber : gameResult;
+      if (!displayNum) return /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 48,
+          height: 48,
+          borderRadius: "50%",
+          background: "#1e2d3d",
+          border: "3px solid #2d4057",
+          fontSize: 12,
+          fontWeight: 700,
+          color: "#64748b",
+          flexShrink: 0
+        }
+      }, "--");
+      var isZ = displayNum === "0" || displayNum === "00";
+      var r = !isZ && RED.has(+displayNum);
       return /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
@@ -9007,23 +9021,8 @@ function App() {
           animation: gameSpinning ? "pulse 0.15s infinite" : "none",
           flexShrink: 0
         }
-      }, gameResult);
-    }() : /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 48,
-        height: 48,
-        borderRadius: "50%",
-        background: "#1e2d3d",
-        border: "3px solid #2d4057",
-        fontSize: 12,
-        fontWeight: 700,
-        color: "#64748b",
-        flexShrink: 0
-      }
-    }, "--"), /*#__PURE__*/React.createElement("button", {
+      }, displayNum);
+    }(), /*#__PURE__*/React.createElement("button", {
       onClick: doGameSpin,
       disabled: gameSpinning || !!betResults,
       style: {
@@ -10973,10 +10972,10 @@ function App() {
 
   // -- Spin Log Page --
   function SpinPage() {
-    var _useState131 = (0, _react.useState)(false),
-      _useState132 = _slicedToArray(_useState131, 2),
-      showAll = _useState132[0],
-      setShowAll = _useState132[1];
+    var _useState133 = (0, _react.useState)(false),
+      _useState134 = _slicedToArray(_useState133, 2),
+      showAll = _useState134[0],
+      setShowAll = _useState134[1];
     var displaySpins = showAll ? _toConsumableArray(sess.spins).reverse() : _toConsumableArray(sess.spins).reverse().slice(0, 60);
     return /*#__PURE__*/React.createElement("div", {
       style: {
@@ -11509,10 +11508,10 @@ function App() {
 
   // -- Settings Page --
   function SettingsPage() {
-    var _useState133 = (0, _react.useState)(settings.defaultBuyIn || 100),
-      _useState134 = _slicedToArray(_useState133, 2),
-      localBuyIn = _useState134[0],
-      setLocalBuyIn = _useState134[1];
+    var _useState135 = (0, _react.useState)(settings.defaultBuyIn || 100),
+      _useState136 = _slicedToArray(_useState135, 2),
+      localBuyIn = _useState136[0],
+      setLocalBuyIn = _useState136[1];
     function saveBuyIn() {
       updSettings(function (s) {
         s.defaultBuyIn = localBuyIn;
@@ -12033,10 +12032,10 @@ function App() {
   // -- Bankroll Edit --
   function BankrollEdit(_ref74) {
     var onClose = _ref74.onClose;
-    var _useState135 = (0, _react.useState)(sess.bankrollCurrent),
-      _useState136 = _slicedToArray(_useState135, 2),
-      val = _useState136[0],
-      setVal = _useState136[1];
+    var _useState137 = (0, _react.useState)(sess.bankrollCurrent),
+      _useState138 = _slicedToArray(_useState137, 2),
+      val = _useState138[0],
+      setVal = _useState138[1];
     function save() {
       updSess(function (s) {
         s.bankrollCurrent = val;
