@@ -801,9 +801,17 @@ export default function App() {
 
         {/* Session Profit */}
         {sess.spins.length>0 && (
-          <div style={{background:pnlVal>=0?"#0a1f0a":"#200505",borderRadius:10,padding:"8px 12px",border:"1px solid "+(pnlVal>=0?"#16a34a":"#991b1b"),textAlign:"center"}}>
-            <div style={{fontSize:8,color:"#64748b",textTransform:"uppercase",letterSpacing:1}}>Session Profit</div>
-            <div style={{fontSize:20,fontWeight:900,color:pnlVal>=0?"#4ade80":"#f87171"}}>{pnlVal>=0?"+":"-"}{cur.symbol}{fmtNum(pnlVal)}</div>
+          <div style={{display:"flex",gap:8,width:"100%"}}>
+            <div style={{flex:1,background:pnlVal>=0?"#0a1f0a":"#200505",borderRadius:12,padding:"14px 10px",border:"2px solid "+(pnlVal>=0?"#16a34a":"#991b1b"),textAlign:"center"}}>
+              <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>Session Profit</div>
+              <div style={{fontSize:28,fontWeight:900,color:pnlVal>=0?"#4ade80":"#f87171"}}>{pnlVal>=0?"+":"-"}{cur.symbol}{fmtNum(pnlVal)}</div>
+            </div>
+            {lastSpinDelta!==null && (
+              <div style={{width:100,background:lastSpinDelta>0?"#0a1f0a":lastSpinDelta<0?"#200505":"#0f1923",borderRadius:12,padding:"14px 10px",border:"2px solid "+(lastSpinDelta>0?"#16a34a":lastSpinDelta<0?"#991b1b":"#2d4057"),textAlign:"center"}}>
+                <div style={{fontSize:9,color:"#64748b",textTransform:"uppercase",letterSpacing:1,marginBottom:2}}>Last Spin</div>
+                <div style={{fontSize:22,fontWeight:900,color:lastSpinDelta>0?"#4ade80":lastSpinDelta<0?"#f87171":"#94a3b8"}}>{lastSpinDelta>0?"+":lastSpinDelta<0?"-":""}{cur.symbol}{fmtNum(lastSpinDelta)}</div>
+              </div>
+            )}
           </div>
         )}
 
