@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.20";
+  var MY_V="0.40.21";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.20";
+var APP_VERSION = "0.40.21";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2696,10 +2696,10 @@ function RouletteBoard(_ref16) {
   var canBet = !!onBet && !spinning && !betResults;
   var BOARD_ROWS = [[3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36], [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35], [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]];
   var g = 2;
-  var cellH = landscape ? 54 : 30;
+  var cellH = landscape ? Math.floor(Math.min(window.innerHeight - 80, 400) / 4.5) : 30;
   var zeroW = landscape ? 36 : 22;
   var colW = landscape ? 36 : 24;
-  var cellFs = landscape ? 16 : 11;
+  var cellFs = landscape ? Math.max(14, Math.floor(cellH / 3)) : 11;
   var winStr = winningNumber ? String(winningNumber) : null;
   var winN = winStr && winStr !== "0" && winStr !== "00" ? +winStr : null;
   // Only highlight outside bets on FINAL result, not during spin

@@ -1,1 +1,1 @@
-{"version":"0.40.20","date":"2026-04-14","notes":"Bigger landscape table - 54px cells, 16px font, larger dozen/even money rows."}
+{"version":"0.40.21","date":"2026-04-14","notes":"Landscape table fills screen height. Delete and re-add home screen bookmark for rotation to work."}
