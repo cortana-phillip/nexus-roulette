@@ -112,10 +112,10 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
   ];
   const g = 2;
-  const cellH = landscape ? Math.floor(Math.min(window.innerHeight - 80, 400) / 4.5) : 30;
-  const zeroW = landscape ? 36 : 22;
-  const colW = landscape ? 36 : 24;
-  const cellFs = landscape ? Math.max(14, Math.floor(cellH/3)) : 11;
+  const cellH = landscape ? Math.floor(Math.min(window.innerHeight - 40, 500) / 3.8) : 30;
+  const zeroW = landscape ? 42 : 22;
+  const colW = landscape ? 40 : 24;
+  const cellFs = landscape ? Math.max(16, Math.floor(cellH/3)) : 11;
   const winStr = winningNumber ? String(winningNumber) : null;
   const winN = winStr && winStr!=="0" && winStr!=="00" ? +winStr : null;
   // Only highlight outside bets on FINAL result, not during spin
@@ -352,8 +352,8 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     <div style={{width:"100%",borderRadius:8,border:"1px solid #2d4057",background:"#0a1218",padding:3,display:"flex",flexDirection:"column",gap:g,overflow:"hidden",boxSizing:"border-box"}}>
       <div style={{display:"flex",gap:g}}>
         <div style={{display:"flex",flexDirection:"column",gap:g,width:zeroW,flexShrink:0}}>
-          {cell(0,true,"0")}
-          {isAmerican&&cell(0,true,"00")}
+          {React.createElement("div",{key:"0",onClick:function(e){if(!canBet)return;var rect=e.currentTarget.getBoundingClientRect();var oy=e.clientY-rect.top;if(isAmerican&&oy>rect.height*0.7)onBet("split","0-00");else onBet("straight","0");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,background:"#166534",border:(winStr==="0"?"2px solid #fbbf24":"1px solid #374151"),color:winStr==="0"?"#fbbf24":"white",fontSize:cellFs-1,fontWeight:800,position:"relative",boxShadow:winStr==="0"?"0 0 10px #fbbf24":"none",cursor:canBet?"pointer":"default"}},"0",winStr==="0"&&!spinning&&React.createElement(Mkr),bb["s:0"]&&React.createElement(BetChip,{amount:bb["s:0"],posKey:"s:0"}))}
+          {isAmerican&&React.createElement("div",{key:"00",onClick:function(e){if(!canBet)return;var rect=e.currentTarget.getBoundingClientRect();var oy=e.clientY-rect.top;if(oy<rect.height*0.3)onBet("split","0-00");else onBet("straight","00");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,background:"#166534",border:(winStr==="00"?"2px solid #fbbf24":"1px solid #374151"),color:winStr==="00"?"#fbbf24":"white",fontSize:cellFs-1,fontWeight:800,position:"relative",boxShadow:winStr==="00"?"0 0 10px #fbbf24":"none",cursor:canBet?"pointer":"default"}},"00",winStr==="00"&&!spinning&&React.createElement(Mkr),bb["s:00"]&&React.createElement(BetChip,{amount:bb["s:00"],posKey:"s:00"}))}
         </div>
         <div style={{position:"relative",flex:1,minWidth:0}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(12,1fr)",gridTemplateRows:"repeat(3,"+cellH+"px)",gap:g}}>

@@ -1,1 +1,1 @@
-{"version":"0.40.21","date":"2026-04-14","notes":"Landscape table fills screen height. Delete and re-add home screen bookmark for rotation to work."}
+{"version":"0.40.22","date":"2026-04-14","notes":"Landscape: bigger cells filling more screen, 0/00 stretch to full grid height."}

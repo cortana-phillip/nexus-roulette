@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.21";
+  var MY_V="0.40.22";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.21";
+var APP_VERSION = "0.40.22";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2696,10 +2696,10 @@ function RouletteBoard(_ref16) {
   var canBet = !!onBet && !spinning && !betResults;
   var BOARD_ROWS = [[3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36], [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35], [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]];
   var g = 2;
-  var cellH = landscape ? Math.floor(Math.min(window.innerHeight - 80, 400) / 4.5) : 30;
-  var zeroW = landscape ? 36 : 22;
-  var colW = landscape ? 36 : 24;
-  var cellFs = landscape ? Math.max(14, Math.floor(cellH / 3)) : 11;
+  var cellH = landscape ? Math.floor(Math.min(window.innerHeight - 40, 500) / 3.8) : 30;
+  var zeroW = landscape ? 42 : 22;
+  var colW = landscape ? 40 : 24;
+  var cellFs = landscape ? Math.max(16, Math.floor(cellH / 3)) : 11;
   var winStr = winningNumber ? String(winningNumber) : null;
   var winN = winStr && winStr !== "0" && winStr !== "00" ? +winStr : null;
   // Only highlight outside bets on FINAL result, not during spin
@@ -3200,7 +3200,59 @@ function RouletteBoard(_ref16) {
       width: zeroW,
       flexShrink: 0
     }
-  }, cell(0, true, "0"), isAmerican && cell(0, true, "00")), /*#__PURE__*/React.createElement("div", {
+  }, React.createElement("div", {
+    key: "0",
+    onClick: function onClick(e) {
+      if (!canBet) return;
+      var rect = e.currentTarget.getBoundingClientRect();
+      var oy = e.clientY - rect.top;
+      if (isAmerican && oy > rect.height * 0.7) onBet("split", "0-00");else onBet("straight", "0");
+    },
+    style: {
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 3,
+      background: "#166534",
+      border: winStr === "0" ? "2px solid #fbbf24" : "1px solid #374151",
+      color: winStr === "0" ? "#fbbf24" : "white",
+      fontSize: cellFs - 1,
+      fontWeight: 800,
+      position: "relative",
+      boxShadow: winStr === "0" ? "0 0 10px #fbbf24" : "none",
+      cursor: canBet ? "pointer" : "default"
+    }
+  }, "0", winStr === "0" && !spinning && React.createElement(Mkr), bb["s:0"] && React.createElement(BetChip, {
+    amount: bb["s:0"],
+    posKey: "s:0"
+  })), isAmerican && React.createElement("div", {
+    key: "00",
+    onClick: function onClick(e) {
+      if (!canBet) return;
+      var rect = e.currentTarget.getBoundingClientRect();
+      var oy = e.clientY - rect.top;
+      if (oy < rect.height * 0.3) onBet("split", "0-00");else onBet("straight", "00");
+    },
+    style: {
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 3,
+      background: "#166534",
+      border: winStr === "00" ? "2px solid #fbbf24" : "1px solid #374151",
+      color: winStr === "00" ? "#fbbf24" : "white",
+      fontSize: cellFs - 1,
+      fontWeight: 800,
+      position: "relative",
+      boxShadow: winStr === "00" ? "0 0 10px #fbbf24" : "none",
+      cursor: canBet ? "pointer" : "default"
+    }
+  }, "00", winStr === "00" && !spinning && React.createElement(Mkr), bb["s:00"] && React.createElement(BetChip, {
+    amount: bb["s:00"],
+    posKey: "s:00"
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       position: "relative",
       flex: 1,
