@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.27";
+  var MY_V="0.40.28";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.27";
+var APP_VERSION = "0.40.28";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -3208,8 +3208,28 @@ function RouletteBoard(_ref16) {
     onClick: function onClick(e) {
       if (!canBet) return;
       var rect = e.currentTarget.getBoundingClientRect();
-      var oy = e.clientY - rect.top;
-      if (isAmerican && oy > rect.height * 0.7) onBet("split", "0-00");else onBet("straight", "0");
+      var ox = e.clientX - rect.left,
+        oy = e.clientY - rect.top;
+      var nearR = ox > rect.width * 0.65,
+        nearB = oy > rect.height * 0.7,
+        nearTop = oy < rect.height * 0.35;
+      if (nearR && nearB && isAmerican) {
+        onBet("street", "0-00-2");
+        return;
+      }
+      if (nearB && isAmerican) {
+        onBet("split", "0-00");
+        return;
+      }
+      if (nearR && nearTop) {
+        onBet("split", "0-3");
+        return;
+      }
+      if (nearR) {
+        onBet("split", "0-2");
+        return;
+      }
+      onBet("straight", "0");
     },
     style: {
       flex: 1,
@@ -3234,8 +3254,28 @@ function RouletteBoard(_ref16) {
     onClick: function onClick(e) {
       if (!canBet) return;
       var rect = e.currentTarget.getBoundingClientRect();
-      var oy = e.clientY - rect.top;
-      if (oy < rect.height * 0.3) onBet("split", "0-00");else onBet("straight", "00");
+      var ox = e.clientX - rect.left,
+        oy = e.clientY - rect.top;
+      var nearR = ox > rect.width * 0.65,
+        nearT = oy < rect.height * 0.3,
+        nearB = oy > rect.height * 0.65;
+      if (nearR && nearB) {
+        onBet("basket", "0-00-1-2-3");
+        return;
+      }
+      if (nearR && nearT) {
+        onBet("street", "0-00-2");
+        return;
+      }
+      if (nearT) {
+        onBet("split", "0-00");
+        return;
+      }
+      if (nearR) {
+        onBet("split", "00-1");
+        return;
+      }
+      onBet("straight", "00");
     },
     style: {
       flex: 1,
