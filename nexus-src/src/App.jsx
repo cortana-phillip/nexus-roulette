@@ -730,7 +730,7 @@ export default function App() {
             clearTimerRef.current = setTimeout(()=>{ setBetResults(null); setManualBets([]); clearTimerRef.current=null; },3000);
           }
           if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate(30);
-          setTimeout(()=>setGameSpinning(false),300);
+          setGameSpinning(false);
         }
       },70);
     }

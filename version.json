@@ -1,1 +1,1 @@
-{"version":"0.40.13","date":"2026-04-14","notes":"Spin without bets in Game mode. Spin button always enabled."}
+{"version":"0.40.14","date":"2026-04-14","notes":"Winning number and bet results now show simultaneously - no more 300ms delay. Green/red chips visible immediately."}
