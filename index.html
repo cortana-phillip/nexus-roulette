@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.2";
+  var MY_V="0.40.3";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.2";
+var APP_VERSION = "0.40.3";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2961,29 +2961,119 @@ function RouletteBoard(_ref16) {
       target: numStr
     };
   }
+
+  // Precompute inside bet chip positions: map anchor cell -> [{amount, posKey, style}]
+  var insideBetChips = {};
+  var insideCoveredNums = {};
+  Object.keys(bb).forEach(function (k) {
+    if (k.startsWith("s:")) return;
+    var parts = k.split(":");
+    var bType = parts[0];
+    var bTarget = parts.slice(1).join(":");
+    if (!bTarget && (bType === "basket" || bType === "red" || bType === "black" || bType === "odd" || bType === "even" || bType === "low" || bType === "high")) return; // outside bets handled separately
+    if (bType !== "split" && bType !== "street" && bType !== "corner" && bType !== "line" && bType !== "basket") return;
+    var betNums = bTarget ? bTarget.split("-") : [];
+    betNums.forEach(function (n) {
+      insideCoveredNums[n] = true;
+    });
+    // Find grid positions of all numbers in this bet
+    var positions = betNums.map(function (n) {
+      return numToPos[n];
+    }).filter(Boolean);
+    if (positions.length === 0) return;
+    // Find min/max row and col
+    var minR = 3,
+      maxR = -1,
+      minC = 12,
+      maxC = -1;
+    positions.forEach(function (p) {
+      if (p.r < minR) minR = p.r;
+      if (p.r > maxR) maxR = p.r;
+      if (p.c < minC) minC = p.c;
+      if (p.c > maxC) maxC = p.c;
+    });
+    // Determine anchor cell and chip position
+    var anchorR, anchorC, chipStyle;
+    if (bType === "corner") {
+      anchorR = minR;
+      anchorC = minC;
+      chipStyle = {
+        position: "absolute",
+        bottom: -4,
+        right: -4,
+        transform: "translate(50%,50%)",
+        zIndex: 10
+      };
+    } else if (bType === "split") {
+      if (minR !== maxR) {
+        // vertical split
+        anchorR = minR;
+        anchorC = minC;
+        chipStyle = {
+          position: "absolute",
+          bottom: -4,
+          left: "50%",
+          transform: "translate(-50%,50%)",
+          zIndex: 10
+        };
+      } else {
+        // horizontal split
+        anchorR = minR;
+        anchorC = minC;
+        chipStyle = {
+          position: "absolute",
+          top: "50%",
+          right: -4,
+          transform: "translate(50%,-50%)",
+          zIndex: 10
+        };
+      }
+    } else if (bType === "street") {
+      anchorR = 1;
+      anchorC = minC; // middle row
+      chipStyle = {
+        position: "absolute",
+        top: "50%",
+        left: -4,
+        transform: "translate(-50%,-50%)",
+        zIndex: 10
+      };
+    } else if (bType === "line") {
+      anchorR = 1;
+      anchorC = minC; // middle of left column
+      chipStyle = {
+        position: "absolute",
+        top: "50%",
+        right: -4,
+        transform: "translate(50%,-50%)",
+        zIndex: 10
+      };
+    } else if (bType === "basket") {
+      anchorR = 1;
+      anchorC = 0;
+      chipStyle = {
+        position: "absolute",
+        top: "50%",
+        left: -4,
+        transform: "translate(-50%,-50%)",
+        zIndex: 10
+      };
+    }
+    var anchorNum = anchorR !== undefined && anchorC !== undefined && BOARD_ROWS[anchorR] ? String(BOARD_ROWS[anchorR][anchorC]) : betNums[0];
+    if (!insideBetChips[anchorNum]) insideBetChips[anchorNum] = [];
+    insideBetChips[anchorNum].push({
+      amount: bb[k],
+      posKey: k,
+      style: chipStyle
+    });
+  });
   function cell(num, isZero, zeroLabel) {
     var numStr = isZero ? zeroLabel || "0" : String(num);
     var betKey = "s:" + numStr;
     var sChips = sChipsMap[betKey] || null;
-    var insideBetAmt = 0,
-      insideBetKey = null,
-      insideCovered = false;
-    Object.keys(bb).forEach(function (k) {
-      if (k.startsWith("s:")) return;
-      if (k === "basket" || k.startsWith("split:") || k.startsWith("street:") || k.startsWith("corner:") || k.startsWith("line:")) {
-        var parts = k.split(":");
-        var bTarget = parts.slice(1).join(":");
-        var nums = bTarget.split("-");
-        if (nums.indexOf(numStr) >= 0) {
-          insideCovered = true;
-          if (nums[0] === numStr) {
-            insideBetAmt += bb[k];
-            insideBetKey = k;
-          }
-        }
-      }
-    });
-    var betBorder = insideCovered && !bb[betKey] ? "2px solid #c084fc" : null;
+    var isCovered = !!insideCoveredNums[numStr];
+    var anchoredChips = insideBetChips[numStr] || [];
+    var betBorder = isCovered && !bb[betKey] ? "2px solid #c084fc" : null;
     function handleClick(e) {
       if (!canBet || !onBet) return;
       if (isZero) {
@@ -3006,22 +3096,45 @@ function RouletteBoard(_ref16) {
       onClick: handleClick,
       style: _objectSpread(_objectSpread({}, numStyle(num, isZero)), {}, {
         cursor: canBet ? "pointer" : "default",
-        border: betBorder || numStyle(num, isZero).border
+        border: betBorder || numStyle(num, isZero).border,
+        overflow: "visible"
       })
     }, numStr, winStr === numStr && !spinning && React.createElement(Mkr), sChips && React.createElement(StratChipBadge, {
       chips: sChips
     }), bb[betKey] && React.createElement(BetChip, {
       amount: bb[betKey],
       posKey: betKey
-    }), insideBetAmt > 0 && !bb[betKey] && React.createElement(BetChip, {
-      amount: insideBetAmt,
-      posKey: insideBetKey
+    }), anchoredChips.map(function (ac, i) {
+      var lbl = ac.amount >= 1000 ? ac.amount / 1000 + "k" : ac.amount >= 1 ? ac.amount % 1 !== 0 ? ac.amount.toFixed(2) : ac.amount.toFixed(0) : ac.amount < 1 ? ac.amount * 100 + "¢" : "";
+      var fs = lbl.length > 3 ? 6 : lbl.length > 2 ? 7 : 8;
+      var result = br[ac.posKey] || null;
+      var bgC = result === "won" ? "#16a34a" : result === "lost" ? "#991b1b" : chipColor || "#fff";
+      var bdC = result === "won" ? "#4ade80" : result === "lost" ? "#f87171" : "#92400e";
+      return React.createElement("div", {
+        key: "ib" + i,
+        style: _objectSpread(_objectSpread({}, ac.style), {}, {
+          minWidth: 16,
+          height: 16,
+          borderRadius: 8,
+          background: bgC,
+          border: "1.5px solid " + bdC,
+          fontSize: fs,
+          fontWeight: 900,
+          color: result ? "#fff" : "#1e293b",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "0 2px",
+          boxShadow: result === "won" ? "0 0 8px #4ade80" : result === "lost" ? "0 0 6px #ef4444" : "0 2px 6px rgba(0,0,0,0.6)",
+          pointerEvents: "none",
+          whiteSpace: "nowrap"
+        })
+      }, lbl);
     }));
   }
   return /*#__PURE__*/React.createElement("div", {
     style: {
       width: "100%",
-      overflow: "hidden",
       borderRadius: 8,
       border: "1px solid #2d4057",
       background: "#0a1218",
@@ -3041,7 +3154,8 @@ function RouletteBoard(_ref16) {
       flexDirection: "column",
       gap: g,
       width: 26,
-      flexShrink: 0
+      flexShrink: 0,
+      overflow: "visible"
     }
   }, cell(0, true, "0"), isAmerican && cell(0, true, "00")), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3049,7 +3163,8 @@ function RouletteBoard(_ref16) {
       display: "grid",
       gridTemplateColumns: "repeat(12,1fr)",
       gridTemplateRows: "repeat(3,32px)",
-      gap: g
+      gap: g,
+      overflow: "visible"
     }
   }, BOARD_ROWS.map(function (row) {
     return row.map(function (num) {

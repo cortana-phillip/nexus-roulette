@@ -1,1 +1,1 @@
-{"version":"0.40.2","date":"2026-04-13","notes":"Fixed: roulette table moved to top in Live mode, removed duplicate drought display, easier street bets (tap top/bottom edges too), all 4 corner directions detected."}
+{"version":"0.40.3","date":"2026-04-13","notes":"Bet chips now appear exactly where you tap - at the intersection for corners, on the line for splits, at the edge for streets. No more bottom-left positioning."}
