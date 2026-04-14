@@ -330,24 +330,49 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
   // Compute overlay chip positions for inside bets
   var overlayChips = [];
   Object.keys(insideBetChips).forEach(function(anchorNum){
-    var pos = numToPos[anchorNum];
-    if(!pos) return;
     insideBetChips[anchorNum].forEach(function(ac){
-      // Determine position based on bet type
       var parts = ac.posKey.split(":"); var bType = parts[0];
-      var betNums = (parts.slice(1).join(":")).split("-").map(function(n){return numToPos[n];}).filter(Boolean);
-      if(betNums.length===0) return;
-      var minR=3,maxR=-1,minC=12,maxC=-1;
-      betNums.forEach(function(p){if(p.r<minR)minR=p.r;if(p.r>maxR)maxR=p.r;if(p.c<minC)minC=p.c;if(p.c>maxC)maxC=p.c;});
+      var targetStr = parts.slice(1).join(":");
+      var allNums = targetStr.split("-");
+      var hasZero = allNums.indexOf("0")>=0 || allNums.indexOf("00")>=0;
+      var gridNums = allNums.map(function(n){return numToPos[n];}).filter(Boolean);
+
       var leftPct, topPx;
-      if(bType==="corner") { leftPct=(minC+1)/12*100; topPx=(minR+1)*(cellH+g)-g; }
-      else if(bType==="split") {
-        if(minR!==maxR) { leftPct=(minC+0.5)/12*100; topPx=(minR+1)*(cellH+g)-g; }
-        else { leftPct=(minC+1)/12*100; topPx=minR*(cellH+g)+cellH/2; }
+
+      if(hasZero) {
+        // Zero-related bets: position at left edge of the grid
+        if(gridNums.length===0) return; // pure 0-00 split handled by zero cells
+        var gridR = gridNums[0].r;
+        if(bType==="split") {
+          // Split with a zero: left edge of the number's row
+          leftPct = 0;
+          topPx = gridR*(cellH+g) + cellH/2;
+        } else if(bType==="street") {
+          // Street 0-00-2: left edge, middle row
+          leftPct = 0;
+          topPx = 1*(cellH+g) + cellH/2;
+        } else if(bType==="basket") {
+          // Basket 0-00-1-2-3: left edge, center of all rows
+          leftPct = 0;
+          topPx = 1*(cellH+g) + cellH/2;
+        } else {
+          leftPct = 0;
+          topPx = 1*(cellH+g) + cellH/2;
+        }
+      } else {
+        // Regular inside bets (no zeros)
+        if(gridNums.length===0) return;
+        var minR=3,maxR=-1,minC=12,maxC=-1;
+        gridNums.forEach(function(p){if(p.r<minR)minR=p.r;if(p.r>maxR)maxR=p.r;if(p.c<minC)minC=p.c;if(p.c>maxC)maxC=p.c;});
+        if(bType==="corner") { leftPct=(minC+1)/12*100; topPx=(minR+1)*(cellH+g)-g; }
+        else if(bType==="split") {
+          if(minR!==maxR) { leftPct=(minC+0.5)/12*100; topPx=(minR+1)*(cellH+g)-g; }
+          else { leftPct=(minC+1)/12*100; topPx=minR*(cellH+g)+cellH/2; }
+        }
+        else if(bType==="street") { leftPct=(minC+0.5)/12*100; topPx=(cellH+g)*3-g; }
+        else if(bType==="line") { leftPct=(minC+1)/12*100; topPx=(cellH+g)*3-g; }
+        else { leftPct=(minC+0.5)/12*100; topPx=1*(cellH+g)+cellH/2; }
       }
-      else if(bType==="street") { leftPct=(minC+0.5)/12*100; topPx=(cellH+g)*3-g; }
-      else if(bType==="line") { leftPct=(minC+1)/12*100; topPx=(cellH+g)*3-g; }
-      else { leftPct=(minC+0.5)/12*100; topPx=1*(cellH+g)+cellH/2; }
       overlayChips.push({left:leftPct,top:topPx,amount:ac.amount,posKey:ac.posKey});
     });
   });
@@ -362,14 +387,14 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
             if(nearR&&nearTop){onBet("split","0-3");return;}
             if(nearR){onBet("split","0-2");return;}
             onBet("straight","0");
-          },style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,background:"#166534",border:(winStr==="0"?"2px solid #fbbf24":"1px solid #374151"),color:winStr==="0"?"#fbbf24":"white",fontSize:cellFs-1,fontWeight:800,position:"relative",boxShadow:winStr==="0"?"0 0 10px #fbbf24":"none",cursor:canBet?"pointer":"default"}},"0",winStr==="0"&&!spinning&&React.createElement(Mkr),bb["s:0"]&&React.createElement(BetChip,{amount:bb["s:0"],posKey:"s:0"}))}
+          },style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,background:"#166534",border:insideCoveredNums["0"]?"2px solid #c084fc":(winStr==="0"?"2px solid #fbbf24":"1px solid #374151"),color:winStr==="0"?"#fbbf24":"white",fontSize:cellFs-1,fontWeight:800,position:"relative",boxShadow:winStr==="0"?"0 0 10px #fbbf24":"none",cursor:canBet?"pointer":"default"}},"0",winStr==="0"&&!spinning&&React.createElement(Mkr),bb["s:0"]&&React.createElement(BetChip,{amount:bb["s:0"],posKey:"s:0"}))}
           {isAmerican&&React.createElement("div",{key:"00",onClick:function(e){if(!canBet)return;var rect=e.currentTarget.getBoundingClientRect();var ox=e.clientX-rect.left,oy=e.clientY-rect.top;var nearR=ox>rect.width*0.65,nearT=oy<rect.height*0.3,nearB=oy>rect.height*0.65;
             if(nearR&&nearB){onBet("basket","0-00-1-2-3");return;}
             if(nearR&&nearT){onBet("street","0-00-2");return;}
             if(nearT){onBet("split","0-00");return;}
             if(nearR){onBet("split","00-1");return;}
             onBet("straight","00");
-          },style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,background:"#166534",border:(winStr==="00"?"2px solid #fbbf24":"1px solid #374151"),color:winStr==="00"?"#fbbf24":"white",fontSize:cellFs-1,fontWeight:800,position:"relative",boxShadow:winStr==="00"?"0 0 10px #fbbf24":"none",cursor:canBet?"pointer":"default"}},"00",winStr==="00"&&!spinning&&React.createElement(Mkr),bb["s:00"]&&React.createElement(BetChip,{amount:bb["s:00"],posKey:"s:00"}))}
+          },style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,background:"#166534",border:insideCoveredNums["00"]?"2px solid #c084fc":(winStr==="00"?"2px solid #fbbf24":"1px solid #374151"),color:winStr==="00"?"#fbbf24":"white",fontSize:cellFs-1,fontWeight:800,position:"relative",boxShadow:winStr==="00"?"0 0 10px #fbbf24":"none",cursor:canBet?"pointer":"default"}},"00",winStr==="00"&&!spinning&&React.createElement(Mkr),bb["s:00"]&&React.createElement(BetChip,{amount:bb["s:00"],posKey:"s:00"}))}
         </div>
         <div style={{position:"relative",flex:1,minWidth:0}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(12,1fr)",gridTemplateRows:"repeat(3,"+cellH+"px)",gap:g}}>

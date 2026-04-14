@@ -1,1 +1,1 @@
-{"version":"0.40.28","date":"2026-04-14","notes":"Zero area bets: split 0-3, 0-2, 00-1, 00-2, street 0-00-2, basket 0-00-1-2-3. Tap edges of zero cells for different bets."}
+{"version":"0.40.29","date":"2026-04-14","notes":"Zero bet chips now position at the left edge between zeros and numbers. Zero cells get purple highlight when part of a bet."}

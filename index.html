@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.28";
+  var MY_V="0.40.29";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.28";
+var APP_VERSION = "0.40.29";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -3127,47 +3127,70 @@ function RouletteBoard(_ref16) {
   // Compute overlay chip positions for inside bets
   var overlayChips = [];
   Object.keys(insideBetChips).forEach(function (anchorNum) {
-    var pos = numToPos[anchorNum];
-    if (!pos) return;
     insideBetChips[anchorNum].forEach(function (ac) {
-      // Determine position based on bet type
       var parts = ac.posKey.split(":");
       var bType = parts[0];
-      var betNums = parts.slice(1).join(":").split("-").map(function (n) {
+      var targetStr = parts.slice(1).join(":");
+      var allNums = targetStr.split("-");
+      var hasZero = allNums.indexOf("0") >= 0 || allNums.indexOf("00") >= 0;
+      var gridNums = allNums.map(function (n) {
         return numToPos[n];
       }).filter(Boolean);
-      if (betNums.length === 0) return;
-      var minR = 3,
-        maxR = -1,
-        minC = 12,
-        maxC = -1;
-      betNums.forEach(function (p) {
-        if (p.r < minR) minR = p.r;
-        if (p.r > maxR) maxR = p.r;
-        if (p.c < minC) minC = p.c;
-        if (p.c > maxC) maxC = p.c;
-      });
       var leftPct, topPx;
-      if (bType === "corner") {
-        leftPct = (minC + 1) / 12 * 100;
-        topPx = (minR + 1) * (cellH + g) - g;
-      } else if (bType === "split") {
-        if (minR !== maxR) {
-          leftPct = (minC + 0.5) / 12 * 100;
-          topPx = (minR + 1) * (cellH + g) - g;
+      if (hasZero) {
+        // Zero-related bets: position at left edge of the grid
+        if (gridNums.length === 0) return; // pure 0-00 split handled by zero cells
+        var gridR = gridNums[0].r;
+        if (bType === "split") {
+          // Split with a zero: left edge of the number's row
+          leftPct = 0;
+          topPx = gridR * (cellH + g) + cellH / 2;
+        } else if (bType === "street") {
+          // Street 0-00-2: left edge, middle row
+          leftPct = 0;
+          topPx = 1 * (cellH + g) + cellH / 2;
+        } else if (bType === "basket") {
+          // Basket 0-00-1-2-3: left edge, center of all rows
+          leftPct = 0;
+          topPx = 1 * (cellH + g) + cellH / 2;
         } else {
-          leftPct = (minC + 1) / 12 * 100;
-          topPx = minR * (cellH + g) + cellH / 2;
+          leftPct = 0;
+          topPx = 1 * (cellH + g) + cellH / 2;
         }
-      } else if (bType === "street") {
-        leftPct = (minC + 0.5) / 12 * 100;
-        topPx = (cellH + g) * 3 - g;
-      } else if (bType === "line") {
-        leftPct = (minC + 1) / 12 * 100;
-        topPx = (cellH + g) * 3 - g;
       } else {
-        leftPct = (minC + 0.5) / 12 * 100;
-        topPx = 1 * (cellH + g) + cellH / 2;
+        // Regular inside bets (no zeros)
+        if (gridNums.length === 0) return;
+        var minR = 3,
+          maxR = -1,
+          minC = 12,
+          maxC = -1;
+        gridNums.forEach(function (p) {
+          if (p.r < minR) minR = p.r;
+          if (p.r > maxR) maxR = p.r;
+          if (p.c < minC) minC = p.c;
+          if (p.c > maxC) maxC = p.c;
+        });
+        if (bType === "corner") {
+          leftPct = (minC + 1) / 12 * 100;
+          topPx = (minR + 1) * (cellH + g) - g;
+        } else if (bType === "split") {
+          if (minR !== maxR) {
+            leftPct = (minC + 0.5) / 12 * 100;
+            topPx = (minR + 1) * (cellH + g) - g;
+          } else {
+            leftPct = (minC + 1) / 12 * 100;
+            topPx = minR * (cellH + g) + cellH / 2;
+          }
+        } else if (bType === "street") {
+          leftPct = (minC + 0.5) / 12 * 100;
+          topPx = (cellH + g) * 3 - g;
+        } else if (bType === "line") {
+          leftPct = (minC + 1) / 12 * 100;
+          topPx = (cellH + g) * 3 - g;
+        } else {
+          leftPct = (minC + 0.5) / 12 * 100;
+          topPx = 1 * (cellH + g) + cellH / 2;
+        }
       }
       overlayChips.push({
         left: leftPct,
@@ -3238,7 +3261,7 @@ function RouletteBoard(_ref16) {
       justifyContent: "center",
       borderRadius: 3,
       background: "#166534",
-      border: winStr === "0" ? "2px solid #fbbf24" : "1px solid #374151",
+      border: insideCoveredNums["0"] ? "2px solid #c084fc" : winStr === "0" ? "2px solid #fbbf24" : "1px solid #374151",
       color: winStr === "0" ? "#fbbf24" : "white",
       fontSize: cellFs - 1,
       fontWeight: 800,
@@ -3284,7 +3307,7 @@ function RouletteBoard(_ref16) {
       justifyContent: "center",
       borderRadius: 3,
       background: "#166534",
-      border: winStr === "00" ? "2px solid #fbbf24" : "1px solid #374151",
+      border: insideCoveredNums["00"] ? "2px solid #c084fc" : winStr === "00" ? "2px solid #fbbf24" : "1px solid #374151",
       color: winStr === "00" ? "#fbbf24" : "white",
       fontSize: cellFs - 1,
       fontWeight: 800,
