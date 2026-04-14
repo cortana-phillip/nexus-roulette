@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.12";
+  var MY_V="0.40.13";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.12";
+var APP_VERSION = "0.40.13";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -8903,7 +8903,7 @@ function App() {
       };
     }
     function doGameSpin() {
-      if (gameSpinning || !canSpin || betResults) return;
+      if (gameSpinning || betResults) return;
       setGameSpinning(true);
       if (!sess.sessionStartedAt) updSess(function (s) {
         s.sessionStartedAt = Date.now();
@@ -9002,17 +9002,17 @@ function App() {
       }
     }, "--"), /*#__PURE__*/React.createElement("button", {
       onClick: doGameSpin,
-      disabled: gameSpinning || !canSpin,
+      disabled: gameSpinning || !!betResults,
       style: {
         flex: 1,
         padding: "12px 0",
         borderRadius: 10,
         border: "none",
-        background: gameSpinning ? "#374151" : canSpin ? "linear-gradient(135deg,#16a34a,#059669)" : "#374151",
+        background: gameSpinning || betResults ? "#374151" : "linear-gradient(135deg,#16a34a,#059669)",
         color: "white",
         fontSize: 16,
         fontWeight: 900,
-        cursor: gameSpinning || !canSpin ? "not-allowed" : "pointer",
+        cursor: gameSpinning || betResults ? "not-allowed" : "pointer",
         opacity: gameSpinning ? 0.7 : 1
       }
     }, gameSpinning ? "Spinning..." : "🎰 SPIN"), lastSpinDelta !== null && /*#__PURE__*/React.createElement("div", {

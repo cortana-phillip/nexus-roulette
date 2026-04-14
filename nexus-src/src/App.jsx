@@ -705,7 +705,7 @@ export default function App() {
     }
 
     function doGameSpin() {
-      if(gameSpinning||!canSpin||betResults) return;
+      if(gameSpinning||betResults) return;
       setGameSpinning(true);
       if(!sess.sessionStartedAt) updSess(s=>{s.sessionStartedAt=Date.now();});
       const nums = wheelNums;
@@ -745,7 +745,7 @@ export default function App() {
             const r=!isZ&&RED.has(+gameResult);
             return <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:48,height:48,borderRadius:"50%",background:isZ?"#166534":r?"#991b1b":"#1e293b",border:"3px solid "+(isZ?"#4ade80":r?"#f87171":"#64748b"),fontSize:20,fontWeight:900,color:"white",animation:gameSpinning?"pulse 0.15s infinite":"none",flexShrink:0}}>{gameResult}</div>;
           })() : <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:48,height:48,borderRadius:"50%",background:"#1e2d3d",border:"3px solid #2d4057",fontSize:12,fontWeight:700,color:"#64748b",flexShrink:0}}>--</div>}
-          <button onClick={doGameSpin} disabled={gameSpinning||!canSpin} style={{flex:1,padding:"12px 0",borderRadius:10,border:"none",background:gameSpinning?"#374151":canSpin?"linear-gradient(135deg,#16a34a,#059669)":"#374151",color:"white",fontSize:16,fontWeight:900,cursor:gameSpinning||!canSpin?"not-allowed":"pointer",opacity:gameSpinning?0.7:1}}>
+          <button onClick={doGameSpin} disabled={gameSpinning||!!betResults} style={{flex:1,padding:"12px 0",borderRadius:10,border:"none",background:gameSpinning||betResults?"#374151":"linear-gradient(135deg,#16a34a,#059669)",color:"white",fontSize:16,fontWeight:900,cursor:gameSpinning||betResults?"not-allowed":"pointer",opacity:gameSpinning?0.7:1}}>
             {gameSpinning?"Spinning...":"🎰 SPIN"}
           </button>
           {lastSpinDelta!==null && <div style={{textAlign:"center",flexShrink:0,minWidth:55}}><div style={{fontSize:7,color:"#64748b",textTransform:"uppercase"}}>Last</div><div style={{fontSize:14,fontWeight:900,color:lastSpinDelta>0?"#4ade80":lastSpinDelta<0?"#f87171":"#94a3b8"}}>{lastSpinDelta>0?"+":lastSpinDelta<0?"-":""}{cur.symbol}{fmtNum(lastSpinDelta)}</div></div>}
