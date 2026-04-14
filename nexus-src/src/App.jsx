@@ -627,6 +627,7 @@ export default function App() {
     const [betResults, setBetResults] = useState(null);
     const [undoStack, setUndoStack] = useState([]); // how many bets each action added
     const clearTimerRef = React.useRef(null);
+    const frozenBetsRef = React.useRef(null); // preserve bets during spin animation
     const tMin = settings.tableMinBet||1;
 
     const CHIPS = [
@@ -644,7 +645,7 @@ export default function App() {
 
     function cancelPendingClear() {
       if(clearTimerRef.current) { clearTimeout(clearTimerRef.current); clearTimerRef.current=null; }
-      if(betResults) { setBetResults(null); setManualBets([]); }
+      if(betResults) { setBetResults(null); setManualBets([]); frozenBetsRef.current=null; }
     }
 
     function placeBet(type, target) {
@@ -681,8 +682,10 @@ export default function App() {
     }
 
     // Aggregate bets by position for display
+    // Use frozen bets during spin animation and result display so chips don't disappear
+    const activeBets = frozenBetsRef.current || manualBets;
     const boardBets = {};
-    manualBets.forEach(b=>{
+    activeBets.forEach(b=>{
       const key = b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
       boardBets[key] = (boardBets[key]||0) + b.amount;
     });
@@ -706,9 +709,12 @@ export default function App() {
 
     function doGameSpin() {
       if(gameSpinning||betResults) return;
+      // Freeze current bets so they persist through spin animation
+      frozenBetsRef.current = [...manualBets];
       setGameSpinning(true);
       if(!sess.sessionStartedAt) updSess(s=>{s.sessionStartedAt=Date.now();});
       const nums = wheelNums;
+      const spinBets = [...manualBets]; // capture bets for resolution
       var ticks=0;
       const iv = setInterval(()=>{
         ticks++;
@@ -719,15 +725,26 @@ export default function App() {
           setGameResult(val);
           if(hasActiveTracks) tapNumber(val, true);
           else { updSess(s=>{s.spins.push(val);const nd={...s.droughts};Object.keys(nd).forEach(k=>nd[k]++);nd[val]=0;s.droughts=nd;}); }
-          if(manualBets.length>0){
-            const res = resolveManualBets(val);
-            updSess(s=>{s.bankrollCurrent=Math.round((s.bankrollCurrent+res.profit)*100)/100;});
-            if(hasActiveTracks) setLastSpinDelta(prev=>(prev||0)+res.profit);
-            else setLastSpinDelta(res.profit);
-            setBetResults(res.posResults);
-            setLastBets([...manualBets]);
+          if(spinBets.length>0){
+            // Resolve using captured bets
+            var totalWin=0, totalBet=0, posResults={};
+            spinBets.forEach(function(b){
+              totalBet+=b.amount;
+              var posKey=b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
+              var covered=betCoveredNumbers(b.type,b.target);
+              if(covered.indexOf(val)>=0){totalWin+=b.amount*betPayoutMult(b.type);posResults[posKey]="won";}
+              else{if(!posResults[posKey])posResults[posKey]="lost";}
+            });
+            var profit=totalWin-totalBet;
+            updSess(s=>{s.bankrollCurrent=Math.round((s.bankrollCurrent+profit)*100)/100;});
+            if(hasActiveTracks) setLastSpinDelta(prev=>(prev||0)+profit);
+            else setLastSpinDelta(profit);
+            setBetResults(posResults);
+            setLastBets([...spinBets]);
             setUndoStack([]);
-            clearTimerRef.current = setTimeout(()=>{ setBetResults(null); setManualBets([]); clearTimerRef.current=null; },3000);
+            clearTimerRef.current = setTimeout(()=>{ setBetResults(null); setManualBets([]); frozenBetsRef.current=null; clearTimerRef.current=null; },3000);
+          } else {
+            frozenBetsRef.current=null;
           }
           if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate(30);
           setGameSpinning(false);

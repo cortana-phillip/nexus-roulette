@@ -1,1 +1,1 @@
-{"version":"0.40.14","date":"2026-04-14","notes":"Winning number and bet results now show simultaneously - no more 300ms delay. Green/red chips visible immediately."}
+{"version":"0.40.15","date":"2026-04-14","notes":"Chips stay on table during spin animation and 3-second result display. Frozen bets ref ensures chips never disappear prematurely."}

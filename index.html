@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.14";
+  var MY_V="0.40.15";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.14";
+var APP_VERSION = "0.40.15";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -8763,6 +8763,7 @@ function App() {
       undoStack = _useState130[0],
       setUndoStack = _useState130[1]; // how many bets each action added
     var clearTimerRef = React.useRef(null);
+    var frozenBetsRef = React.useRef(null); // preserve bets during spin animation
     var tMin = settings.tableMinBet || 1;
     var CHIPS = [{
       val: 0.25,
@@ -8814,6 +8815,7 @@ function App() {
       if (betResults) {
         setBetResults(null);
         setManualBets([]);
+        frozenBetsRef.current = null;
       }
     }
     function placeBet(type, target) {
@@ -8874,8 +8876,10 @@ function App() {
     }
 
     // Aggregate bets by position for display
+    // Use frozen bets during spin animation and result display so chips don't disappear
+    var activeBets = frozenBetsRef.current || manualBets;
     var boardBets = {};
-    manualBets.forEach(function (b) {
+    activeBets.forEach(function (b) {
       var key = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
       boardBets[key] = (boardBets[key] || 0) + b.amount;
     });
@@ -8904,11 +8908,14 @@ function App() {
     }
     function doGameSpin() {
       if (gameSpinning || betResults) return;
+      // Freeze current bets so they persist through spin animation
+      frozenBetsRef.current = _toConsumableArray(manualBets);
       setGameSpinning(true);
       if (!sess.sessionStartedAt) updSess(function (s) {
         s.sessionStartedAt = Date.now();
       });
       var nums = wheelNums;
+      var spinBets = _toConsumableArray(manualBets); // capture bets for resolution
       var ticks = 0;
       var iv = setInterval(function () {
         ticks++;
@@ -8928,22 +8935,40 @@ function App() {
               s.droughts = nd;
             });
           }
-          if (manualBets.length > 0) {
-            var res = resolveManualBets(val);
+          if (spinBets.length > 0) {
+            // Resolve using captured bets
+            var totalWin = 0,
+              totalBet = 0,
+              posResults = {};
+            spinBets.forEach(function (b) {
+              totalBet += b.amount;
+              var posKey = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
+              var covered = betCoveredNumbers(b.type, b.target);
+              if (covered.indexOf(val) >= 0) {
+                totalWin += b.amount * betPayoutMult(b.type);
+                posResults[posKey] = "won";
+              } else {
+                if (!posResults[posKey]) posResults[posKey] = "lost";
+              }
+            });
+            var profit = totalWin - totalBet;
             updSess(function (s) {
-              s.bankrollCurrent = Math.round((s.bankrollCurrent + res.profit) * 100) / 100;
+              s.bankrollCurrent = Math.round((s.bankrollCurrent + profit) * 100) / 100;
             });
             if (hasActiveTracks) setLastSpinDelta(function (prev) {
-              return (prev || 0) + res.profit;
-            });else setLastSpinDelta(res.profit);
-            setBetResults(res.posResults);
-            setLastBets(_toConsumableArray(manualBets));
+              return (prev || 0) + profit;
+            });else setLastSpinDelta(profit);
+            setBetResults(posResults);
+            setLastBets(_toConsumableArray(spinBets));
             setUndoStack([]);
             clearTimerRef.current = setTimeout(function () {
               setBetResults(null);
               setManualBets([]);
+              frozenBetsRef.current = null;
               clearTimerRef.current = null;
             }, 3000);
+          } else {
+            frozenBetsRef.current = null;
           }
           if (settings.vibration !== false && navigator.vibrate) navigator.vibrate(30);
           setGameSpinning(false);
