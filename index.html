@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.37.0";
+  var MY_V="0.37.1";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -391,7 +391,7 @@ var TRACK_ICONS = {
   solution: "🎯"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.37.0";
+var APP_VERSION = "0.37.1";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -7104,27 +7104,31 @@ function App() {
     _useState90 = _slicedToArray(_useState89, 2),
     liveSelectingWinner = _useState90[0],
     setLiveSelectingWinner = _useState90[1];
-  var _useState91 = (0, _react.useState)([]),
+  var _useState91 = (0, _react.useState)(null),
     _useState92 = _slicedToArray(_useState91, 2),
-    liveManualBets = _useState92[0],
-    setLiveManualBets = _useState92[1];
+    liveWinNumber = _useState92[0],
+    setLiveWinNumber = _useState92[1];
   var _useState93 = (0, _react.useState)([]),
     _useState94 = _slicedToArray(_useState93, 2),
-    liveLastBets = _useState94[0],
-    setLiveLastBets = _useState94[1];
-  var _useState95 = (0, _react.useState)(null),
+    liveManualBets = _useState94[0],
+    setLiveManualBets = _useState94[1];
+  var _useState95 = (0, _react.useState)([]),
     _useState96 = _slicedToArray(_useState95, 2),
-    liveBetResults = _useState96[0],
-    setLiveBetResults = _useState96[1];
-  var _useState97 = (0, _react.useState)([]),
+    liveLastBets = _useState96[0],
+    setLiveLastBets = _useState96[1];
+  var _useState97 = (0, _react.useState)(null),
     _useState98 = _slicedToArray(_useState97, 2),
-    liveUndoStack = _useState98[0],
-    setLiveUndoStack = _useState98[1];
-  var liveClearTimerRef = React.useRef(null);
-  var _useState99 = (0, _react.useState)(null),
+    liveBetResults = _useState98[0],
+    setLiveBetResults = _useState98[1];
+  var _useState99 = (0, _react.useState)([]),
     _useState100 = _slicedToArray(_useState99, 2),
-    updateAvailable = _useState100[0],
-    setUpdateAvailable = _useState100[1]; // {version, notes}
+    liveUndoStack = _useState100[0],
+    setLiveUndoStack = _useState100[1];
+  var liveClearTimerRef = React.useRef(null);
+  var _useState101 = (0, _react.useState)(null),
+    _useState102 = _slicedToArray(_useState101, 2),
+    updateAvailable = _useState102[0],
+    setUpdateAvailable = _useState102[1]; // {version, notes}
 
   // Check for app updates
   (0, _react.useEffect)(function () {
@@ -7144,46 +7148,46 @@ function App() {
       return clearInterval(iv);
     };
   }, []);
-  var _useState101 = (0, _react.useState)(false),
-    _useState102 = _slicedToArray(_useState101, 2),
-    buyInOpen = _useState102[0],
-    setBuyInOpen = _useState102[1];
   var _useState103 = (0, _react.useState)(false),
     _useState104 = _slicedToArray(_useState103, 2),
-    currencyOpen = _useState104[0],
-    setCurrencyOpen = _useState104[1];
+    buyInOpen = _useState104[0],
+    setBuyInOpen = _useState104[1];
   var _useState105 = (0, _react.useState)(false),
     _useState106 = _slicedToArray(_useState105, 2),
-    changelogOpen = _useState106[0],
-    setChangelogOpen = _useState106[1];
+    currencyOpen = _useState106[0],
+    setCurrencyOpen = _useState106[1];
   var _useState107 = (0, _react.useState)(false),
     _useState108 = _slicedToArray(_useState107, 2),
-    editBankroll = _useState108[0],
-    setEditBankroll = _useState108[1];
+    changelogOpen = _useState108[0],
+    setChangelogOpen = _useState108[1];
   var _useState109 = (0, _react.useState)(false),
     _useState110 = _slicedToArray(_useState109, 2),
-    cashOutOpen = _useState110[0],
-    setCashOutOpen = _useState110[1];
+    editBankroll = _useState110[0],
+    setEditBankroll = _useState110[1];
   var _useState111 = (0, _react.useState)(false),
     _useState112 = _slicedToArray(_useState111, 2),
-    hardResetOpen = _useState112[0],
-    setHardResetOpen = _useState112[1];
+    cashOutOpen = _useState112[0],
+    setCashOutOpen = _useState112[1];
   var _useState113 = (0, _react.useState)(false),
     _useState114 = _slicedToArray(_useState113, 2),
-    feedbackOpen = _useState114[0],
-    setFeedbackOpen = _useState114[1];
-  var _useState115 = (0, _react.useState)(""),
+    hardResetOpen = _useState114[0],
+    setHardResetOpen = _useState114[1];
+  var _useState115 = (0, _react.useState)(false),
     _useState116 = _slicedToArray(_useState115, 2),
-    feedbackText = _useState116[0],
-    setFeedbackText = _useState116[1];
-  var _useState117 = (0, _react.useState)("fibonacci"),
+    feedbackOpen = _useState116[0],
+    setFeedbackOpen = _useState116[1];
+  var _useState117 = (0, _react.useState)(""),
     _useState118 = _slicedToArray(_useState117, 2),
-    pendingTrackType = _useState118[0],
-    setPendingTrackType = _useState118[1];
-  var _useState119 = (0, _react.useState)(defaultFibCfg()),
+    feedbackText = _useState118[0],
+    setFeedbackText = _useState118[1];
+  var _useState119 = (0, _react.useState)("fibonacci"),
     _useState120 = _slicedToArray(_useState119, 2),
-    pendingTrackCfg = _useState120[0],
-    setPendingTrackCfg = _useState120[1];
+    pendingTrackType = _useState120[0],
+    setPendingTrackType = _useState120[1];
+  var _useState121 = (0, _react.useState)(defaultFibCfg()),
+    _useState122 = _slicedToArray(_useState121, 2),
+    pendingTrackCfg = _useState122[0],
+    setPendingTrackCfg = _useState122[1];
   var sessKey = appMode === "game" ? "gameSession" : "currentSession";
   var sess = appState[sessKey] || appState.currentSession;
   var livePauseOffset = livePausedTotal + (livePausedAt ? Date.now() - livePausedAt : 0);
@@ -7970,22 +7974,22 @@ function App() {
     var hasActiveTracks = nonClosedTracks.some(function (t) {
       return t.state === "active";
     });
-    var _useState121 = (0, _react.useState)([]),
-      _useState122 = _slicedToArray(_useState121, 2),
-      manualBets = _useState122[0],
-      setManualBets = _useState122[1];
     var _useState123 = (0, _react.useState)([]),
       _useState124 = _slicedToArray(_useState123, 2),
-      lastBets = _useState124[0],
-      setLastBets = _useState124[1];
-    var _useState125 = (0, _react.useState)(null),
+      manualBets = _useState124[0],
+      setManualBets = _useState124[1];
+    var _useState125 = (0, _react.useState)([]),
       _useState126 = _slicedToArray(_useState125, 2),
-      betResults = _useState126[0],
-      setBetResults = _useState126[1];
-    var _useState127 = (0, _react.useState)([]),
+      lastBets = _useState126[0],
+      setLastBets = _useState126[1];
+    var _useState127 = (0, _react.useState)(null),
       _useState128 = _slicedToArray(_useState127, 2),
-      undoStack = _useState128[0],
-      setUndoStack = _useState128[1]; // how many bets each action added
+      betResults = _useState128[0],
+      setBetResults = _useState128[1];
+    var _useState129 = (0, _react.useState)([]),
+      _useState130 = _slicedToArray(_useState129, 2),
+      undoStack = _useState130[0],
+      setUndoStack = _useState130[1]; // how many bets each action added
     var clearTimerRef = React.useRef(null);
     var tMin = settings.tableMinBet || 1;
     var CHIPS = [{
@@ -9709,6 +9713,7 @@ function App() {
           // In winner selection mode - process the spin
           var val = type === "straight" ? target : null;
           if (!val) return; // Can only select numbers as winners
+          setLiveWinNumber(val);
           tapNumber(val, nonClosedTracks.some(function (t) {
             return t.state === "active";
           }));
@@ -9771,6 +9776,7 @@ function App() {
           setLiveBetResults(null);
           setLiveManualBets([]);
         }
+        setLiveWinNumber(null);
         setLiveManualBets(function (prev) {
           return [].concat(_toConsumableArray(prev), [{
             id: Date.now() + Math.random(),
@@ -9948,7 +9954,7 @@ function App() {
         }
       }, liveSelectingWinner ? "👆 Tap the winning number..." : "🎯 Choose Winning Number"), /*#__PURE__*/React.createElement(RouletteBoard, {
         roulette: sess.roulette,
-        winningNumber: liveSelectingWinner ? null : flashNum,
+        winningNumber: liveWinNumber,
         stratBets: stratBets,
         spinning: false,
         onBet: livePlaceBet,
@@ -10137,10 +10143,10 @@ function App() {
 
   // -- Spin Log Page --
   function SpinPage() {
-    var _useState129 = (0, _react.useState)(false),
-      _useState130 = _slicedToArray(_useState129, 2),
-      showAll = _useState130[0],
-      setShowAll = _useState130[1];
+    var _useState131 = (0, _react.useState)(false),
+      _useState132 = _slicedToArray(_useState131, 2),
+      showAll = _useState132[0],
+      setShowAll = _useState132[1];
     var displaySpins = showAll ? _toConsumableArray(sess.spins).reverse() : _toConsumableArray(sess.spins).reverse().slice(0, 60);
     return /*#__PURE__*/React.createElement("div", {
       style: {
@@ -10673,10 +10679,10 @@ function App() {
 
   // -- Settings Page --
   function SettingsPage() {
-    var _useState131 = (0, _react.useState)(settings.defaultBuyIn || 100),
-      _useState132 = _slicedToArray(_useState131, 2),
-      localBuyIn = _useState132[0],
-      setLocalBuyIn = _useState132[1];
+    var _useState133 = (0, _react.useState)(settings.defaultBuyIn || 100),
+      _useState134 = _slicedToArray(_useState133, 2),
+      localBuyIn = _useState134[0],
+      setLocalBuyIn = _useState134[1];
     function saveBuyIn() {
       updSettings(function (s) {
         s.defaultBuyIn = localBuyIn;
@@ -11197,10 +11203,10 @@ function App() {
   // -- Bankroll Edit --
   function BankrollEdit(_ref73) {
     var onClose = _ref73.onClose;
-    var _useState133 = (0, _react.useState)(sess.bankrollCurrent),
-      _useState134 = _slicedToArray(_useState133, 2),
-      val = _useState134[0],
-      setVal = _useState134[1];
+    var _useState135 = (0, _react.useState)(sess.bankrollCurrent),
+      _useState136 = _slicedToArray(_useState135, 2),
+      val = _useState136[0],
+      setVal = _useState136[1];
     function save() {
       updSess(function (s) {
         s.bankrollCurrent = val;

@@ -41,6 +41,7 @@ export default function App() {
   const [lastSpinDelta, setLastSpinDelta] = useState(null);
   const [selectedChip, setSelectedChip] = useState(1);
   const [liveSelectingWinner, setLiveSelectingWinner] = useState(true);
+  const [liveWinNumber, setLiveWinNumber] = useState(null);
   const [liveManualBets, setLiveManualBets] = useState([]);
   const [liveLastBets, setLiveLastBets] = useState([]);
   const [liveBetResults, setLiveBetResults] = useState(null);
@@ -1137,6 +1138,7 @@ export default function App() {
               // In winner selection mode - process the spin
               const val = type==="straight"?target:null;
               if(!val) return; // Can only select numbers as winners
+              setLiveWinNumber(val);
               tapNumber(val, nonClosedTracks.some(t=>t.state==="active"));
               // Resolve manual bets
               if(liveManualBets.length>0){
@@ -1175,6 +1177,7 @@ export default function App() {
               if(liveClearTimerRef.current){clearTimeout(liveClearTimerRef.current);liveClearTimerRef.current=null;}
               setLiveBetResults(null);setLiveManualBets([]);
             }
+            setLiveWinNumber(null);
             setLiveManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type,target,amount:selectedChip}]);
             setLiveUndoStack(prev=>[...prev,1]);
             if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate(10);
@@ -1228,7 +1231,7 @@ export default function App() {
                 {liveSelectingWinner?"👆 Tap the winning number...":"🎯 Choose Winning Number"}
               </button>
               {/* Roulette Board */}
-              <RouletteBoard roulette={sess.roulette} winningNumber={liveSelectingWinner?null:flashNum} stratBets={stratBets} spinning={false} onBet={livePlaceBet} boardBets={liveBoardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={liveBetResults}/>
+              <RouletteBoard roulette={sess.roulette} winningNumber={liveWinNumber} stratBets={stratBets} spinning={false} onBet={livePlaceBet} boardBets={liveBoardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={liveBetResults}/>
               <div style={{textAlign:"center",fontSize:9,color:"#475569"}}>{liveSelectingWinner?"Tap a number on the table to record the spin result":"Tap table to place bets, then Choose Winning Number"}</div>
             </div>
           );
