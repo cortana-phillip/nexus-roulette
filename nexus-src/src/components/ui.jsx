@@ -132,7 +132,7 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     var stratC = sb["s:"+numStr]||null;
     return {
       position:"relative", display:"flex", alignItems:"center", justifyContent:"center",
-      height:32, borderRadius:3, cursor:"default",
+      height:30, borderRadius:3, cursor:"default",
       background: isZero?"#166534":isRed?"#991b1b":"#1e293b",
       border: isWin?"2px solid #fbbf24":stratC?"2px solid "+stratC:"1px solid #374151",
       color: isWin?"#fbbf24":"white",
@@ -323,23 +323,23 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
   }
 
   return (
-    <div style={{width:"100%",borderRadius:8,border:"1px solid #2d4057",background:"#0a1218",padding:4,display:"flex",flexDirection:"column",gap:g}}>
+    <div style={{width:"100%",borderRadius:8,border:"1px solid #2d4057",background:"#0a1218",padding:3,display:"flex",flexDirection:"column",gap:g,overflow:"hidden",boxSizing:"border-box"}}>
       <div style={{display:"flex",gap:g}}>
-        <div style={{display:"flex",flexDirection:"column",gap:g,width:26,flexShrink:0,overflow:"visible"}}>
+        <div style={{display:"flex",flexDirection:"column",gap:g,width:22,flexShrink:0,overflow:"visible"}}>
           {cell(0,true,"0")}
           {isAmerican&&cell(0,true,"00")}
         </div>
-        <div style={{flex:1,display:"grid",gridTemplateColumns:"repeat(12,1fr)",gridTemplateRows:"repeat(3,32px)",gap:g,overflow:"visible"}}>
+        <div style={{flex:1,minWidth:0,display:"grid",gridTemplateColumns:"repeat(12,1fr)",gridTemplateRows:"repeat(3,30px)",gap:g,overflow:"visible"}}>
           {BOARD_ROWS.map(function(row){return row.map(function(num){return cell(num,false);});})}
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:g,width:28,flexShrink:0}}>
+        <div style={{display:"flex",flexDirection:"column",gap:g,width:24,flexShrink:0}}>
           {[2,1,0].map(function(c){var on=winGroups.col===c;var bk="column:"+c;var sc=sb[bk]||null;var sCh=sChipsMap[bk]||null;return React.createElement("div",{key:c,onClick:function(){if(canBet)onBet("column",c);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",fontSize:8,fontWeight:700,cursor:canBet?"pointer":"default",position:"relative"}},"2:1",sCh&&React.createElement(StratChipBadge,{chips:sCh}),bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
         </div>
       </div>
-      <div style={{display:"flex",gap:g,marginLeft:26+g}}>
+      <div style={{display:"flex",gap:g,marginLeft:22+g}}>
         {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){var on=winGroups.doz===d.i;var bk="dozen:"+d.i;var sc=sb[bk]||null;var sCh=sChipsMap[bk]||null;return React.createElement("div",{key:d.i,onClick:function(){if(canBet)onBet("dozen",d.i);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:10,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",cursor:canBet?"pointer":"default",position:"relative"}},d.l,sCh&&React.createElement(StratChipBadge,{chips:sCh}),bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
       </div>
-      <div style={{display:"flex",gap:g,marginLeft:26+g}}>
+      <div style={{display:"flex",gap:g,marginLeft:22+g}}>
         {[
           {l:"1-18",k:"low",bg:"#0f1923"},
           {l:"EVEN",k:"even",bg:"#0f1923"},

@@ -1,1 +1,1 @@
-{"version":"0.40.4","date":"2026-04-13","notes":"Fixed bet chip positioning - chips now sit exactly at intersection points, on cell edges for splits, centered on corners."}
+{"version":"0.40.5","date":"2026-04-13","notes":"Fixed table clipping on right side. Narrower zero/column cells so everything fits on screen. Chip positioning fixed at intersections."}
