@@ -344,13 +344,16 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
         if(gridNums.length===0) return; // pure 0-00 split handled by zero cells
         var gridR = gridNums[0].r;
         if(bType==="split") {
-          // Split with a zero: left edge of the number's row
           leftPct = 0;
           topPx = gridR*(cellH+g) + cellH/2;
         } else if(bType==="street") {
-          // Street 0-00-2: left edge, middle row
           leftPct = 0;
-          topPx = 1*(cellH+g) + cellH/2;
+          // Position based on which row boundary the street covers
+          var hasRow0 = gridNums.some(function(p){return p.r===0;});
+          var hasRow2 = gridNums.some(function(p){return p.r===2;});
+          if(hasRow0 && !hasRow2) topPx = (cellH+g) - g; // boundary between row 0 and 1 (0-2-3)
+          else if(hasRow2 && !hasRow0) topPx = 2*(cellH+g) - g; // boundary between row 1 and 2 (00-1-2)
+          else topPx = 1*(cellH+g) + cellH/2; // middle (0-00-2)
         } else if(bType==="basket") {
           // Bottom-left of grid, where 00 meets 1 and dozens start
           leftPct = 0;
@@ -381,18 +384,31 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     <div style={{width:"100%",borderRadius:8,border:"1px solid #2d4057",background:"#0a1218",padding:3,display:"flex",flexDirection:"column",gap:g,overflow:"hidden",boxSizing:"border-box"}}>
       <div style={{display:"flex",gap:g}}>
         <div style={{display:"flex",flexDirection:"column",gap:g,width:zeroW,flexShrink:0}}>
-          {React.createElement("div",{key:"0",onClick:function(e){if(!canBet)return;var rect=e.currentTarget.getBoundingClientRect();var ox=e.clientX-rect.left,oy=e.clientY-rect.top;var nearR=ox>rect.width*0.65,nearB=oy>rect.height*0.7,nearTop=oy<rect.height*0.35;
-            if(nearR&&nearB&&isAmerican){onBet("street","0-00-2");return;}
-            if(nearB&&isAmerican){onBet("split","0-00");return;}
-            if(nearR&&nearTop){onBet("split","0-3");return;}
-            if(nearR){onBet("split","0-2");return;}
+          {React.createElement("div",{key:"0",onClick:function(e){if(!canBet)return;var rect=e.currentTarget.getBoundingClientRect();var ox=e.clientX-rect.left,oy=e.clientY-rect.top;var pX=ox/rect.width,pY=oy/rect.height;
+            // Bottom-right corner: street 0-00-2
+            if(pX>0.6&&pY>0.7&&isAmerican){onBet("street","0-00-2");return;}
+            // Bottom edge: split 0-00
+            if(pY>0.7&&isAmerican){onBet("split","0-00");return;}
+            // Right edge top third: split 0-3
+            if(pX>0.6&&pY<0.35){onBet("split","0-3");return;}
+            // Right edge middle: street 0-2-3
+            if(pX>0.6&&pY>=0.35&&pY<=0.65){onBet("street","0-2-3");return;}
+            // Right edge bottom third: split 0-2
+            if(pX>0.6){onBet("split","0-2");return;}
             onBet("straight","0");
           },style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,background:"#166534",border:insideCoveredNums["0"]?"2px solid #c084fc":(winStr==="0"?"2px solid #fbbf24":"1px solid #374151"),color:winStr==="0"?"#fbbf24":"white",fontSize:cellFs-1,fontWeight:800,position:"relative",boxShadow:winStr==="0"?"0 0 10px #fbbf24":"none",cursor:canBet?"pointer":"default"}},"0",winStr==="0"&&!spinning&&React.createElement(Mkr),bb["s:0"]&&React.createElement(BetChip,{amount:bb["s:0"],posKey:"s:0"}))}
-          {isAmerican&&React.createElement("div",{key:"00",onClick:function(e){if(!canBet)return;var rect=e.currentTarget.getBoundingClientRect();var ox=e.clientX-rect.left,oy=e.clientY-rect.top;var nearR=ox>rect.width*0.65,nearT=oy<rect.height*0.3,nearB=oy>rect.height*0.65;
-            if(nearR&&nearB){onBet("basket","0-00-1-2-3");return;}
-            if(nearR&&nearT){onBet("street","0-00-2");return;}
-            if(nearT){onBet("split","0-00");return;}
-            if(nearR){onBet("split","00-1");return;}
+          {isAmerican&&React.createElement("div",{key:"00",onClick:function(e){if(!canBet)return;var rect=e.currentTarget.getBoundingClientRect();var ox=e.clientX-rect.left,oy=e.clientY-rect.top;var pX=ox/rect.width,pY=oy/rect.height;
+            if(pX>0.6) {
+              // Right edge zones (top to bottom)
+              if(pY<0.2){onBet("street","0-00-2");return;}
+              if(pY<0.4){onBet("split","00-2");return;}
+              if(pY<0.6){onBet("street","00-1-2");return;}
+              if(pY<0.8){onBet("split","00-1");return;}
+              onBet("basket","0-00-1-2-3");return;
+            }
+            // Top edge: split 0-00
+            if(pY<0.25){onBet("split","0-00");return;}
+            onBet("straight","00");
             onBet("straight","00");
           },style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,background:"#166534",border:insideCoveredNums["00"]?"2px solid #c084fc":(winStr==="00"?"2px solid #fbbf24":"1px solid #374151"),color:winStr==="00"?"#fbbf24":"white",fontSize:cellFs-1,fontWeight:800,position:"relative",boxShadow:winStr==="00"?"0 0 10px #fbbf24":"none",cursor:canBet?"pointer":"default"}},"00",winStr==="00"&&!spinning&&React.createElement(Mkr),bb["s:00"]&&React.createElement(BetChip,{amount:bb["s:00"],posKey:"s:00"}))}
         </div>

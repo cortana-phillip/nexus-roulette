@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.31";
+  var MY_V="0.40.32";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.31";
+var APP_VERSION = "0.40.32";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -3142,13 +3142,20 @@ function RouletteBoard(_ref16) {
         if (gridNums.length === 0) return; // pure 0-00 split handled by zero cells
         var gridR = gridNums[0].r;
         if (bType === "split") {
-          // Split with a zero: left edge of the number's row
           leftPct = 0;
           topPx = gridR * (cellH + g) + cellH / 2;
         } else if (bType === "street") {
-          // Street 0-00-2: left edge, middle row
           leftPct = 0;
-          topPx = 1 * (cellH + g) + cellH / 2;
+          // Position based on which row boundary the street covers
+          var hasRow0 = gridNums.some(function (p) {
+            return p.r === 0;
+          });
+          var hasRow2 = gridNums.some(function (p) {
+            return p.r === 2;
+          });
+          if (hasRow0 && !hasRow2) topPx = cellH + g - g; // boundary between row 0 and 1 (0-2-3)
+          else if (hasRow2 && !hasRow0) topPx = 2 * (cellH + g) - g; // boundary between row 1 and 2 (00-1-2)
+          else topPx = 1 * (cellH + g) + cellH / 2; // middle (0-00-2)
         } else if (bType === "basket") {
           // Bottom-left of grid, where 00 meets 1 and dozens start
           leftPct = 0;
@@ -3233,22 +3240,30 @@ function RouletteBoard(_ref16) {
       var rect = e.currentTarget.getBoundingClientRect();
       var ox = e.clientX - rect.left,
         oy = e.clientY - rect.top;
-      var nearR = ox > rect.width * 0.65,
-        nearB = oy > rect.height * 0.7,
-        nearTop = oy < rect.height * 0.35;
-      if (nearR && nearB && isAmerican) {
+      var pX = ox / rect.width,
+        pY = oy / rect.height;
+      // Bottom-right corner: street 0-00-2
+      if (pX > 0.6 && pY > 0.7 && isAmerican) {
         onBet("street", "0-00-2");
         return;
       }
-      if (nearB && isAmerican) {
+      // Bottom edge: split 0-00
+      if (pY > 0.7 && isAmerican) {
         onBet("split", "0-00");
         return;
       }
-      if (nearR && nearTop) {
+      // Right edge top third: split 0-3
+      if (pX > 0.6 && pY < 0.35) {
         onBet("split", "0-3");
         return;
       }
-      if (nearR) {
+      // Right edge middle: street 0-2-3
+      if (pX > 0.6 && pY >= 0.35 && pY <= 0.65) {
+        onBet("street", "0-2-3");
+        return;
+      }
+      // Right edge bottom third: split 0-2
+      if (pX > 0.6) {
         onBet("split", "0-2");
         return;
       }
@@ -3279,25 +3294,35 @@ function RouletteBoard(_ref16) {
       var rect = e.currentTarget.getBoundingClientRect();
       var ox = e.clientX - rect.left,
         oy = e.clientY - rect.top;
-      var nearR = ox > rect.width * 0.65,
-        nearT = oy < rect.height * 0.3,
-        nearB = oy > rect.height * 0.65;
-      if (nearR && nearB) {
+      var pX = ox / rect.width,
+        pY = oy / rect.height;
+      if (pX > 0.6) {
+        // Right edge zones (top to bottom)
+        if (pY < 0.2) {
+          onBet("street", "0-00-2");
+          return;
+        }
+        if (pY < 0.4) {
+          onBet("split", "00-2");
+          return;
+        }
+        if (pY < 0.6) {
+          onBet("street", "00-1-2");
+          return;
+        }
+        if (pY < 0.8) {
+          onBet("split", "00-1");
+          return;
+        }
         onBet("basket", "0-00-1-2-3");
         return;
       }
-      if (nearR && nearT) {
-        onBet("street", "0-00-2");
-        return;
-      }
-      if (nearT) {
+      // Top edge: split 0-00
+      if (pY < 0.25) {
         onBet("split", "0-00");
         return;
       }
-      if (nearR) {
-        onBet("split", "00-1");
-        return;
-      }
+      onBet("straight", "00");
       onBet("straight", "00");
     },
     style: {

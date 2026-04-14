@@ -1,1 +1,1 @@
-{"version":"0.40.31","date":"2026-04-14","notes":"Basket chip at bottom-left of grid. Bets preserved when tabbing away - saved to localStorage on page hide."}
+{"version":"0.40.32","date":"2026-04-14","notes":"All zero area bets: splits 0-3, 0-2, 00-2, 00-1. Streets 0-2-3, 0-00-2, 00-1-2. Basket 0-00-1-2-3. Correct chip positions for each."}
