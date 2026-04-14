@@ -1666,7 +1666,7 @@ export default function App() {
 
   return (
     <div style={{minHeight:"100vh",background:"#0f1923",color:"#e2e8f0",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
-      <div style={{width:"100%",maxWidth:460,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",gap:12,padding:"16px 14px 80px",boxSizing:"border-box"}}>
+      <div style={{width:"100%",maxWidth:isLandscape?9999:460,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",gap:isLandscape?8:12,padding:isLandscape?"8px 10px 40px":"16px 14px 80px",boxSizing:"border-box"}}>
 
         {/* Header */}
         <div style={{width:"100%",textAlign:"center"}}>

@@ -1,1 +1,1 @@
-{"version":"0.40.22","date":"2026-04-14","notes":"Landscape: bigger cells filling more screen, 0/00 stretch to full grid height."}
+{"version":"0.40.23","date":"2026-04-14","notes":"Landscape: removed 460px max-width constraint, table fills full screen width. Reduced padding."}
