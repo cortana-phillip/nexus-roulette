@@ -1,1 +1,1 @@
-{"version":"0.40.33","date":"2026-04-14","notes":"Bigger zero bet zones - streets at corners, splits on edges. Much easier to tap the right bet."}
+{"version":"0.40.34","date":"2026-04-14","notes":"Zero bets from grid side: left edge of cells 1/2/3 for splits with zeros. Corners for zero streets. Bottom-left for basket. Zero cells only do splits and straights."}

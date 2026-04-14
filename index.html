@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.33";
+  var MY_V="0.40.34";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.33";
+var APP_VERSION = "0.40.34";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2914,14 +2914,63 @@ function RouletteBoard(_ref16) {
         target: line.join("-")
       };
     }
-    // Street: ONLY at outer boundary of the grid (bottom of row 2, left of col 0)
+    // Col 0 left edge: zero area bets (splits, streets, basket)
     if (nearLeft && !hasLeft) {
-      var st = [BOARD_ROWS[0][c], BOARD_ROWS[1][c], BOARD_ROWS[2][c]].sort(function (a, b) {
-        return a - b;
-      });
+      // Bottom-left corner of bottom row: basket
+      if (nearBottom && !hasBelow) {
+        return {
+          type: "basket",
+          target: "0-00-1-2-3"
+        };
+      }
+      // Top-left corners: zero streets
+      if (nearTop && hasAbove) {
+        if (r === 1) return {
+          type: "street",
+          target: "0-2-3"
+        }; // between row 0 (3) and row 1 (2)
+        if (r === 2) return {
+          type: "street",
+          target: "00-1-2"
+        }; // between row 1 (2) and row 2 (1)
+      }
+      // Bottom-left corners: zero streets
+      if (nearBottom && hasBelow) {
+        if (r === 0) return {
+          type: "street",
+          target: "0-2-3"
+        }; // between row 0 (3) and row 1 (2)
+        if (r === 1) return {
+          type: "street",
+          target: "00-1-2"
+        }; // between row 1 (2) and row 2 (1)
+      }
+      // Left edge center: splits with zeros
+      if (r === 0) return {
+        type: "split",
+        target: "0-3"
+      };
+      if (r === 1) {
+        if (nearTop) return {
+          type: "split",
+          target: "0-2"
+        };
+        if (nearBottom) return {
+          type: "split",
+          target: "00-2"
+        };
+        return {
+          type: "street",
+          target: "0-00-2"
+        }; // center of cell 2 left edge
+      }
+      if (r === 2) return {
+        type: "split",
+        target: "00-1"
+      };
       return {
-        type: "street",
-        target: st.join("-")
+        type: "straight",
+        target: numStr
       };
     }
     if (nearBottom && !hasBelow) {
@@ -3240,14 +3289,6 @@ function RouletteBoard(_ref16) {
       var rect = e.currentTarget.getBoundingClientRect();
       var pX = (e.clientX - rect.left) / rect.width,
         pY = (e.clientY - rect.top) / rect.height;
-      if (pX > 0.5 && pY > 0.65 && isAmerican) {
-        onBet("street", "0-00-2");
-        return;
-      }
-      if (pX > 0.5 && pY < 0.35) {
-        onBet("street", "0-2-3");
-        return;
-      }
       if (pY > 0.7 && isAmerican) {
         onBet("split", "0-00");
         return;
@@ -3287,14 +3328,6 @@ function RouletteBoard(_ref16) {
       var rect = e.currentTarget.getBoundingClientRect();
       var pX = (e.clientX - rect.left) / rect.width,
         pY = (e.clientY - rect.top) / rect.height;
-      if (pX > 0.5 && pY < 0.3) {
-        onBet("street", "00-1-2");
-        return;
-      }
-      if (pX > 0.5 && pY > 0.7) {
-        onBet("basket", "0-00-1-2-3");
-        return;
-      }
       if (pY < 0.25) {
         onBet("split", "0-00");
         return;
