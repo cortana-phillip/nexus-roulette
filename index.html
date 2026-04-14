@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.25";
+  var MY_V="0.40.26";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.25";
+var APP_VERSION = "0.40.26";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2696,7 +2696,7 @@ function RouletteBoard(_ref16) {
   var canBet = !!onBet && !spinning && !betResults;
   var BOARD_ROWS = [[3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36], [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35], [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]];
   var g = 2;
-  var cellH = landscape ? Math.floor(Math.min(window.innerHeight - 190, 250) / 3) : 30;
+  var cellH = landscape ? Math.max(28, Math.floor((window.innerHeight - 250) / 3)) : 30;
   var zeroW = landscape ? 40 : 22;
   var colW = landscape ? 36 : 24;
   var cellFs = landscape ? Math.max(14, Math.floor(cellH / 3)) : 11;
@@ -2752,12 +2752,15 @@ function RouletteBoard(_ref16) {
       }
     });
   }
+  var chipSize = landscape ? 24 : 16;
+  var chipFs = landscape ? 11 : 8;
+  var stratSize = landscape ? 20 : 14;
   function BetChip(_ref17) {
     var amount = _ref17.amount,
       posKey = _ref17.posKey;
     if (!amount) return null;
     var lbl = amount >= 1000 ? amount / 1000 + "k" : amount >= 100 ? amount.toFixed(0) : amount >= 1 ? amount % 1 !== 0 ? amount.toFixed(2) : amount.toFixed(0) : amount < 1 ? amount * 100 + "¢" : "";
-    var fs = lbl.length > 3 ? 6 : lbl.length > 2 ? 7 : 8;
+    var fs = landscape ? lbl.length > 3 ? 8 : lbl.length > 2 ? 9 : chipFs : lbl.length > 3 ? 6 : lbl.length > 2 ? 7 : chipFs;
     var result = br[posKey] || null;
     var bgC = result === "won" ? "#16a34a" : result === "lost" ? "#991b1b" : chipColor || "#fff";
     var bdC = result === "won" ? "#4ade80" : result === "lost" ? "#f87171" : "#92400e";
@@ -2768,18 +2771,18 @@ function RouletteBoard(_ref16) {
         bottom: -2,
         left: "50%",
         transform: "translateX(-50%)",
-        minWidth: 16,
-        height: 16,
-        borderRadius: 8,
+        minWidth: chipSize,
+        height: chipSize,
+        borderRadius: chipSize / 2,
         background: bgC,
-        border: "1.5px solid " + bdC,
+        border: (landscape ? "2" : "1.5") + "px solid " + bdC,
         fontSize: fs,
         fontWeight: 900,
         color: result ? "#fff" : "#1e293b",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "0 2px",
+        padding: "0 3px",
         zIndex: 5,
         boxShadow: shadow,
         animation: result === "won" ? "pulse 0.8s infinite" : "none",
@@ -2801,13 +2804,13 @@ function RouletteBoard(_ref16) {
       }
     }, chips.map(function (ch, i) {
       var lbl = ch.amount >= 100 ? ch.amount.toFixed(0) : ch.amount >= 1 ? ch.amount % 1 !== 0 ? ch.amount.toFixed(2) : ch.amount.toFixed(0) : ch.amount < 1 ? ch.amount * 100 + "¢" : "";
-      var fs = lbl.length > 3 ? 5 : lbl.length > 2 ? 6 : 7;
+      var fs = landscape ? lbl.length > 3 ? 7 : lbl.length > 2 ? 8 : 9 : lbl.length > 3 ? 5 : lbl.length > 2 ? 6 : 7;
       return React.createElement("div", {
         key: i,
         style: {
-          minWidth: 14,
-          height: 14,
-          borderRadius: 7,
+          minWidth: stratSize,
+          height: stratSize,
+          borderRadius: stratSize / 2,
           background: ch.color,
           border: "1.5px solid #ffffff44",
           fontSize: fs,
@@ -3281,7 +3284,7 @@ function RouletteBoard(_ref16) {
     }
   }, overlayChips.map(function (oc, i) {
     var lbl = oc.amount >= 1000 ? oc.amount / 1000 + "k" : oc.amount >= 1 ? oc.amount % 1 !== 0 ? oc.amount.toFixed(2) : oc.amount.toFixed(0) : oc.amount < 1 ? oc.amount * 100 + "¢" : "";
-    var fs = lbl.length > 3 ? 6 : lbl.length > 2 ? 7 : 8;
+    var fs = landscape ? lbl.length > 3 ? 8 : lbl.length > 2 ? 9 : chipFs : lbl.length > 3 ? 6 : lbl.length > 2 ? 7 : 8;
     var result = br[oc.posKey] || null;
     var bgC = result === "won" ? "#16a34a" : result === "lost" ? "#991b1b" : chipColor || "#fff";
     var bdC = result === "won" ? "#4ade80" : result === "lost" ? "#f87171" : "#92400e";
@@ -3292,9 +3295,9 @@ function RouletteBoard(_ref16) {
         left: oc.left + "%",
         top: oc.top,
         transform: "translate(-50%,-50%)",
-        minWidth: 18,
-        height: 18,
-        borderRadius: 9,
+        minWidth: chipSize + 2,
+        height: chipSize + 2,
+        borderRadius: (chipSize + 2) / 2,
         background: bgC,
         border: "2px solid " + bdC,
         fontSize: fs,
@@ -3374,7 +3377,7 @@ function RouletteBoard(_ref16) {
       },
       style: {
         flex: 1,
-        padding: landscape ? "10px 0" : "6px 0",
+        padding: landscape ? "6px 0" : "6px 0",
         borderRadius: 3,
         textAlign: "center",
         fontSize: landscape ? 13 : 10,
@@ -9099,12 +9102,12 @@ function App() {
       disabled: gameSpinning || !!betResults,
       style: {
         flex: 1,
-        padding: "12px 0",
+        padding: isLandscape ? "6px 0" : "12px 0",
         borderRadius: 10,
         border: "none",
         background: gameSpinning || betResults ? "#374151" : "linear-gradient(135deg,#16a34a,#059669)",
         color: "white",
-        fontSize: 16,
+        fontSize: isLandscape ? 13 : 16,
         fontWeight: 900,
         cursor: gameSpinning || betResults ? "not-allowed" : "pointer",
         opacity: gameSpinning ? 0.7 : 1
@@ -9186,8 +9189,8 @@ function App() {
           return setSelectedChip(c.val);
         },
         style: {
-          width: isLandscape ? 44 : 34,
-          height: isLandscape ? 44 : 34,
+          width: isLandscape ? 38 : 34,
+          height: isLandscape ? 38 : 34,
           borderRadius: "50%",
           border: (isLandscape ? "3" : "2") + "px solid " + (selectedChip === c.val ? "#fbbf24" : c.border),
           background: c.color,
@@ -9211,7 +9214,7 @@ function App() {
       disabled: manualBets.length === 0 || !!betResults,
       style: {
         flex: 1,
-        padding: isLandscape ? "8px 0" : "5px 0",
+        padding: isLandscape ? "6px 0" : "5px 0",
         borderRadius: 6,
         border: "1px solid #2d4057",
         background: "#0f1923",
@@ -9224,7 +9227,7 @@ function App() {
       disabled: manualBets.length === 0 || !!betResults,
       style: {
         flex: 1,
-        padding: isLandscape ? "8px 0" : "5px 0",
+        padding: isLandscape ? "6px 0" : "5px 0",
         borderRadius: 6,
         border: "1px solid #2d4057",
         background: "#0f1923",
@@ -9237,7 +9240,7 @@ function App() {
       disabled: manualBets.length === 0 || !!betResults,
       style: {
         flex: 1,
-        padding: isLandscape ? "8px 0" : "5px 0",
+        padding: isLandscape ? "6px 0" : "5px 0",
         borderRadius: 6,
         border: "1px solid #2d4057",
         background: "#0f1923",
@@ -9250,7 +9253,7 @@ function App() {
       disabled: lastBets.length === 0,
       style: {
         flex: 1,
-        padding: isLandscape ? "8px 0" : "5px 0",
+        padding: isLandscape ? "6px 0" : "5px 0",
         borderRadius: 6,
         border: "1px solid #2d4057",
         background: "#0f1923",
@@ -12179,8 +12182,8 @@ function App() {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      gap: isLandscape ? 8 : 12,
-      padding: isLandscape ? "8px 10px 40px" : "16px 14px 80px",
+      gap: isLandscape ? 4 : 12,
+      padding: isLandscape ? "4px 8px 8px" : "16px 14px 80px",
       boxSizing: "border-box"
     }
   }, /*#__PURE__*/React.createElement("div", {

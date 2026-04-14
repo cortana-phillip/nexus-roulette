@@ -112,7 +112,7 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
   ];
   const g = 2;
-  const cellH = landscape ? Math.floor(Math.min(window.innerHeight - 190, 250) / 3) : 30;
+  const cellH = landscape ? Math.max(28, Math.floor((window.innerHeight - 250) / 3)) : 30;
   const zeroW = landscape ? 40 : 22;
   const colW = landscape ? 36 : 24;
   const cellFs = landscape ? Math.max(14, Math.floor(cellH/3)) : 11;
@@ -148,15 +148,19 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
 
   function Mkr(){return React.createElement("div",{style:{position:"absolute",top:-5,right:-3,width:12,height:12,borderRadius:"50%",background:"#fbbf24",border:"2px solid #92400e",boxShadow:"0 0 6px #fbbf24",animation:"pulse 1s infinite"}});}
 
+  var chipSize = landscape ? 24 : 16;
+  var chipFs = landscape ? 11 : 8;
+  var stratSize = landscape ? 20 : 14;
+
   function BetChip({amount,posKey}){
     if(!amount) return null;
     var lbl = amount>=1000?(amount/1000)+"k":amount>=100?amount.toFixed(0):amount>=1?(amount%1!==0?amount.toFixed(2):amount.toFixed(0)):amount<1?(amount*100)+"¢":"";
-    var fs = lbl.length>3?6:lbl.length>2?7:8;
+    var fs = landscape?(lbl.length>3?8:lbl.length>2?9:chipFs):(lbl.length>3?6:lbl.length>2?7:chipFs);
     var result = br[posKey]||null;
     var bgC = result==="won"?"#16a34a":result==="lost"?"#991b1b":(chipColor||"#fff");
     var bdC = result==="won"?"#4ade80":result==="lost"?"#f87171":"#92400e";
     var shadow = result==="won"?"0 0 8px #4ade80":result==="lost"?"0 0 6px #ef4444":"0 1px 3px rgba(0,0,0,0.5)";
-    return React.createElement("div",{style:{position:"absolute",bottom:-2,left:"50%",transform:"translateX(-50%)",minWidth:16,height:16,borderRadius:8,background:bgC,border:"1.5px solid "+bdC,fontSize:fs,fontWeight:900,color:result?"#fff":"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 2px",zIndex:5,boxShadow:shadow,animation:result==="won"?"pulse 0.8s infinite":"none",whiteSpace:"nowrap"}},lbl);
+    return React.createElement("div",{style:{position:"absolute",bottom:-2,left:"50%",transform:"translateX(-50%)",minWidth:chipSize,height:chipSize,borderRadius:chipSize/2,background:bgC,border:(landscape?"2":"1.5")+"px solid "+bdC,fontSize:fs,fontWeight:900,color:result?"#fff":"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px",zIndex:5,boxShadow:shadow,animation:result==="won"?"pulse 0.8s infinite":"none",whiteSpace:"nowrap"}},lbl);
   }
 
   function StratChipBadge({chips}){
@@ -164,8 +168,8 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     return React.createElement("div",{style:{position:"absolute",top:-3,left:-3,display:"flex",gap:1,zIndex:6}},
       chips.map(function(ch,i){
         var lbl=ch.amount>=100?ch.amount.toFixed(0):ch.amount>=1?(ch.amount%1!==0?ch.amount.toFixed(2):ch.amount.toFixed(0)):ch.amount<1?(ch.amount*100)+"¢":"";
-        var fs=lbl.length>3?5:lbl.length>2?6:7;
-        return React.createElement("div",{key:i,style:{minWidth:14,height:14,borderRadius:7,background:ch.color,border:"1.5px solid #ffffff44",fontSize:fs,fontWeight:900,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 2px",boxShadow:"0 1px 3px rgba(0,0,0,0.5)"}},lbl);
+        var fs=landscape?(lbl.length>3?7:lbl.length>2?8:9):(lbl.length>3?5:lbl.length>2?6:7);
+        return React.createElement("div",{key:i,style:{minWidth:stratSize,height:stratSize,borderRadius:stratSize/2,background:ch.color,border:"1.5px solid #ffffff44",fontSize:fs,fontWeight:900,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 2px",boxShadow:"0 1px 3px rgba(0,0,0,0.5)"}},lbl);
       })
     );
   }
@@ -362,11 +366,11 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
           {overlayChips.length>0 && React.createElement("div",{style:{position:"absolute",top:0,left:0,right:0,bottom:0,pointerEvents:"none",zIndex:20}},
             overlayChips.map(function(oc,i){
               var lbl=oc.amount>=1000?(oc.amount/1000)+"k":oc.amount>=1?(oc.amount%1!==0?oc.amount.toFixed(2):oc.amount.toFixed(0)):oc.amount<1?(oc.amount*100)+"¢":"";
-              var fs=lbl.length>3?6:lbl.length>2?7:8;
+              var fs=landscape?(lbl.length>3?8:lbl.length>2?9:chipFs):(lbl.length>3?6:lbl.length>2?7:8);
               var result=br[oc.posKey]||null;
               var bgC=result==="won"?"#16a34a":result==="lost"?"#991b1b":(chipColor||"#fff");
               var bdC=result==="won"?"#4ade80":result==="lost"?"#f87171":"#92400e";
-              return React.createElement("div",{key:"oc"+i,style:{position:"absolute",left:oc.left+"%",top:oc.top,transform:"translate(-50%,-50%)",minWidth:18,height:18,borderRadius:9,background:bgC,border:"2px solid "+bdC,fontSize:fs,fontWeight:900,color:result?"#fff":"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px",boxShadow:result==="won"?"0 0 8px #4ade80":result==="lost"?"0 0 6px #ef4444":"0 2px 8px rgba(0,0,0,0.8)",whiteSpace:"nowrap"}},lbl);
+              return React.createElement("div",{key:"oc"+i,style:{position:"absolute",left:oc.left+"%",top:oc.top,transform:"translate(-50%,-50%)",minWidth:chipSize+2,height:chipSize+2,borderRadius:(chipSize+2)/2,background:bgC,border:"2px solid "+bdC,fontSize:fs,fontWeight:900,color:result?"#fff":"#1e293b",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px",boxShadow:result==="won"?"0 0 8px #4ade80":result==="lost"?"0 0 6px #ef4444":"0 2px 8px rgba(0,0,0,0.8)",whiteSpace:"nowrap"}},lbl);
             })
           )}
         </div>
@@ -375,7 +379,7 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
         </div>
       </div>
       <div style={{display:"flex",gap:g,marginLeft:zeroW+g}}>
-        {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){var on=winGroups.doz===d.i;var bk="dozen:"+d.i;var sc=sb[bk]||null;var sCh=sChipsMap[bk]||null;return React.createElement("div",{key:d.i,onClick:function(){if(canBet)onBet("dozen",d.i);},style:{flex:1,padding:landscape?"10px 0":"6px 0",borderRadius:3,textAlign:"center",fontSize:landscape?13:10,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",cursor:canBet?"pointer":"default",position:"relative"}},d.l,sCh&&React.createElement(StratChipBadge,{chips:sCh}),bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
+        {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){var on=winGroups.doz===d.i;var bk="dozen:"+d.i;var sc=sb[bk]||null;var sCh=sChipsMap[bk]||null;return React.createElement("div",{key:d.i,onClick:function(){if(canBet)onBet("dozen",d.i);},style:{flex:1,padding:landscape?"6px 0":"6px 0",borderRadius:3,textAlign:"center",fontSize:landscape?13:10,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",cursor:canBet?"pointer":"default",position:"relative"}},d.l,sCh&&React.createElement(StratChipBadge,{chips:sCh}),bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
       </div>
       <div style={{display:"flex",gap:g,marginLeft:zeroW+g}}>
         {[

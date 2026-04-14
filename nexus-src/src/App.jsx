@@ -767,7 +767,7 @@ export default function App() {
             const r=!isZ&&RED.has(+displayNum);
             return <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:48,height:48,borderRadius:"50%",background:isZ?"#166534":r?"#991b1b":"#1e293b",border:"3px solid "+(isZ?"#4ade80":r?"#f87171":"#64748b"),fontSize:20,fontWeight:900,color:"white",animation:gameSpinning?"pulse 0.15s infinite":"none",flexShrink:0}}>{displayNum}</div>;
           })()}
-          <button onClick={doGameSpin} disabled={gameSpinning||!!betResults} style={{flex:1,padding:"12px 0",borderRadius:10,border:"none",background:gameSpinning||betResults?"#374151":"linear-gradient(135deg,#16a34a,#059669)",color:"white",fontSize:16,fontWeight:900,cursor:gameSpinning||betResults?"not-allowed":"pointer",opacity:gameSpinning?0.7:1}}>
+          <button onClick={doGameSpin} disabled={gameSpinning||!!betResults} style={{flex:1,padding:isLandscape?"6px 0":"12px 0",borderRadius:10,border:"none",background:gameSpinning||betResults?"#374151":"linear-gradient(135deg,#16a34a,#059669)",color:"white",fontSize:isLandscape?13:16,fontWeight:900,cursor:gameSpinning||betResults?"not-allowed":"pointer",opacity:gameSpinning?0.7:1}}>
             {gameSpinning?"Spinning...":"🎰 SPIN"}
           </button>
           {lastSpinDelta!==null && <div style={{textAlign:"center",flexShrink:0,minWidth:55}}><div style={{fontSize:7,color:"#64748b",textTransform:"uppercase"}}>Last</div><div style={{fontSize:14,fontWeight:900,color:lastSpinDelta>0?"#4ade80":lastSpinDelta<0?"#f87171":"#94a3b8"}}>{lastSpinDelta>0?"+":lastSpinDelta<0?"-":""}{cur.symbol}{fmtNum(lastSpinDelta)}</div></div>}
@@ -786,13 +786,13 @@ export default function App() {
 
         {/* Chips + controls (compact, matching Live mode) */}
         <div style={{display:"flex",gap:isLandscape?6:3,justifyContent:"center",flexWrap:"wrap"}}>
-          {CHIPS.map(c=>(<button key={c.val} onClick={()=>setSelectedChip(c.val)} style={{width:isLandscape?44:34,height:isLandscape?44:34,borderRadius:"50%",border:(isLandscape?"3":"2")+"px solid "+(selectedChip===c.val?"#fbbf24":c.border),background:c.color,color:c.val>=100?"#fff":c.val<=0.5?"#1e293b":"#1e293b",fontSize:isLandscape?(c.val<1?9:11):(c.val<1?7:8),fontWeight:900,cursor:"pointer",boxShadow:selectedChip===c.val?"0 0 8px #fbbf24":"none",display:"flex",alignItems:"center",justifyContent:"center"}}>{c.label}</button>))}
+          {CHIPS.map(c=>(<button key={c.val} onClick={()=>setSelectedChip(c.val)} style={{width:isLandscape?38:34,height:isLandscape?38:34,borderRadius:"50%",border:(isLandscape?"3":"2")+"px solid "+(selectedChip===c.val?"#fbbf24":c.border),background:c.color,color:c.val>=100?"#fff":c.val<=0.5?"#1e293b":"#1e293b",fontSize:isLandscape?(c.val<1?9:11):(c.val<1?7:8),fontWeight:900,cursor:"pointer",boxShadow:selectedChip===c.val?"0 0 8px #fbbf24":"none",display:"flex",alignItems:"center",justifyContent:"center"}}>{c.label}</button>))}
         </div>
         <div style={{display:"flex",gap:isLandscape?6:3}}>
-          <button onClick={undoBet} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:isLandscape?"8px 0":"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#60a5fa":"#374151",fontSize:isLandscape?11:8,fontWeight:700}}>↩Undo</button>
-          <button onClick={clearBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:isLandscape?"8px 0":"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#f87171":"#374151",fontSize:isLandscape?11:8,fontWeight:700}}>✕Clear</button>
-          <button onClick={doubleBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:isLandscape?"8px 0":"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#fbbf24":"#374151",fontSize:isLandscape?11:8,fontWeight:700}}>2×</button>
-          <button onClick={repeatBets} disabled={lastBets.length===0} style={{flex:1,padding:isLandscape?"8px 0":"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:lastBets.length>0?"#86efac":"#374151",fontSize:isLandscape?11:8,fontWeight:700}}>♻Rpt</button>
+          <button onClick={undoBet} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:isLandscape?"6px 0":"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#60a5fa":"#374151",fontSize:isLandscape?11:8,fontWeight:700}}>↩Undo</button>
+          <button onClick={clearBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:isLandscape?"6px 0":"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#f87171":"#374151",fontSize:isLandscape?11:8,fontWeight:700}}>✕Clear</button>
+          <button onClick={doubleBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:isLandscape?"6px 0":"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#fbbf24":"#374151",fontSize:isLandscape?11:8,fontWeight:700}}>2×</button>
+          <button onClick={repeatBets} disabled={lastBets.length===0} style={{flex:1,padding:isLandscape?"6px 0":"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:lastBets.length>0?"#86efac":"#374151",fontSize:isLandscape?11:8,fontWeight:700}}>♻Rpt</button>
         </div>
         {totalBetAmt>0 && <div style={{textAlign:"center",fontSize:10,fontWeight:800,color:"#fbbf24"}}>Bet: {cur.symbol}{fmtNum(totalBetAmt)}</div>}
         {totalBetAmt>0 && !betResults && (
@@ -1666,7 +1666,7 @@ export default function App() {
 
   return (
     <div style={{minHeight:"100vh",background:"#0f1923",color:"#e2e8f0",fontFamily:"'Segoe UI',system-ui,sans-serif"}}>
-      <div style={{width:"100%",maxWidth:isLandscape?9999:460,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",gap:isLandscape?8:12,padding:isLandscape?"8px 10px 40px":"16px 14px 80px",boxSizing:"border-box"}}>
+      <div style={{width:"100%",maxWidth:isLandscape?9999:460,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",gap:isLandscape?4:12,padding:isLandscape?"4px 8px 8px":"16px 14px 80px",boxSizing:"border-box"}}>
 
         {/* Header */}
         <div style={{width:"100%",textAlign:"center"}}>
