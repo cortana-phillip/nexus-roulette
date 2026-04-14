@@ -112,10 +112,10 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
   ];
   const g = 2;
-  const cellH = landscape ? 44 : 30;
-  const zeroW = landscape ? 28 : 22;
-  const colW = landscape ? 30 : 24;
-  const cellFs = landscape ? 14 : 11;
+  const cellH = landscape ? 54 : 30;
+  const zeroW = landscape ? 36 : 22;
+  const colW = landscape ? 36 : 24;
+  const cellFs = landscape ? 16 : 11;
   const winStr = winningNumber ? String(winningNumber) : null;
   const winN = winStr && winStr!=="0" && winStr!=="00" ? +winStr : null;
   // Only highlight outside bets on FINAL result, not during spin
@@ -375,7 +375,7 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
         </div>
       </div>
       <div style={{display:"flex",gap:g,marginLeft:zeroW+g}}>
-        {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){var on=winGroups.doz===d.i;var bk="dozen:"+d.i;var sc=sb[bk]||null;var sCh=sChipsMap[bk]||null;return React.createElement("div",{key:d.i,onClick:function(){if(canBet)onBet("dozen",d.i);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:10,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",cursor:canBet?"pointer":"default",position:"relative"}},d.l,sCh&&React.createElement(StratChipBadge,{chips:sCh}),bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
+        {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){var on=winGroups.doz===d.i;var bk="dozen:"+d.i;var sc=sb[bk]||null;var sCh=sChipsMap[bk]||null;return React.createElement("div",{key:d.i,onClick:function(){if(canBet)onBet("dozen",d.i);},style:{flex:1,padding:landscape?"10px 0":"6px 0",borderRadius:3,textAlign:"center",fontSize:landscape?13:10,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",cursor:canBet?"pointer":"default",position:"relative"}},d.l,sCh&&React.createElement(StratChipBadge,{chips:sCh}),bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
       </div>
       <div style={{display:"flex",gap:g,marginLeft:zeroW+g}}>
         {[
