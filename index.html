@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.7";
+  var MY_V="0.40.8";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.7";
+var APP_VERSION = "0.40.8";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -3096,42 +3096,69 @@ function RouletteBoard(_ref16) {
       onClick: handleClick,
       style: _objectSpread(_objectSpread({}, numStyle(num, isZero)), {}, {
         cursor: canBet ? "pointer" : "default",
-        border: betBorder || numStyle(num, isZero).border,
-        overflow: "visible"
+        border: betBorder || numStyle(num, isZero).border
       })
     }, numStr, winStr === numStr && !spinning && React.createElement(Mkr), sChips && React.createElement(StratChipBadge, {
       chips: sChips
     }), bb[betKey] && React.createElement(BetChip, {
       amount: bb[betKey],
       posKey: betKey
-    }), anchoredChips.map(function (ac, i) {
-      var lbl = ac.amount >= 1000 ? ac.amount / 1000 + "k" : ac.amount >= 1 ? ac.amount % 1 !== 0 ? ac.amount.toFixed(2) : ac.amount.toFixed(0) : ac.amount < 1 ? ac.amount * 100 + "¢" : "";
-      var fs = lbl.length > 3 ? 6 : lbl.length > 2 ? 7 : 8;
-      var result = br[ac.posKey] || null;
-      var bgC = result === "won" ? "#16a34a" : result === "lost" ? "#991b1b" : chipColor || "#fff";
-      var bdC = result === "won" ? "#4ade80" : result === "lost" ? "#f87171" : "#92400e";
-      return React.createElement("div", {
-        key: "ib" + i,
-        style: _objectSpread(_objectSpread({}, ac.style), {}, {
-          minWidth: 16,
-          height: 16,
-          borderRadius: 8,
-          background: bgC,
-          border: "1.5px solid " + bdC,
-          fontSize: fs,
-          fontWeight: 900,
-          color: result ? "#fff" : "#1e293b",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "0 2px",
-          boxShadow: result === "won" ? "0 0 8px #4ade80" : result === "lost" ? "0 0 6px #ef4444" : "0 2px 6px rgba(0,0,0,0.6)",
-          pointerEvents: "none",
-          whiteSpace: "nowrap"
-        })
-      }, lbl);
     }));
   }
+
+  // Compute overlay chip positions for inside bets
+  var overlayChips = [];
+  Object.keys(insideBetChips).forEach(function (anchorNum) {
+    var pos = numToPos[anchorNum];
+    if (!pos) return;
+    insideBetChips[anchorNum].forEach(function (ac) {
+      // Determine position based on bet type
+      var parts = ac.posKey.split(":");
+      var bType = parts[0];
+      var betNums = parts.slice(1).join(":").split("-").map(function (n) {
+        return numToPos[n];
+      }).filter(Boolean);
+      if (betNums.length === 0) return;
+      var minR = 3,
+        maxR = -1,
+        minC = 12,
+        maxC = -1;
+      betNums.forEach(function (p) {
+        if (p.r < minR) minR = p.r;
+        if (p.r > maxR) maxR = p.r;
+        if (p.c < minC) minC = p.c;
+        if (p.c > maxC) maxC = p.c;
+      });
+      var leftPct, topPx;
+      if (bType === "corner") {
+        leftPct = (minC + 1) / 12 * 100;
+        topPx = (minR + 1) * (30 + g) - g;
+      } else if (bType === "split") {
+        if (minR !== maxR) {
+          leftPct = (minC + 0.5) / 12 * 100;
+          topPx = (minR + 1) * (30 + g) - g;
+        } else {
+          leftPct = (minC + 1) / 12 * 100;
+          topPx = minR * (30 + g) + 15;
+        }
+      } else if (bType === "street") {
+        leftPct = 0;
+        topPx = 1 * (30 + g) + 15;
+      } else if (bType === "line") {
+        leftPct = maxC / 12 * 100;
+        topPx = 1 * (30 + g) + 15;
+      } else {
+        leftPct = (minC + 0.5) / 12 * 100;
+        topPx = 1 * (30 + g) + 15;
+      }
+      overlayChips.push({
+        left: leftPct,
+        top: topPx,
+        amount: ac.amount,
+        posKey: ac.posKey
+      });
+    });
+  });
   return /*#__PURE__*/React.createElement("div", {
     style: {
       width: "100%",
@@ -3161,19 +3188,61 @@ function RouletteBoard(_ref16) {
     }
   }, cell(0, true, "0"), isAmerican && cell(0, true, "00")), /*#__PURE__*/React.createElement("div", {
     style: {
+      position: "relative",
       flex: 1,
-      minWidth: 0,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
       display: "grid",
       gridTemplateColumns: "repeat(12,1fr)",
       gridTemplateRows: "repeat(3,30px)",
-      gap: g,
-      overflow: "visible"
+      gap: g
     }
   }, BOARD_ROWS.map(function (row) {
     return row.map(function (num) {
       return cell(num, false);
     });
-  })), /*#__PURE__*/React.createElement("div", {
+  })), overlayChips.length > 0 && React.createElement("div", {
+    style: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      pointerEvents: "none",
+      zIndex: 20
+    }
+  }, overlayChips.map(function (oc, i) {
+    var lbl = oc.amount >= 1000 ? oc.amount / 1000 + "k" : oc.amount >= 1 ? oc.amount % 1 !== 0 ? oc.amount.toFixed(2) : oc.amount.toFixed(0) : oc.amount < 1 ? oc.amount * 100 + "¢" : "";
+    var fs = lbl.length > 3 ? 6 : lbl.length > 2 ? 7 : 8;
+    var result = br[oc.posKey] || null;
+    var bgC = result === "won" ? "#16a34a" : result === "lost" ? "#991b1b" : chipColor || "#fff";
+    var bdC = result === "won" ? "#4ade80" : result === "lost" ? "#f87171" : "#92400e";
+    return React.createElement("div", {
+      key: "oc" + i,
+      style: {
+        position: "absolute",
+        left: oc.left + "%",
+        top: oc.top,
+        transform: "translate(-50%,-50%)",
+        minWidth: 18,
+        height: 18,
+        borderRadius: 9,
+        background: bgC,
+        border: "2px solid " + bdC,
+        fontSize: fs,
+        fontWeight: 900,
+        color: result ? "#fff" : "#1e293b",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "0 3px",
+        boxShadow: result === "won" ? "0 0 8px #4ade80" : result === "lost" ? "0 0 6px #ef4444" : "0 2px 8px rgba(0,0,0,0.8)",
+        whiteSpace: "nowrap"
+      }
+    }, lbl);
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",

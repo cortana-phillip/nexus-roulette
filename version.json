@@ -1,1 +1,1 @@
-{"version":"0.40.7","date":"2026-04-13","notes":"Restored big prominent Session Profit + Last Spin display."}
+{"version":"0.40.8","date":"2026-04-13","notes":"Bet chips now render in an overlay layer ON TOP of the entire grid. No more chips hidden behind cells."}
