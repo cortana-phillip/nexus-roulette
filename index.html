@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.26";
+  var MY_V="0.40.27";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.26";
+var APP_VERSION = "0.40.27";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -3354,7 +3354,8 @@ function RouletteBoard(_ref16) {
     style: {
       display: "flex",
       gap: g,
-      marginLeft: zeroW + g
+      marginLeft: zeroW + g,
+      marginRight: colW + g
     }
   }, [{
     l: "1st 12",
@@ -3399,7 +3400,8 @@ function RouletteBoard(_ref16) {
     style: {
       display: "flex",
       gap: g,
-      marginLeft: zeroW + g
+      marginLeft: zeroW + g,
+      marginRight: colW + g
     }
   }, [{
     l: "1-18",
@@ -9102,12 +9104,12 @@ function App() {
       disabled: gameSpinning || !!betResults,
       style: {
         flex: 1,
-        padding: isLandscape ? "6px 0" : "12px 0",
+        padding: isLandscape ? "12px 0" : "12px 0",
         borderRadius: 10,
         border: "none",
         background: gameSpinning || betResults ? "#374151" : "linear-gradient(135deg,#16a34a,#059669)",
         color: "white",
-        fontSize: isLandscape ? 13 : 16,
+        fontSize: isLandscape ? 15 : 16,
         fontWeight: 900,
         cursor: gameSpinning || betResults ? "not-allowed" : "pointer",
         opacity: gameSpinning ? 0.7 : 1

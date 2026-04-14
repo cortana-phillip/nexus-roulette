@@ -767,7 +767,7 @@ export default function App() {
             const r=!isZ&&RED.has(+displayNum);
             return <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:48,height:48,borderRadius:"50%",background:isZ?"#166534":r?"#991b1b":"#1e293b",border:"3px solid "+(isZ?"#4ade80":r?"#f87171":"#64748b"),fontSize:20,fontWeight:900,color:"white",animation:gameSpinning?"pulse 0.15s infinite":"none",flexShrink:0}}>{displayNum}</div>;
           })()}
-          <button onClick={doGameSpin} disabled={gameSpinning||!!betResults} style={{flex:1,padding:isLandscape?"6px 0":"12px 0",borderRadius:10,border:"none",background:gameSpinning||betResults?"#374151":"linear-gradient(135deg,#16a34a,#059669)",color:"white",fontSize:isLandscape?13:16,fontWeight:900,cursor:gameSpinning||betResults?"not-allowed":"pointer",opacity:gameSpinning?0.7:1}}>
+          <button onClick={doGameSpin} disabled={gameSpinning||!!betResults} style={{flex:1,padding:isLandscape?"12px 0":"12px 0",borderRadius:10,border:"none",background:gameSpinning||betResults?"#374151":"linear-gradient(135deg,#16a34a,#059669)",color:"white",fontSize:isLandscape?15:16,fontWeight:900,cursor:gameSpinning||betResults?"not-allowed":"pointer",opacity:gameSpinning?0.7:1}}>
             {gameSpinning?"Spinning...":"🎰 SPIN"}
           </button>
           {lastSpinDelta!==null && <div style={{textAlign:"center",flexShrink:0,minWidth:55}}><div style={{fontSize:7,color:"#64748b",textTransform:"uppercase"}}>Last</div><div style={{fontSize:14,fontWeight:900,color:lastSpinDelta>0?"#4ade80":lastSpinDelta<0?"#f87171":"#94a3b8"}}>{lastSpinDelta>0?"+":lastSpinDelta<0?"-":""}{cur.symbol}{fmtNum(lastSpinDelta)}</div></div>}
