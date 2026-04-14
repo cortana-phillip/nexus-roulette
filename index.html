@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.1";
+  var MY_V="0.40.2";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.1";
+var APP_VERSION = "0.40.2";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2869,7 +2869,25 @@ function RouletteBoard(_ref16) {
         target: nums.join("-")
       };
     }
-    // Street: left edge of leftmost column
+    if (nearLeft && nearBottom && hasLeft && hasBelow) {
+      var nums = [BOARD_ROWS[r][c - 1], BOARD_ROWS[r][c], BOARD_ROWS[r + 1][c - 1], BOARD_ROWS[r + 1][c]].sort(function (a, b) {
+        return a - b;
+      });
+      return {
+        type: "corner",
+        target: nums.join("-")
+      };
+    }
+    if (nearLeft && nearTop && hasLeft && hasAbove) {
+      var nums = [BOARD_ROWS[r - 1][c - 1], BOARD_ROWS[r - 1][c], BOARD_ROWS[r][c - 1], BOARD_ROWS[r][c]].sort(function (a, b) {
+        return a - b;
+      });
+      return {
+        type: "corner",
+        target: nums.join("-")
+      };
+    }
+    // Street: edges of the grid (left of col 0, top of row 0, bottom of row 2)
     if (nearLeft && !hasLeft) {
       var st = [BOARD_ROWS[0][c], BOARD_ROWS[1][c], BOARD_ROWS[2][c]].sort(function (a, b) {
         return a - b;
@@ -2879,7 +2897,25 @@ function RouletteBoard(_ref16) {
         target: st.join("-")
       };
     }
-    // Line: left edge between two columns
+    if (nearTop && !hasAbove) {
+      var st = [BOARD_ROWS[0][c], BOARD_ROWS[1][c], BOARD_ROWS[2][c]].sort(function (a, b) {
+        return a - b;
+      });
+      return {
+        type: "street",
+        target: st.join("-")
+      };
+    }
+    if (nearBottom && !hasBelow) {
+      var st = [BOARD_ROWS[0][c], BOARD_ROWS[1][c], BOARD_ROWS[2][c]].sort(function (a, b) {
+        return a - b;
+      });
+      return {
+        type: "street",
+        target: st.join("-")
+      };
+    }
+    // Line: between two columns
     if (nearLeft && hasLeft) {
       var line = [BOARD_ROWS[0][c - 1], BOARD_ROWS[1][c - 1], BOARD_ROWS[2][c - 1], BOARD_ROWS[0][c], BOARD_ROWS[1][c], BOARD_ROWS[2][c]].sort(function (a, b) {
         return a - b;
@@ -9498,7 +9534,322 @@ function App() {
           justifyContent: "center"
         }
       }, val);
-    })), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
+    })), function () {
+      var tMin = settings.tableMinBet || 1;
+      var CHIPS = [{
+        val: 0.25,
+        color: "#89CFF0",
+        border: "#5BA3D9",
+        label: "25¢"
+      }, {
+        val: 0.50,
+        color: "#FFB6C1",
+        border: "#E8929E",
+        label: "50¢"
+      }, {
+        val: 1,
+        color: "#ffffff",
+        border: "#aaaaaa",
+        label: "$1"
+      }, {
+        val: 5,
+        color: "#ef4444",
+        border: "#b91c1c",
+        label: "$5"
+      }, {
+        val: 25,
+        color: "#22c55e",
+        border: "#15803d",
+        label: "$25"
+      }, {
+        val: 100,
+        color: "#1e293b",
+        border: "#64748b",
+        label: "$100"
+      }, {
+        val: 500,
+        color: "#8b5cf6",
+        border: "#6d28d9",
+        label: "$500"
+      }].filter(function (c) {
+        return c.val >= tMin;
+      });
+      var liveTotalBet = liveManualBets.reduce(function (s, b) {
+        return s + b.amount;
+      }, 0);
+      var liveBoardBets = {};
+      liveManualBets.forEach(function (b) {
+        var key = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
+        liveBoardBets[key] = (liveBoardBets[key] || 0) + b.amount;
+      });
+      var stratBets = {};
+      nonClosedTracks.filter(function (t) {
+        return t.state === "active";
+      }).forEach(function (t) {
+        if (t.type === "fibonacci") {
+          (t.config.dozenTargets || []).forEach(function (d) {
+            stratBets["dozen:" + d] = t.color;
+          });
+          (t.config.colTargets || []).forEach(function (c) {
+            stratBets["column:" + c] = t.color;
+          });
+          (t.config.evenTargets || []).forEach(function (key) {
+            stratBets[key] = t.color;
+          });
+        }
+        if (t.type === "solution") {
+          (t.config.activeBets || []).forEach(function (b) {
+            if (!stratBets["s:" + b.number]) stratBets["s:" + b.number] = t.color;
+          });
+        }
+        if (t.type === "custom") {
+          (t.config.positions || []).forEach(function (p) {
+            var pk = p.type === "straight" ? "s:" + p.target : p.type + (p.target !== undefined ? ":" + p.target : "");
+            if (!stratBets[pk]) stratBets[pk] = t.color;
+          });
+        }
+      });
+      function livePlaceBet(type, target) {
+        if (liveSelectingWinner) {
+          var val = type === "straight" ? target : null;
+          if (!val) return;
+          setLiveWinNumber(val);
+          tapNumber(val, nonClosedTracks.some(function (t) {
+            return t.state === "active";
+          }));
+          if (liveManualBets.length > 0) {
+            var totalWin = 0,
+              totalBet = 0,
+              posResults = {};
+            liveManualBets.forEach(function (b) {
+              totalBet += b.amount;
+              var posKey = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
+              var covered = betCoveredNumbers(b.type, b.target);
+              if (covered.indexOf(val) >= 0) {
+                totalWin += b.amount * betPayoutMult(b.type);
+                posResults[posKey] = "won";
+              } else {
+                if (!posResults[posKey]) posResults[posKey] = "lost";
+              }
+            });
+            updSess(function (s) {
+              s.bankrollCurrent = Math.round((s.bankrollCurrent + (totalWin - totalBet)) * 100) / 100;
+            });
+            setLiveBetResults(posResults);
+            setLiveLastBets(_toConsumableArray(liveManualBets));
+            setLiveUndoStack([]);
+            liveClearTimerRef.current = setTimeout(function () {
+              setLiveBetResults(null);
+              setLiveManualBets([]);
+              liveClearTimerRef.current = null;
+            }, 3000);
+          }
+          setLiveSelectingWinner(true);
+          return;
+        }
+        if (liveBetResults) {
+          if (liveClearTimerRef.current) {
+            clearTimeout(liveClearTimerRef.current);
+            liveClearTimerRef.current = null;
+          }
+          setLiveBetResults(null);
+          setLiveManualBets([]);
+        }
+        setLiveWinNumber(null);
+        setLiveManualBets(function (prev) {
+          return [].concat(_toConsumableArray(prev), [{
+            id: Date.now() + Math.random(),
+            type: type,
+            target: target,
+            amount: selectedChip
+          }]);
+        });
+        setLiveUndoStack(function (prev) {
+          return [].concat(_toConsumableArray(prev), [1]);
+        });
+        if (settings.vibration !== false && navigator.vibrate) navigator.vibrate(10);
+      }
+      function liveUndoBet() {
+        if (liveBetResults) return;
+        setLiveUndoStack(function (prev) {
+          if (prev.length === 0) return prev;
+          var count = prev[prev.length - 1];
+          setLiveManualBets(function (mb) {
+            return mb.slice(0, -count);
+          });
+          return prev.slice(0, -1);
+        });
+      }
+      function liveClearBets() {
+        setLiveManualBets([]);
+        setLiveUndoStack([]);
+      }
+      function liveDoubleBets() {
+        if (liveBetResults) return;
+        setLiveManualBets(function (prev) {
+          setLiveUndoStack(function (us) {
+            return [].concat(_toConsumableArray(us), [prev.length]);
+          });
+          return [].concat(_toConsumableArray(prev), _toConsumableArray(prev.map(function (b) {
+            return _objectSpread(_objectSpread({}, b), {}, {
+              id: Date.now() + Math.random()
+            });
+          })));
+        });
+      }
+      function liveRepeatBets() {
+        if (liveLastBets.length === 0) return;
+        if (liveClearTimerRef.current) {
+          clearTimeout(liveClearTimerRef.current);
+          liveClearTimerRef.current = null;
+        }
+        if (liveBetResults) {
+          setLiveBetResults(null);
+          setLiveManualBets([]);
+        }
+        var repeated = liveLastBets.map(function (b) {
+          return _objectSpread(_objectSpread({}, b), {}, {
+            id: Date.now() + Math.random()
+          });
+        });
+        setLiveManualBets(repeated);
+        setLiveUndoStack([repeated.length]);
+      }
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 6
+        }
+      }, /*#__PURE__*/React.createElement("button", {
+        onClick: function onClick() {
+          return setLiveSelectingWinner(!liveSelectingWinner);
+        },
+        style: {
+          width: "100%",
+          padding: "12px 0",
+          borderRadius: 10,
+          border: liveSelectingWinner ? "2px solid #fbbf24" : "2px solid #2d4057",
+          background: liveSelectingWinner ? "linear-gradient(135deg,#92400e,#78350f)" : "#0f1923",
+          color: liveSelectingWinner ? "#fbbf24" : "#94a3b8",
+          fontSize: 13,
+          fontWeight: 800,
+          cursor: "pointer"
+        }
+      }, liveSelectingWinner ? "👆 Tap the winning number..." : "🎯 Choose Winning Number"), /*#__PURE__*/React.createElement(RouletteBoard, {
+        roulette: sess.roulette,
+        winningNumber: liveWinNumber,
+        stratBets: stratBets,
+        spinning: false,
+        onBet: livePlaceBet,
+        boardBets: liveBoardBets,
+        chipColor: (CHIPS.find(function (c) {
+          return c.val === selectedChip;
+        }) || CHIPS[0]).color,
+        betResults: liveBetResults,
+        stratChips: computeStratChips()
+      }), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 3,
+          justifyContent: "center",
+          flexWrap: "wrap"
+        }
+      }, CHIPS.map(function (c) {
+        return /*#__PURE__*/React.createElement("button", {
+          key: c.val,
+          onClick: function onClick() {
+            setSelectedChip(c.val);
+            setLiveSelectingWinner(false);
+          },
+          style: {
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            border: "2px solid " + (selectedChip === c.val && !liveSelectingWinner ? "#fbbf24" : c.border),
+            background: c.color,
+            color: c.val >= 100 ? "#fff" : c.val <= 0.5 ? "#1e293b" : "#1e293b",
+            fontSize: c.val < 1 ? 6 : 8,
+            fontWeight: 900,
+            cursor: "pointer",
+            boxShadow: selectedChip === c.val && !liveSelectingWinner ? "0 0 8px #fbbf24" : "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }
+        }, c.label);
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 3
+        }
+      }, /*#__PURE__*/React.createElement("button", {
+        onClick: liveUndoBet,
+        disabled: liveManualBets.length === 0 || !!liveBetResults,
+        style: {
+          flex: 1,
+          padding: "5px 0",
+          borderRadius: 6,
+          border: "1px solid #2d4057",
+          background: "#0f1923",
+          color: liveManualBets.length > 0 && !liveBetResults ? "#60a5fa" : "#374151",
+          fontSize: 8,
+          fontWeight: 700
+        }
+      }, "\u21A9Undo"), /*#__PURE__*/React.createElement("button", {
+        onClick: liveClearBets,
+        disabled: liveManualBets.length === 0 || !!liveBetResults,
+        style: {
+          flex: 1,
+          padding: "5px 0",
+          borderRadius: 6,
+          border: "1px solid #2d4057",
+          background: "#0f1923",
+          color: liveManualBets.length > 0 && !liveBetResults ? "#f87171" : "#374151",
+          fontSize: 8,
+          fontWeight: 700
+        }
+      }, "\u2715Clear"), /*#__PURE__*/React.createElement("button", {
+        onClick: liveDoubleBets,
+        disabled: liveManualBets.length === 0 || !!liveBetResults,
+        style: {
+          flex: 1,
+          padding: "5px 0",
+          borderRadius: 6,
+          border: "1px solid #2d4057",
+          background: "#0f1923",
+          color: liveManualBets.length > 0 && !liveBetResults ? "#fbbf24" : "#374151",
+          fontSize: 8,
+          fontWeight: 700
+        }
+      }, "2\xD7"), /*#__PURE__*/React.createElement("button", {
+        onClick: liveRepeatBets,
+        disabled: liveLastBets.length === 0,
+        style: {
+          flex: 1,
+          padding: "5px 0",
+          borderRadius: 6,
+          border: "1px solid #2d4057",
+          background: "#0f1923",
+          color: liveLastBets.length > 0 ? "#86efac" : "#374151",
+          fontSize: 8,
+          fontWeight: 700
+        }
+      }, "\u267BRpt")), liveTotalBet > 0 && /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "center",
+          fontSize: 10,
+          fontWeight: 800,
+          color: "#fbbf24"
+        }
+      }, "Bet: ", cur.symbol, fmtNum(liveTotalBet)), /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "center",
+          fontSize: 8,
+          color: "#374151"
+        }
+      }, "center=straight \xB7 edge=split \xB7 corner=corner"));
+    }(), sess.spins.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -9868,35 +10219,6 @@ function App() {
           fontWeight: 700
         }
       }, d, "sp"));
-    }))), sess.spins.length > 0 && /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 5,
-        marginBottom: 6
-      }
-    }, [0, 1, 2].map(function (i) {
-      return /*#__PURE__*/React.createElement(DCard, {
-        key: i,
-        label: DZ_LABELS[i],
-        range: ["1-12", "13-24", "25-36"][i],
-        drought: dozD[i],
-        colorBd: DZ_BD[i],
-        colorTx: DZ_TX[i]
-      });
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 5
-      }
-    }, [0, 1, 2].map(function (i) {
-      return /*#__PURE__*/React.createElement(DCard, {
-        key: i,
-        label: COL_LABELS[i],
-        range: ["1,4..34", "2,5..35", "3,6..36"][i],
-        drought: colD[i],
-        colorBd: COL_BD[i],
-        colorTx: COL_TX[i]
-      });
     }))), primaryTrack && primaryTrack.type === "fibonacci" && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
@@ -10244,395 +10566,7 @@ function App() {
           flexShrink: 0
         }
       }), TRACK_ICONS[t.type], " Lvl ", t.level);
-    }))), function () {
-      var tMin = settings.tableMinBet || 1;
-      var CHIPS = [{
-        val: 0.25,
-        color: "#89CFF0",
-        border: "#5BA3D9",
-        label: "25¢"
-      }, {
-        val: 0.50,
-        color: "#FFB6C1",
-        border: "#E8929E",
-        label: "50¢"
-      }, {
-        val: 1,
-        color: "#ffffff",
-        border: "#aaaaaa",
-        label: "$1"
-      }, {
-        val: 5,
-        color: "#ef4444",
-        border: "#b91c1c",
-        label: "$5"
-      }, {
-        val: 25,
-        color: "#22c55e",
-        border: "#15803d",
-        label: "$25"
-      }, {
-        val: 100,
-        color: "#1e293b",
-        border: "#64748b",
-        label: "$100"
-      }, {
-        val: 500,
-        color: "#8b5cf6",
-        border: "#6d28d9",
-        label: "$500"
-      }].filter(function (c) {
-        return c.val >= tMin;
-      });
-      var liveTotalBet = liveManualBets.reduce(function (s, b) {
-        return s + b.amount;
-      }, 0);
-      var liveBoardBets = {};
-      liveManualBets.forEach(function (b) {
-        var key = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
-        liveBoardBets[key] = (liveBoardBets[key] || 0) + b.amount;
-      });
-      var stratBets = {};
-      nonClosedTracks.filter(function (t) {
-        return t.state === "active";
-      }).forEach(function (t) {
-        if (t.type === "fibonacci") {
-          (t.config.dozenTargets || []).forEach(function (d) {
-            stratBets["dozen:" + d] = t.color;
-          });
-          (t.config.colTargets || []).forEach(function (c) {
-            stratBets["column:" + c] = t.color;
-          });
-          (t.config.evenTargets || []).forEach(function (key) {
-            stratBets[key] = t.color;
-          });
-        }
-        if (t.type === "solution") {
-          (t.config.activeBets || []).forEach(function (b) {
-            if (!stratBets["s:" + b.number]) stratBets["s:" + b.number] = t.color;
-          });
-        }
-        if (t.type === "custom") {
-          (t.config.positions || []).forEach(function (p) {
-            var pk = p.type === "straight" ? "s:" + p.target : p.type + (p.target !== undefined ? ":" + p.target : "");
-            if (!stratBets[pk]) stratBets[pk] = t.color;
-          });
-        }
-      });
-      function livePlaceBet(type, target) {
-        if (liveSelectingWinner) {
-          var val = type === "straight" ? target : null;
-          if (!val) return;
-          setLiveWinNumber(val);
-          tapNumber(val, nonClosedTracks.some(function (t) {
-            return t.state === "active";
-          }));
-          if (liveManualBets.length > 0) {
-            var totalWin = 0,
-              totalBet = 0,
-              posResults = {};
-            liveManualBets.forEach(function (b) {
-              totalBet += b.amount;
-              var posKey = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
-              var covered = betCoveredNumbers(b.type, b.target);
-              if (covered.indexOf(val) >= 0) {
-                totalWin += b.amount * betPayoutMult(b.type);
-                posResults[posKey] = "won";
-              } else {
-                if (!posResults[posKey]) posResults[posKey] = "lost";
-              }
-            });
-            updSess(function (s) {
-              s.bankrollCurrent = Math.round((s.bankrollCurrent + (totalWin - totalBet)) * 100) / 100;
-            });
-            setLiveBetResults(posResults);
-            setLiveLastBets(_toConsumableArray(liveManualBets));
-            setLiveUndoStack([]);
-            liveClearTimerRef.current = setTimeout(function () {
-              setLiveBetResults(null);
-              setLiveManualBets([]);
-              liveClearTimerRef.current = null;
-            }, 3000);
-          }
-          setLiveSelectingWinner(true);
-          return;
-        }
-        // Normal bet placement mode
-        if (liveBetResults) {
-          if (liveClearTimerRef.current) {
-            clearTimeout(liveClearTimerRef.current);
-            liveClearTimerRef.current = null;
-          }
-          setLiveBetResults(null);
-          setLiveManualBets([]);
-        }
-        setLiveWinNumber(null);
-        setLiveManualBets(function (prev) {
-          return [].concat(_toConsumableArray(prev), [{
-            id: Date.now() + Math.random(),
-            type: type,
-            target: target,
-            amount: selectedChip
-          }]);
-        });
-        setLiveUndoStack(function (prev) {
-          return [].concat(_toConsumableArray(prev), [1]);
-        });
-        if (settings.vibration !== false && navigator.vibrate) navigator.vibrate(10);
-      }
-      function liveUndoBet() {
-        if (liveBetResults) return;
-        setLiveUndoStack(function (prev) {
-          if (prev.length === 0) return prev;
-          var count = prev[prev.length - 1];
-          setLiveManualBets(function (mb) {
-            return mb.slice(0, -count);
-          });
-          return prev.slice(0, -1);
-        });
-      }
-      function liveClearBets() {
-        setLiveManualBets([]);
-        setLiveUndoStack([]);
-      }
-      function liveDoubleBets() {
-        if (liveBetResults) return;
-        setLiveManualBets(function (prev) {
-          setLiveUndoStack(function (us) {
-            return [].concat(_toConsumableArray(us), [prev.length]);
-          });
-          return [].concat(_toConsumableArray(prev), _toConsumableArray(prev.map(function (b) {
-            return _objectSpread(_objectSpread({}, b), {}, {
-              id: Date.now() + Math.random()
-            });
-          })));
-        });
-      }
-      function liveRepeatBets() {
-        if (liveLastBets.length === 0) return;
-        if (liveClearTimerRef.current) {
-          clearTimeout(liveClearTimerRef.current);
-          liveClearTimerRef.current = null;
-        }
-        if (liveBetResults) {
-          setLiveBetResults(null);
-          setLiveManualBets([]);
-        }
-        var repeated = liveLastBets.map(function (b) {
-          return _objectSpread(_objectSpread({}, b), {}, {
-            id: Date.now() + Math.random()
-          });
-        });
-        setLiveManualBets(repeated);
-        setLiveUndoStack([repeated.length]);
-      }
-      return /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          flexDirection: "column",
-          gap: 8
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          gap: 4,
-          justifyContent: "center",
-          flexWrap: "wrap"
-        }
-      }, CHIPS.map(function (c) {
-        return /*#__PURE__*/React.createElement("button", {
-          key: c.val,
-          onClick: function onClick() {
-            setSelectedChip(c.val);
-            setLiveSelectingWinner(false);
-          },
-          style: {
-            width: 40,
-            height: 40,
-            borderRadius: "50%",
-            border: "3px solid " + (selectedChip === c.val && !liveSelectingWinner ? "#fbbf24" : c.border),
-            background: c.color,
-            color: c.val >= 100 ? "#fff" : c.val <= 0.5 ? "#1e293b" : "#1e293b",
-            fontSize: c.val < 1 ? 7 : 9,
-            fontWeight: 900,
-            cursor: "pointer",
-            boxShadow: selectedChip === c.val && !liveSelectingWinner ? "0 0 10px #fbbf24" : "0 2px 4px rgba(0,0,0,0.3)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }
-        }, c.label);
-      })), /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          gap: 4,
-          alignItems: "center"
-        }
-      }, /*#__PURE__*/React.createElement("button", {
-        onClick: liveUndoBet,
-        disabled: liveManualBets.length === 0 || !!liveBetResults,
-        style: {
-          flex: 1,
-          padding: "7px 0",
-          borderRadius: 8,
-          border: "1px solid #2d4057",
-          background: "#0f1923",
-          color: liveManualBets.length > 0 && !liveBetResults ? "#60a5fa" : "#374151",
-          fontSize: 9,
-          fontWeight: 700
-        }
-      }, "\u21A9 Undo"), /*#__PURE__*/React.createElement("button", {
-        onClick: liveClearBets,
-        disabled: liveManualBets.length === 0 || !!liveBetResults,
-        style: {
-          flex: 1,
-          padding: "7px 0",
-          borderRadius: 8,
-          border: "1px solid #2d4057",
-          background: "#0f1923",
-          color: liveManualBets.length > 0 && !liveBetResults ? "#f87171" : "#374151",
-          fontSize: 9,
-          fontWeight: 700
-        }
-      }, "\u2715 Clear"), /*#__PURE__*/React.createElement("button", {
-        onClick: liveDoubleBets,
-        disabled: liveManualBets.length === 0 || !!liveBetResults,
-        style: {
-          flex: 1,
-          padding: "7px 0",
-          borderRadius: 8,
-          border: "1px solid #2d4057",
-          background: "#0f1923",
-          color: liveManualBets.length > 0 && !liveBetResults ? "#fbbf24" : "#374151",
-          fontSize: 9,
-          fontWeight: 700
-        }
-      }, "2\xD7 Dbl"), /*#__PURE__*/React.createElement("button", {
-        onClick: liveRepeatBets,
-        disabled: liveLastBets.length === 0,
-        style: {
-          flex: 1,
-          padding: "7px 0",
-          borderRadius: 8,
-          border: "1px solid #2d4057",
-          background: "#0f1923",
-          color: liveLastBets.length > 0 ? "#86efac" : "#374151",
-          fontSize: 9,
-          fontWeight: 700
-        }
-      }, "\u267B Rpt")), liveTotalBet > 0 && /*#__PURE__*/React.createElement("div", {
-        style: {
-          textAlign: "center",
-          fontSize: 11,
-          fontWeight: 800,
-          color: "#fbbf24"
-        }
-      }, "Total Bet: ", cur.symbol, fmtNum(liveTotalBet)), liveTotalBet > 0 && !liveBetResults && /*#__PURE__*/React.createElement("button", {
-        onClick: function onClick() {
-          var posMap = {};
-          liveManualBets.forEach(function (b) {
-            var key = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
-            if (!posMap[key]) posMap[key] = {
-              type: b.type,
-              target: b.target,
-              baseAmount: 0
-            };
-            posMap[key].baseAmount += b.amount;
-          });
-          var positions = Object.values(posMap);
-          var hasInside = positions.some(function (p) {
-            return isInsideBet(p.type);
-          });
-          if (!hasInside) {
-            var dts = [],
-              cts = [],
-              evts = [];
-            positions.forEach(function (p) {
-              if (p.type === "dozen") dts.push(p.target);else if (p.type === "column") cts.push(p.target);else evts.push(p.type);
-            });
-            var cfg = defaultFibCfg();
-            cfg.betMode = "flat";
-            cfg.dozenTargets = dts;
-            cfg.colTargets = cts;
-            cfg.evenTargets = evts;
-            updSess(function (s) {
-              s.tracks.push(newTrack("fibonacci", s.tracks.length, cfg));
-            });
-          } else {
-            var cfg = {
-              type: "custom",
-              unit: 1,
-              roi: 15,
-              betMode: "flat",
-              stopLoss: 200,
-              positions: positions
-            };
-            updSess(function (s) {
-              s.tracks.push({
-                id: uid(),
-                type: "custom",
-                color: TRACK_COLORS[s.tracks.length % TRACK_COLORS.length],
-                state: "active",
-                config: cfg,
-                level: 0,
-                pnl: 0,
-                bets: [],
-                createdAtSpin: s.spins.length,
-                closedAtSpin: null,
-                wins: 0,
-                sequences: 0
-              });
-            });
-          }
-          liveClearBets();
-          if (settings.vibration !== false && navigator.vibrate) navigator.vibrate([20, 10, 20]);
-        },
-        style: {
-          width: "100%",
-          padding: "10px 0",
-          borderRadius: 10,
-          border: "2px dashed #7c3aed",
-          background: "#1e1040",
-          color: "#c4b5fd",
-          fontSize: 12,
-          fontWeight: 700,
-          cursor: "pointer"
-        }
-      }, "\uD83C\uDCCF Create Strategy from Current Bets"), /*#__PURE__*/React.createElement("button", {
-        onClick: function onClick() {
-          return setLiveSelectingWinner(!liveSelectingWinner);
-        },
-        style: {
-          width: "100%",
-          padding: "14px 0",
-          borderRadius: 12,
-          border: liveSelectingWinner ? "2px solid #fbbf24" : "2px solid #2d4057",
-          background: liveSelectingWinner ? "linear-gradient(135deg,#92400e,#78350f)" : "#0f1923",
-          color: liveSelectingWinner ? "#fbbf24" : "#94a3b8",
-          fontSize: 14,
-          fontWeight: 800,
-          cursor: "pointer"
-        }
-      }, liveSelectingWinner ? "👆 Tap the winning number..." : "🎯 Choose Winning Number"), /*#__PURE__*/React.createElement(RouletteBoard, {
-        roulette: sess.roulette,
-        winningNumber: liveWinNumber,
-        stratBets: stratBets,
-        spinning: false,
-        onBet: livePlaceBet,
-        boardBets: liveBoardBets,
-        chipColor: (CHIPS.find(function (c) {
-          return c.val === selectedChip;
-        }) || CHIPS[0]).color,
-        betResults: liveBetResults,
-        stratChips: computeStratChips()
-      }), /*#__PURE__*/React.createElement("div", {
-        style: {
-          textAlign: "center",
-          fontSize: 9,
-          color: "#475569"
-        }
-      }, liveSelectingWinner ? "Tap a number on the table to record the spin result" : "Tap table to place bets, then Choose Winning Number"));
-    }());
+    }))));
   }
   function TablePage() {
     var selTrack = sess.tracks.find(function (t) {

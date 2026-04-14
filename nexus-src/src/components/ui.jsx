@@ -191,12 +191,28 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
       var nums=[BOARD_ROWS[r-1][c],BOARD_ROWS[r-1][c+1],BOARD_ROWS[r][c],BOARD_ROWS[r][c+1]].sort(function(a,b){return a-b;});
       return {type:"corner",target:nums.join("-")};
     }
-    // Street: left edge of leftmost column
+    if(nearLeft && nearBottom && hasLeft && hasBelow) {
+      var nums=[BOARD_ROWS[r][c-1],BOARD_ROWS[r][c],BOARD_ROWS[r+1][c-1],BOARD_ROWS[r+1][c]].sort(function(a,b){return a-b;});
+      return {type:"corner",target:nums.join("-")};
+    }
+    if(nearLeft && nearTop && hasLeft && hasAbove) {
+      var nums=[BOARD_ROWS[r-1][c-1],BOARD_ROWS[r-1][c],BOARD_ROWS[r][c-1],BOARD_ROWS[r][c]].sort(function(a,b){return a-b;});
+      return {type:"corner",target:nums.join("-")};
+    }
+    // Street: edges of the grid (left of col 0, top of row 0, bottom of row 2)
     if(nearLeft && !hasLeft) {
       var st=[BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c]].sort(function(a,b){return a-b;});
       return {type:"street",target:st.join("-")};
     }
-    // Line: left edge between two columns
+    if(nearTop && !hasAbove) {
+      var st=[BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c]].sort(function(a,b){return a-b;});
+      return {type:"street",target:st.join("-")};
+    }
+    if(nearBottom && !hasBelow) {
+      var st=[BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c]].sort(function(a,b){return a-b;});
+      return {type:"street",target:st.join("-")};
+    }
+    // Line: between two columns
     if(nearLeft && hasLeft) {
       var line=[BOARD_ROWS[0][c-1],BOARD_ROWS[1][c-1],BOARD_ROWS[2][c-1],BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c]].sort(function(a,b){return a-b;});
       return {type:"line",target:line.join("-")};

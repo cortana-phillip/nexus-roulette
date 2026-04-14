@@ -1,1 +1,1 @@
-{"version":"0.40.1","date":"2026-04-13","notes":"Smart touch detection! Tap center of a number for straight bet. Tap the edge between two numbers for a split. Tap where 4 numbers meet for a corner. Tap left edge for street or line. No bet type selector needed."}
+{"version":"0.40.2","date":"2026-04-13","notes":"Fixed: roulette table moved to top in Live mode, removed duplicate drought display, easier street bets (tap top/bottom edges too), all 4 corner directions detected."}
