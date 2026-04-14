@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.0";
+  var MY_V="0.40.1";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.0";
+var APP_VERSION = "0.40.1";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2817,37 +2817,157 @@ function RouletteBoard(_ref16) {
       }, lbl);
     }));
   }
+
+  // Map number to grid position
+  var numToPos = {};
+  BOARD_ROWS.forEach(function (row, ri) {
+    row.forEach(function (n, ci) {
+      numToPos[String(n)] = {
+        r: ri,
+        c: ci
+      };
+    });
+  });
+  function detectBetType(numStr, offsetX, offsetY, cellW, cellH) {
+    if (!cellW || !cellH) return {
+      type: "straight",
+      target: numStr
+    };
+    var pos = numToPos[numStr];
+    if (!pos) return {
+      type: "straight",
+      target: numStr
+    }; // zeros
+    var r = pos.r,
+      c = pos.c;
+    var edgePct = 0.30;
+    var nearRight = offsetX > cellW * (1 - edgePct);
+    var nearLeft = offsetX < cellW * edgePct;
+    var nearBottom = offsetY > cellH * (1 - edgePct);
+    var nearTop = offsetY < cellH * edgePct;
+    var hasRight = c < 11,
+      hasBelow = r < 2,
+      hasAbove = r > 0,
+      hasLeft = c > 0;
+
+    // Corner: where 4 numbers meet
+    if (nearRight && nearBottom && hasRight && hasBelow) {
+      var nums = [BOARD_ROWS[r][c], BOARD_ROWS[r][c + 1], BOARD_ROWS[r + 1][c], BOARD_ROWS[r + 1][c + 1]].sort(function (a, b) {
+        return a - b;
+      });
+      return {
+        type: "corner",
+        target: nums.join("-")
+      };
+    }
+    if (nearRight && nearTop && hasRight && hasAbove) {
+      var nums = [BOARD_ROWS[r - 1][c], BOARD_ROWS[r - 1][c + 1], BOARD_ROWS[r][c], BOARD_ROWS[r][c + 1]].sort(function (a, b) {
+        return a - b;
+      });
+      return {
+        type: "corner",
+        target: nums.join("-")
+      };
+    }
+    // Street: left edge of leftmost column
+    if (nearLeft && !hasLeft) {
+      var st = [BOARD_ROWS[0][c], BOARD_ROWS[1][c], BOARD_ROWS[2][c]].sort(function (a, b) {
+        return a - b;
+      });
+      return {
+        type: "street",
+        target: st.join("-")
+      };
+    }
+    // Line: left edge between two columns
+    if (nearLeft && hasLeft) {
+      var line = [BOARD_ROWS[0][c - 1], BOARD_ROWS[1][c - 1], BOARD_ROWS[2][c - 1], BOARD_ROWS[0][c], BOARD_ROWS[1][c], BOARD_ROWS[2][c]].sort(function (a, b) {
+        return a - b;
+      });
+      return {
+        type: "line",
+        target: line.join("-")
+      };
+    }
+    // Split horizontal: right edge
+    if (nearRight && hasRight) {
+      var nums = [BOARD_ROWS[r][c], BOARD_ROWS[r][c + 1]].sort(function (a, b) {
+        return a - b;
+      });
+      return {
+        type: "split",
+        target: nums.join("-")
+      };
+    }
+    // Split vertical: bottom edge
+    if (nearBottom && hasBelow) {
+      var nums = [BOARD_ROWS[r][c], BOARD_ROWS[r + 1][c]].sort(function (a, b) {
+        return a - b;
+      });
+      return {
+        type: "split",
+        target: nums.join("-")
+      };
+    }
+    // Split vertical: top edge
+    if (nearTop && hasAbove) {
+      var nums = [BOARD_ROWS[r - 1][c], BOARD_ROWS[r][c]].sort(function (a, b) {
+        return a - b;
+      });
+      return {
+        type: "split",
+        target: nums.join("-")
+      };
+    }
+    // Center: straight bet
+    return {
+      type: "straight",
+      target: numStr
+    };
+  }
   function cell(num, isZero, zeroLabel) {
     var numStr = isZero ? zeroLabel || "0" : String(num);
     var betKey = "s:" + numStr;
     var sChips = sChipsMap[betKey] || null;
-    // Find any inside bet that covers this number (show on first number of group)
     var insideBetAmt = 0,
       insideBetKey = null,
       insideCovered = false;
     Object.keys(bb).forEach(function (k) {
-      if (k.startsWith("s:")) return; // skip straights, handled separately
+      if (k.startsWith("s:")) return;
       if (k === "basket" || k.startsWith("split:") || k.startsWith("street:") || k.startsWith("corner:") || k.startsWith("line:")) {
         var parts = k.split(":");
-        var bType = parts[0],
-          bTarget = parts.slice(1).join(":");
+        var bTarget = parts.slice(1).join(":");
         var nums = bTarget.split("-");
         if (nums.indexOf(numStr) >= 0) {
           insideCovered = true;
           if (nums[0] === numStr) {
             insideBetAmt += bb[k];
             insideBetKey = k;
-          } // show chip on first number only
+          }
         }
       }
     });
-    var hasBet = bb[betKey] || insideBetAmt;
     var betBorder = insideCovered && !bb[betKey] ? "2px solid #c084fc" : null;
+    function handleClick(e) {
+      if (!canBet || !onBet) return;
+      if (isZero) {
+        // Zeros: center = straight, edge near other zero = split 0-00
+        var rect = e.currentTarget.getBoundingClientRect();
+        var oy = e.clientY - rect.top;
+        var isNear00 = zeroLabel === "0" && oy > rect.height * 0.7;
+        var isNear0 = zeroLabel === "00" && oy < rect.height * 0.3;
+        if (isNear00 || isNear0) onBet("split", "0-00");else onBet("straight", numStr);
+        return;
+      }
+      var rect = e.currentTarget.getBoundingClientRect();
+      var ox = e.clientX - rect.left,
+        oy = e.clientY - rect.top;
+      var det = detectBetType(numStr, ox, oy, rect.width, rect.height);
+      onBet(det.type, det.target);
+    }
     return React.createElement("div", {
       key: numStr,
-      onClick: function onClick() {
-        if (canBet) onBet("straight", numStr);
-      },
+      onClick: handleClick,
       style: _objectSpread(_objectSpread({}, numStyle(num, isZero)), {}, {
         cursor: canBet ? "pointer" : "default",
         border: betBorder || numStyle(num, isZero).border
@@ -7376,39 +7496,35 @@ function App() {
     _useState88 = _slicedToArray(_useState87, 2),
     selectedChip = _useState88[0],
     setSelectedChip = _useState88[1];
-  var _useState89 = (0, _react.useState)("straight"),
+  var _useState89 = (0, _react.useState)(true),
     _useState90 = _slicedToArray(_useState89, 2),
-    betMode = _useState90[0],
-    setBetMode = _useState90[1]; // straight|split|street|corner|line|basket
-  var _useState91 = (0, _react.useState)(true),
+    liveSelectingWinner = _useState90[0],
+    setLiveSelectingWinner = _useState90[1];
+  var _useState91 = (0, _react.useState)(null),
     _useState92 = _slicedToArray(_useState91, 2),
-    liveSelectingWinner = _useState92[0],
-    setLiveSelectingWinner = _useState92[1];
-  var _useState93 = (0, _react.useState)(null),
+    liveWinNumber = _useState92[0],
+    setLiveWinNumber = _useState92[1];
+  var _useState93 = (0, _react.useState)([]),
     _useState94 = _slicedToArray(_useState93, 2),
-    liveWinNumber = _useState94[0],
-    setLiveWinNumber = _useState94[1];
+    liveManualBets = _useState94[0],
+    setLiveManualBets = _useState94[1];
   var _useState95 = (0, _react.useState)([]),
     _useState96 = _slicedToArray(_useState95, 2),
-    liveManualBets = _useState96[0],
-    setLiveManualBets = _useState96[1];
-  var _useState97 = (0, _react.useState)([]),
+    liveLastBets = _useState96[0],
+    setLiveLastBets = _useState96[1];
+  var _useState97 = (0, _react.useState)(null),
     _useState98 = _slicedToArray(_useState97, 2),
-    liveLastBets = _useState98[0],
-    setLiveLastBets = _useState98[1];
-  var _useState99 = (0, _react.useState)(null),
+    liveBetResults = _useState98[0],
+    setLiveBetResults = _useState98[1];
+  var _useState99 = (0, _react.useState)([]),
     _useState100 = _slicedToArray(_useState99, 2),
-    liveBetResults = _useState100[0],
-    setLiveBetResults = _useState100[1];
-  var _useState101 = (0, _react.useState)([]),
-    _useState102 = _slicedToArray(_useState101, 2),
-    liveUndoStack = _useState102[0],
-    setLiveUndoStack = _useState102[1];
+    liveUndoStack = _useState100[0],
+    setLiveUndoStack = _useState100[1];
   var liveClearTimerRef = React.useRef(null);
-  var _useState103 = (0, _react.useState)(null),
-    _useState104 = _slicedToArray(_useState103, 2),
-    updateAvailable = _useState104[0],
-    setUpdateAvailable = _useState104[1]; // {version, notes}
+  var _useState101 = (0, _react.useState)(null),
+    _useState102 = _slicedToArray(_useState101, 2),
+    updateAvailable = _useState102[0],
+    setUpdateAvailable = _useState102[1]; // {version, notes}
 
   // Check for app updates
   (0, _react.useEffect)(function () {
@@ -7428,46 +7544,46 @@ function App() {
       return clearInterval(iv);
     };
   }, []);
+  var _useState103 = (0, _react.useState)(false),
+    _useState104 = _slicedToArray(_useState103, 2),
+    buyInOpen = _useState104[0],
+    setBuyInOpen = _useState104[1];
   var _useState105 = (0, _react.useState)(false),
     _useState106 = _slicedToArray(_useState105, 2),
-    buyInOpen = _useState106[0],
-    setBuyInOpen = _useState106[1];
+    currencyOpen = _useState106[0],
+    setCurrencyOpen = _useState106[1];
   var _useState107 = (0, _react.useState)(false),
     _useState108 = _slicedToArray(_useState107, 2),
-    currencyOpen = _useState108[0],
-    setCurrencyOpen = _useState108[1];
+    changelogOpen = _useState108[0],
+    setChangelogOpen = _useState108[1];
   var _useState109 = (0, _react.useState)(false),
     _useState110 = _slicedToArray(_useState109, 2),
-    changelogOpen = _useState110[0],
-    setChangelogOpen = _useState110[1];
+    editBankroll = _useState110[0],
+    setEditBankroll = _useState110[1];
   var _useState111 = (0, _react.useState)(false),
     _useState112 = _slicedToArray(_useState111, 2),
-    editBankroll = _useState112[0],
-    setEditBankroll = _useState112[1];
+    cashOutOpen = _useState112[0],
+    setCashOutOpen = _useState112[1];
   var _useState113 = (0, _react.useState)(false),
     _useState114 = _slicedToArray(_useState113, 2),
-    cashOutOpen = _useState114[0],
-    setCashOutOpen = _useState114[1];
+    hardResetOpen = _useState114[0],
+    setHardResetOpen = _useState114[1];
   var _useState115 = (0, _react.useState)(false),
     _useState116 = _slicedToArray(_useState115, 2),
-    hardResetOpen = _useState116[0],
-    setHardResetOpen = _useState116[1];
-  var _useState117 = (0, _react.useState)(false),
+    feedbackOpen = _useState116[0],
+    setFeedbackOpen = _useState116[1];
+  var _useState117 = (0, _react.useState)(""),
     _useState118 = _slicedToArray(_useState117, 2),
-    feedbackOpen = _useState118[0],
-    setFeedbackOpen = _useState118[1];
-  var _useState119 = (0, _react.useState)(""),
+    feedbackText = _useState118[0],
+    setFeedbackText = _useState118[1];
+  var _useState119 = (0, _react.useState)("fibonacci"),
     _useState120 = _slicedToArray(_useState119, 2),
-    feedbackText = _useState120[0],
-    setFeedbackText = _useState120[1];
-  var _useState121 = (0, _react.useState)("fibonacci"),
+    pendingTrackType = _useState120[0],
+    setPendingTrackType = _useState120[1];
+  var _useState121 = (0, _react.useState)(defaultFibCfg()),
     _useState122 = _slicedToArray(_useState121, 2),
-    pendingTrackType = _useState122[0],
-    setPendingTrackType = _useState122[1];
-  var _useState123 = (0, _react.useState)(defaultFibCfg()),
-    _useState124 = _slicedToArray(_useState123, 2),
-    pendingTrackCfg = _useState124[0],
-    setPendingTrackCfg = _useState124[1];
+    pendingTrackCfg = _useState122[0],
+    setPendingTrackCfg = _useState122[1];
   var sessKey = appMode === "game" ? "gameSession" : "currentSession";
   var sess = appState[sessKey] || appState.currentSession;
   var livePauseOffset = livePausedTotal + (livePausedAt ? Date.now() - livePausedAt : 0);
@@ -8397,22 +8513,22 @@ function App() {
     var hasActiveTracks = nonClosedTracks.some(function (t) {
       return t.state === "active";
     });
+    var _useState123 = (0, _react.useState)([]),
+      _useState124 = _slicedToArray(_useState123, 2),
+      manualBets = _useState124[0],
+      setManualBets = _useState124[1];
     var _useState125 = (0, _react.useState)([]),
       _useState126 = _slicedToArray(_useState125, 2),
-      manualBets = _useState126[0],
-      setManualBets = _useState126[1];
-    var _useState127 = (0, _react.useState)([]),
+      lastBets = _useState126[0],
+      setLastBets = _useState126[1];
+    var _useState127 = (0, _react.useState)(null),
       _useState128 = _slicedToArray(_useState127, 2),
-      lastBets = _useState128[0],
-      setLastBets = _useState128[1];
-    var _useState129 = (0, _react.useState)(null),
+      betResults = _useState128[0],
+      setBetResults = _useState128[1];
+    var _useState129 = (0, _react.useState)([]),
       _useState130 = _slicedToArray(_useState129, 2),
-      betResults = _useState130[0],
-      setBetResults = _useState130[1];
-    var _useState131 = (0, _react.useState)([]),
-      _useState132 = _slicedToArray(_useState131, 2),
-      undoStack = _useState132[0],
-      setUndoStack = _useState132[1]; // how many bets each action added
+      undoStack = _useState130[0],
+      setUndoStack = _useState130[1]; // how many bets each action added
     var clearTimerRef = React.useRef(null);
     var tMin = settings.tableMinBet || 1;
     var CHIPS = [{
@@ -8470,48 +8586,11 @@ function App() {
     function placeBet(type, target) {
       if (gameSpinning) return;
       if (betResults) cancelPendingClear();
-      var finalType = type,
-        finalTarget = target;
-      // For number taps, apply the selected betMode
-      if (type === "straight" && betMode !== "straight") {
-        var numStr = target;
-        if (numStr === "0" || numStr === "00") {
-          if (betMode === "basket") {
-            finalType = "basket";
-            finalTarget = "0-00-1-2-3";
-          } else if (betMode === "split") {
-            finalType = "split";
-            finalTarget = numStr === "0" ? "0-00" : "00-0";
-          } else return; // can't do street/corner/line on zeros
-        } else {
-          var n = +numStr;
-          if (betMode === "split") {
-            var sp = getVerticalSplit(n);
-            finalType = "split";
-            finalTarget = sp.join("-");
-          } else if (betMode === "street") {
-            var st = getStreet(n);
-            finalType = "street";
-            finalTarget = st.join("-");
-          } else if (betMode === "corner") {
-            var cn = getCornerNums(n);
-            finalType = "corner";
-            finalTarget = cn.join("-");
-          } else if (betMode === "line") {
-            var ln = getLineNums(n);
-            finalType = "line";
-            finalTarget = ln.join("-");
-          } else if (betMode === "basket") {
-            finalType = "basket";
-            finalTarget = "0-00-1-2-3";
-          }
-        }
-      }
       setManualBets(function (prev) {
         return [].concat(_toConsumableArray(prev), [{
           id: Date.now() + Math.random(),
-          type: finalType,
-          target: finalTarget,
+          type: type,
+          target: target,
           amount: selectedChip
         }]);
       });
@@ -8734,35 +8813,6 @@ function App() {
           transition: "box-shadow 0.2s"
         }
       }, c.label);
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 3,
-        justifyContent: "center"
-      }
-    }, BET_TYPES.map(function (bt) {
-      return /*#__PURE__*/React.createElement("button", {
-        key: bt.key,
-        onClick: function onClick() {
-          return setBetMode(bt.key);
-        },
-        style: {
-          padding: "5px 6px",
-          borderRadius: 6,
-          border: "1px solid " + (betMode === bt.key ? "#7c3aed" : "#2d4057"),
-          background: betMode === bt.key ? "#1e1040" : "#0f1923",
-          color: betMode === bt.key ? "#c4b5fd" : "#64748b",
-          fontSize: 8,
-          fontWeight: 700,
-          cursor: "pointer",
-          lineHeight: 1.2,
-          textAlign: "center"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 12
-        }
-      }, bt.label), /*#__PURE__*/React.createElement("div", null, bt.name));
     })), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
@@ -10317,48 +10367,11 @@ function App() {
           setLiveManualBets([]);
         }
         setLiveWinNumber(null);
-        // Apply betMode for number taps
-        var finalType = type,
-          finalTarget = target;
-        if (type === "straight" && betMode !== "straight") {
-          var numStr = target;
-          if (numStr === "0" || numStr === "00") {
-            if (betMode === "basket") {
-              finalType = "basket";
-              finalTarget = "0-00-1-2-3";
-            } else if (betMode === "split") {
-              finalType = "split";
-              finalTarget = numStr === "0" ? "0-00" : "00-0";
-            } else return;
-          } else {
-            var n = +numStr;
-            if (betMode === "split") {
-              var sp = getVerticalSplit(n);
-              finalType = "split";
-              finalTarget = sp.join("-");
-            } else if (betMode === "street") {
-              var st = getStreet(n);
-              finalType = "street";
-              finalTarget = st.join("-");
-            } else if (betMode === "corner") {
-              var cn = getCornerNums(n);
-              finalType = "corner";
-              finalTarget = cn.join("-");
-            } else if (betMode === "line") {
-              var ln = getLineNums(n);
-              finalType = "line";
-              finalTarget = ln.join("-");
-            } else if (betMode === "basket") {
-              finalType = "basket";
-              finalTarget = "0-00-1-2-3";
-            }
-          }
-        }
         setLiveManualBets(function (prev) {
           return [].concat(_toConsumableArray(prev), [{
             id: Date.now() + Math.random(),
-            type: finalType,
-            target: finalTarget,
+            type: type,
+            target: target,
             amount: selectedChip
           }]);
         });
@@ -10449,35 +10462,6 @@ function App() {
             justifyContent: "center"
           }
         }, c.label);
-      })), !liveSelectingWinner && /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          gap: 3,
-          justifyContent: "center"
-        }
-      }, BET_TYPES.map(function (bt) {
-        return /*#__PURE__*/React.createElement("button", {
-          key: bt.key,
-          onClick: function onClick() {
-            return setBetMode(bt.key);
-          },
-          style: {
-            padding: "4px 5px",
-            borderRadius: 6,
-            border: "1px solid " + (betMode === bt.key ? "#7c3aed" : "#2d4057"),
-            background: betMode === bt.key ? "#1e1040" : "#0f1923",
-            color: betMode === bt.key ? "#c4b5fd" : "#64748b",
-            fontSize: 7,
-            fontWeight: 700,
-            cursor: "pointer",
-            lineHeight: 1.2,
-            textAlign: "center"
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontSize: 11
-          }
-        }, bt.label), /*#__PURE__*/React.createElement("div", null, bt.name));
       })), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
@@ -10821,10 +10805,10 @@ function App() {
 
   // -- Spin Log Page --
   function SpinPage() {
-    var _useState133 = (0, _react.useState)(false),
-      _useState134 = _slicedToArray(_useState133, 2),
-      showAll = _useState134[0],
-      setShowAll = _useState134[1];
+    var _useState131 = (0, _react.useState)(false),
+      _useState132 = _slicedToArray(_useState131, 2),
+      showAll = _useState132[0],
+      setShowAll = _useState132[1];
     var displaySpins = showAll ? _toConsumableArray(sess.spins).reverse() : _toConsumableArray(sess.spins).reverse().slice(0, 60);
     return /*#__PURE__*/React.createElement("div", {
       style: {
@@ -11357,10 +11341,10 @@ function App() {
 
   // -- Settings Page --
   function SettingsPage() {
-    var _useState135 = (0, _react.useState)(settings.defaultBuyIn || 100),
-      _useState136 = _slicedToArray(_useState135, 2),
-      localBuyIn = _useState136[0],
-      setLocalBuyIn = _useState136[1];
+    var _useState133 = (0, _react.useState)(settings.defaultBuyIn || 100),
+      _useState134 = _slicedToArray(_useState133, 2),
+      localBuyIn = _useState134[0],
+      setLocalBuyIn = _useState134[1];
     function saveBuyIn() {
       updSettings(function (s) {
         s.defaultBuyIn = localBuyIn;
@@ -11881,10 +11865,10 @@ function App() {
   // -- Bankroll Edit --
   function BankrollEdit(_ref74) {
     var onClose = _ref74.onClose;
-    var _useState137 = (0, _react.useState)(sess.bankrollCurrent),
-      _useState138 = _slicedToArray(_useState137, 2),
-      val = _useState138[0],
-      setVal = _useState138[1];
+    var _useState135 = (0, _react.useState)(sess.bankrollCurrent),
+      _useState136 = _slicedToArray(_useState135, 2),
+      val = _useState136[0],
+      setVal = _useState136[1];
     function save() {
       updSess(function (s) {
         s.bankrollCurrent = val;

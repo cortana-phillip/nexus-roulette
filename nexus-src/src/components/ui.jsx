@@ -166,27 +166,98 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     );
   }
 
+  // Map number to grid position
+  var numToPos = {};
+  BOARD_ROWS.forEach(function(row,ri){row.forEach(function(n,ci){numToPos[String(n)]={r:ri,c:ci};});});
+
+  function detectBetType(numStr, offsetX, offsetY, cellW, cellH) {
+    if(!cellW||!cellH) return {type:"straight",target:numStr};
+    var pos = numToPos[numStr];
+    if(!pos) return {type:"straight",target:numStr}; // zeros
+    var r=pos.r, c=pos.c;
+    var edgePct = 0.30;
+    var nearRight = offsetX > cellW*(1-edgePct);
+    var nearLeft = offsetX < cellW*edgePct;
+    var nearBottom = offsetY > cellH*(1-edgePct);
+    var nearTop = offsetY < cellH*edgePct;
+    var hasRight = c<11, hasBelow = r<2, hasAbove = r>0, hasLeft = c>0;
+
+    // Corner: where 4 numbers meet
+    if(nearRight && nearBottom && hasRight && hasBelow) {
+      var nums=[BOARD_ROWS[r][c],BOARD_ROWS[r][c+1],BOARD_ROWS[r+1][c],BOARD_ROWS[r+1][c+1]].sort(function(a,b){return a-b;});
+      return {type:"corner",target:nums.join("-")};
+    }
+    if(nearRight && nearTop && hasRight && hasAbove) {
+      var nums=[BOARD_ROWS[r-1][c],BOARD_ROWS[r-1][c+1],BOARD_ROWS[r][c],BOARD_ROWS[r][c+1]].sort(function(a,b){return a-b;});
+      return {type:"corner",target:nums.join("-")};
+    }
+    // Street: left edge of leftmost column
+    if(nearLeft && !hasLeft) {
+      var st=[BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c]].sort(function(a,b){return a-b;});
+      return {type:"street",target:st.join("-")};
+    }
+    // Line: left edge between two columns
+    if(nearLeft && hasLeft) {
+      var line=[BOARD_ROWS[0][c-1],BOARD_ROWS[1][c-1],BOARD_ROWS[2][c-1],BOARD_ROWS[0][c],BOARD_ROWS[1][c],BOARD_ROWS[2][c]].sort(function(a,b){return a-b;});
+      return {type:"line",target:line.join("-")};
+    }
+    // Split horizontal: right edge
+    if(nearRight && hasRight) {
+      var nums=[BOARD_ROWS[r][c],BOARD_ROWS[r][c+1]].sort(function(a,b){return a-b;});
+      return {type:"split",target:nums.join("-")};
+    }
+    // Split vertical: bottom edge
+    if(nearBottom && hasBelow) {
+      var nums=[BOARD_ROWS[r][c],BOARD_ROWS[r+1][c]].sort(function(a,b){return a-b;});
+      return {type:"split",target:nums.join("-")};
+    }
+    // Split vertical: top edge
+    if(nearTop && hasAbove) {
+      var nums=[BOARD_ROWS[r-1][c],BOARD_ROWS[r][c]].sort(function(a,b){return a-b;});
+      return {type:"split",target:nums.join("-")};
+    }
+    // Center: straight bet
+    return {type:"straight",target:numStr};
+  }
+
   function cell(num,isZero,zeroLabel){
     var numStr=isZero?(zeroLabel||"0"):String(num);
     var betKey="s:"+numStr;
     var sChips=sChipsMap[betKey]||null;
-    // Find any inside bet that covers this number (show on first number of group)
     var insideBetAmt=0, insideBetKey=null, insideCovered=false;
     Object.keys(bb).forEach(function(k){
-      if(k.startsWith("s:")) return; // skip straights, handled separately
+      if(k.startsWith("s:")) return;
       if(k==="basket"||k.startsWith("split:")||k.startsWith("street:")||k.startsWith("corner:")||k.startsWith("line:")) {
         var parts=k.split(":");
-        var bType=parts[0], bTarget=parts.slice(1).join(":");
+        var bTarget=parts.slice(1).join(":");
         var nums=bTarget.split("-");
         if(nums.indexOf(numStr)>=0) {
           insideCovered=true;
-          if(nums[0]===numStr) { insideBetAmt+=bb[k]; insideBetKey=k; } // show chip on first number only
+          if(nums[0]===numStr) { insideBetAmt+=bb[k]; insideBetKey=k; }
         }
       }
     });
-    var hasBet=bb[betKey]||insideBetAmt;
     var betBorder=insideCovered&&!bb[betKey]?"2px solid #c084fc":null;
-    return React.createElement("div",{key:numStr,onClick:function(){if(canBet)onBet("straight",numStr);},style:{...numStyle(num,isZero),cursor:canBet?"pointer":"default",border:betBorder||numStyle(num,isZero).border}},
+
+    function handleClick(e){
+      if(!canBet||!onBet) return;
+      if(isZero) {
+        // Zeros: center = straight, edge near other zero = split 0-00
+        var rect=e.currentTarget.getBoundingClientRect();
+        var oy=e.clientY-rect.top;
+        var isNear00=zeroLabel==="0"&&oy>rect.height*0.7;
+        var isNear0=zeroLabel==="00"&&oy<rect.height*0.3;
+        if(isNear00||isNear0) onBet("split","0-00");
+        else onBet("straight",numStr);
+        return;
+      }
+      var rect=e.currentTarget.getBoundingClientRect();
+      var ox=e.clientX-rect.left, oy=e.clientY-rect.top;
+      var det=detectBetType(numStr,ox,oy,rect.width,rect.height);
+      onBet(det.type,det.target);
+    }
+
+    return React.createElement("div",{key:numStr,onClick:handleClick,style:{...numStyle(num,isZero),cursor:canBet?"pointer":"default",border:betBorder||numStyle(num,isZero).border}},
       numStr,
       winStr===numStr&&!spinning&&React.createElement(Mkr),
       sChips&&React.createElement(StratChipBadge,{chips:sChips}),

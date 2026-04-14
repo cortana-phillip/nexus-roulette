@@ -40,7 +40,6 @@ export default function App() {
   const [gameResult, setGameResult] = useState(null);
   const [lastSpinDelta, setLastSpinDelta] = useState(null);
   const [selectedChip, setSelectedChip] = useState(1);
-  const [betMode, setBetMode] = useState("straight"); // straight|split|street|corner|line|basket
   const [liveSelectingWinner, setLiveSelectingWinner] = useState(true);
   const [liveWinNumber, setLiveWinNumber] = useState(null);
   const [liveManualBets, setLiveManualBets] = useState([]);
@@ -651,24 +650,7 @@ export default function App() {
     function placeBet(type, target) {
       if(gameSpinning) return;
       if(betResults) cancelPendingClear();
-      var finalType=type, finalTarget=target;
-      // For number taps, apply the selected betMode
-      if(type==="straight" && betMode!=="straight") {
-        var numStr=target;
-        if(numStr==="0"||numStr==="00") {
-          if(betMode==="basket") { finalType="basket"; finalTarget="0-00-1-2-3"; }
-          else if(betMode==="split") { finalType="split"; finalTarget=numStr==="0"?"0-00":"00-0"; }
-          else return; // can't do street/corner/line on zeros
-        } else {
-          var n=+numStr;
-          if(betMode==="split") { var sp=getVerticalSplit(n); finalType="split"; finalTarget=sp.join("-"); }
-          else if(betMode==="street") { var st=getStreet(n); finalType="street"; finalTarget=st.join("-"); }
-          else if(betMode==="corner") { var cn=getCornerNums(n); finalType="corner"; finalTarget=cn.join("-"); }
-          else if(betMode==="line") { var ln=getLineNums(n); finalType="line"; finalTarget=ln.join("-"); }
-          else if(betMode==="basket") { finalType="basket"; finalTarget="0-00-1-2-3"; }
-        }
-      }
-      setManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type:finalType,target:finalTarget,amount:selectedChip}]);
+      setManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type:type,target:target,amount:selectedChip}]);
       setUndoStack(prev=>[...prev,1]);
       if(settings.vibration!==false && navigator.vibrate) navigator.vibrate(10);
     }
@@ -782,16 +764,6 @@ export default function App() {
           {CHIPS.map(c=>(
             <button key={c.val} onClick={()=>setSelectedChip(c.val)} style={{width:44,height:44,borderRadius:"50%",border:"3px solid "+(selectedChip===c.val?"#fbbf24":c.border),background:c.color,color:c.val>=100?"#ffffff":c.val<=0.5?"#1e293b":"#1e293b",fontSize:c.val<1?8:10,fontWeight:900,cursor:"pointer",boxShadow:selectedChip===c.val?"0 0 10px #fbbf24":"0 2px 4px rgba(0,0,0,0.3)",display:"flex",alignItems:"center",justifyContent:"center",transition:"box-shadow 0.2s"}}>
               {c.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Bet type selector */}
-        <div style={{display:"flex",gap:3,justifyContent:"center"}}>
-          {BET_TYPES.map(bt=>(
-            <button key={bt.key} onClick={()=>setBetMode(bt.key)} style={{padding:"5px 6px",borderRadius:6,border:"1px solid "+(betMode===bt.key?"#7c3aed":"#2d4057"),background:betMode===bt.key?"#1e1040":"#0f1923",color:betMode===bt.key?"#c4b5fd":"#64748b",fontSize:8,fontWeight:700,cursor:"pointer",lineHeight:1.2,textAlign:"center"}}>
-              <div style={{fontSize:12}}>{bt.label}</div>
-              <div>{bt.name}</div>
             </button>
           ))}
         </div>
@@ -1303,24 +1275,7 @@ export default function App() {
               setLiveBetResults(null);setLiveManualBets([]);
             }
             setLiveWinNumber(null);
-            // Apply betMode for number taps
-            var finalType=type, finalTarget=target;
-            if(type==="straight" && betMode!=="straight") {
-              var numStr=target;
-              if(numStr==="0"||numStr==="00") {
-                if(betMode==="basket") { finalType="basket"; finalTarget="0-00-1-2-3"; }
-                else if(betMode==="split") { finalType="split"; finalTarget=numStr==="0"?"0-00":"00-0"; }
-                else return;
-              } else {
-                var n=+numStr;
-                if(betMode==="split") { var sp=getVerticalSplit(n); finalType="split"; finalTarget=sp.join("-"); }
-                else if(betMode==="street") { var st=getStreet(n); finalType="street"; finalTarget=st.join("-"); }
-                else if(betMode==="corner") { var cn=getCornerNums(n); finalType="corner"; finalTarget=cn.join("-"); }
-                else if(betMode==="line") { var ln=getLineNums(n); finalType="line"; finalTarget=ln.join("-"); }
-                else if(betMode==="basket") { finalType="basket"; finalTarget="0-00-1-2-3"; }
-              }
-            }
-            setLiveManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type:finalType,target:finalTarget,amount:selectedChip}]);
+            setLiveManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type:type,target:target,amount:selectedChip}]);
             setLiveUndoStack(prev=>[...prev,1]);
             if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate(10);
           }
@@ -1360,15 +1315,6 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              {/* Bet type selector */}
-              {!liveSelectingWinner && <div style={{display:"flex",gap:3,justifyContent:"center"}}>
-                {BET_TYPES.map(bt=>(
-                  <button key={bt.key} onClick={()=>setBetMode(bt.key)} style={{padding:"4px 5px",borderRadius:6,border:"1px solid "+(betMode===bt.key?"#7c3aed":"#2d4057"),background:betMode===bt.key?"#1e1040":"#0f1923",color:betMode===bt.key?"#c4b5fd":"#64748b",fontSize:7,fontWeight:700,cursor:"pointer",lineHeight:1.2,textAlign:"center"}}>
-                    <div style={{fontSize:11}}>{bt.label}</div>
-                    <div>{bt.name}</div>
-                  </button>
-                ))}
-              </div>}
               {/* Bet controls */}
               <div style={{display:"flex",gap:4,alignItems:"center"}}>
                 <button onClick={liveUndoBet} disabled={liveManualBets.length===0||!!liveBetResults} style={{flex:1,padding:"7px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:liveManualBets.length>0&&!liveBetResults?"#60a5fa":"#374151",fontSize:9,fontWeight:700}}>↩ Undo</button>

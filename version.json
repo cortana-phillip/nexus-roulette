@@ -1,1 +1,1 @@
-{"version":"0.40.0","date":"2026-04-13","notes":"All roulette bet types! Splits, streets, corners, lines, basket. Bet type selector below chips. Smart strategy creation — outside-only bets become regular strategies, mixed bets become custom."}
+{"version":"0.40.1","date":"2026-04-13","notes":"Smart touch detection! Tap center of a number for straight bet. Tap the edge between two numbers for a split. Tap where 4 numbers meet for a corner. Tap left edge for street or line. No bet type selector needed."}
