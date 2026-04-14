@@ -40,6 +40,12 @@ export default function App() {
   const [gameResult, setGameResult] = useState(null);
   const [lastSpinDelta, setLastSpinDelta] = useState(null);
   const [selectedChip, setSelectedChip] = useState(1);
+  const [liveSelectingWinner, setLiveSelectingWinner] = useState(false);
+  const [liveManualBets, setLiveManualBets] = useState([]);
+  const [liveLastBets, setLiveLastBets] = useState([]);
+  const [liveBetResults, setLiveBetResults] = useState(null);
+  const [liveUndoStack, setLiveUndoStack] = useState([]);
+  const liveClearTimerRef = React.useRef(null);
   const [updateAvailable, setUpdateAvailable] = useState(null); // {version, notes}
 
   // Check for app updates
@@ -1094,20 +1100,139 @@ export default function App() {
             </div>
           </div>
         )}
-        {/* Always-visible catch-up grid -- log spins any time */}
-        <Card>
-          <Lbl>{sess.sessionStartedAt ? "Tap Winning Number" : "Catch-up -- Tap to Log Spin"}</Lbl>
-          <FibGrid
-            onNumber={v=>tapNumber(v, nonClosedTracks.some(t=>t.state==="active"))}
-            onGhost={ghostSpin}
-            dozenTargets={primaryTrack&&primaryTrack.type==="fibonacci"?dts:[]}
-            colTargets={primaryTrack&&primaryTrack.type==="fibonacci"?cts:[]}
-            fibRow={primaryTrack&&primaryTrack.type==="fibonacci"?row:null}
-            trackOverlays={trackOverlays}
-            flashNum={flashNum}
-          />
-          <div style={{textAlign:"center",fontSize:9,color:"#374151",marginTop:4}}>Long-press = ghost spin (drought tracking only)</div>
-        </Card>
+        {/* Roulette Table for Live Mode */}
+        {(()=>{
+          const tMin = settings.tableMinBet||1;
+          const CHIPS = [
+            {val:0.25,color:"#89CFF0",border:"#5BA3D9",label:"25¢"},
+            {val:0.50,color:"#FFB6C1",border:"#E8929E",label:"50¢"},
+            {val:1,color:"#ffffff",border:"#aaaaaa",label:"$1"},
+            {val:5,color:"#ef4444",border:"#b91c1c",label:"$5"},
+            {val:25,color:"#22c55e",border:"#15803d",label:"$25"},
+            {val:100,color:"#1e293b",border:"#64748b",label:"$100"},
+            {val:500,color:"#8b5cf6",border:"#6d28d9",label:"$500"},
+          ].filter(c=>c.val>=tMin);
+
+          const liveTotalBet = liveManualBets.reduce((s,b)=>s+b.amount,0);
+          const liveBoardBets = {};
+          liveManualBets.forEach(b=>{
+            const key = b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
+            liveBoardBets[key] = (liveBoardBets[key]||0) + b.amount;
+          });
+
+          const stratBets = {};
+          nonClosedTracks.filter(t=>t.state==="active").forEach(t=>{
+            if(t.type==="fibonacci") {
+              (t.config.dozenTargets||[]).forEach(d=>{ stratBets["dozen:"+d]=t.color; });
+              (t.config.colTargets||[]).forEach(c=>{ stratBets["column:"+c]=t.color; });
+              (t.config.evenTargets||[]).forEach(key=>{ stratBets[key]=t.color; });
+            }
+            if(t.type==="solution") {
+              (t.config.activeBets||[]).forEach(b=>{ if(!stratBets["s:"+b.number]) stratBets["s:"+b.number]=t.color; });
+            }
+          });
+
+          function livePlaceBet(type, target) {
+            if(liveSelectingWinner) {
+              // In winner selection mode - process the spin
+              const val = type==="straight"?target:null;
+              if(!val) return; // Can only select numbers as winners
+              tapNumber(val, nonClosedTracks.some(t=>t.state==="active"));
+              // Resolve manual bets
+              if(liveManualBets.length>0){
+                const isZ=val==="0"||val==="00";
+                const n=isZ?null:+val;
+                var totalWin=0,totalBet=0,posResults={};
+                liveManualBets.forEach(function(b){
+                  totalBet+=b.amount;
+                  var won=false;
+                  var posKey=b.type==="straight"?"s:"+b.target:b.type+(b.target!==undefined?":"+b.target:"");
+                  if(b.type==="straight"&&String(b.target)===val) won=true;
+                  if(!isZ&&n){
+                    if(b.type==="dozen"){var d=n<=12?0:n<=24?1:2;if(b.target===d)won=true;}
+                    if(b.type==="column"){var c=n%3===0?2:n%3===1?0:1;if(b.target===c)won=true;}
+                    if(b.type==="red"&&RED.has(n))won=true;
+                    if(b.type==="black"&&!RED.has(n))won=true;
+                    if(b.type==="odd"&&n%2===1)won=true;
+                    if(b.type==="even"&&n%2===0)won=true;
+                    if(b.type==="low"&&n<=18)won=true;
+                    if(b.type==="high"&&n>=19)won=true;
+                  }
+                  if(won){totalWin+=b.type==="straight"?b.amount*36:(b.type==="dozen"||b.type==="column")?b.amount*3:b.amount*2;posResults[posKey]="won";}
+                  else{if(!posResults[posKey])posResults[posKey]="lost";}
+                });
+                updSess(s=>{s.bankrollCurrent=Math.round((s.bankrollCurrent+(totalWin-totalBet))*100)/100;});
+                setLiveBetResults(posResults);
+                setLiveLastBets([...liveManualBets]);
+                setLiveUndoStack([]);
+                liveClearTimerRef.current=setTimeout(()=>{setLiveBetResults(null);setLiveManualBets([]);liveClearTimerRef.current=null;},3000);
+              }
+              setLiveSelectingWinner(false);
+              return;
+            }
+            // Normal bet placement mode
+            if(liveBetResults){
+              if(liveClearTimerRef.current){clearTimeout(liveClearTimerRef.current);liveClearTimerRef.current=null;}
+              setLiveBetResults(null);setLiveManualBets([]);
+            }
+            setLiveManualBets(prev=>[...prev,{id:Date.now()+Math.random(),type,target,amount:selectedChip}]);
+            setLiveUndoStack(prev=>[...prev,1]);
+            if(settings.vibration!==false&&navigator.vibrate) navigator.vibrate(10);
+          }
+
+          function liveUndoBet(){
+            if(liveBetResults)return;
+            setLiveUndoStack(prev=>{
+              if(prev.length===0)return prev;
+              const count=prev[prev.length-1];
+              setLiveManualBets(mb=>mb.slice(0,-count));
+              return prev.slice(0,-1);
+            });
+          }
+          function liveClearBets(){setLiveManualBets([]);setLiveUndoStack([]);}
+          function liveDoubleBets(){
+            if(liveBetResults)return;
+            setLiveManualBets(prev=>{
+              setLiveUndoStack(us=>[...us,prev.length]);
+              return[...prev,...prev.map(b=>({...b,id:Date.now()+Math.random()}))];
+            });
+          }
+          function liveRepeatBets(){
+            if(liveLastBets.length===0)return;
+            if(liveClearTimerRef.current){clearTimeout(liveClearTimerRef.current);liveClearTimerRef.current=null;}
+            if(liveBetResults){setLiveBetResults(null);setLiveManualBets([]);}
+            const repeated=liveLastBets.map(b=>({...b,id:Date.now()+Math.random()}));
+            setLiveManualBets(repeated);setLiveUndoStack([repeated.length]);
+          }
+
+          return (
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {/* Chip selector */}
+              <div style={{display:"flex",gap:4,justifyContent:"center",flexWrap:"wrap"}}>
+                {CHIPS.map(c=>(
+                  <button key={c.val} onClick={()=>setSelectedChip(c.val)} style={{width:40,height:40,borderRadius:"50%",border:"3px solid "+(selectedChip===c.val?"#fbbf24":c.border),background:c.color,color:c.val>=100?"#fff":c.val<=0.5?"#1e293b":"#1e293b",fontSize:c.val<1?7:9,fontWeight:900,cursor:"pointer",boxShadow:selectedChip===c.val?"0 0 10px #fbbf24":"0 2px 4px rgba(0,0,0,0.3)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+              {/* Bet controls */}
+              <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                <button onClick={liveUndoBet} disabled={liveManualBets.length===0||!!liveBetResults} style={{flex:1,padding:"7px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:liveManualBets.length>0&&!liveBetResults?"#60a5fa":"#374151",fontSize:9,fontWeight:700}}>↩ Undo</button>
+                <button onClick={liveClearBets} disabled={liveManualBets.length===0||!!liveBetResults} style={{flex:1,padding:"7px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:liveManualBets.length>0&&!liveBetResults?"#f87171":"#374151",fontSize:9,fontWeight:700}}>✕ Clear</button>
+                <button onClick={liveDoubleBets} disabled={liveManualBets.length===0||!!liveBetResults} style={{flex:1,padding:"7px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:liveManualBets.length>0&&!liveBetResults?"#fbbf24":"#374151",fontSize:9,fontWeight:700}}>2× Dbl</button>
+                <button onClick={liveRepeatBets} disabled={liveLastBets.length===0} style={{flex:1,padding:"7px 0",borderRadius:8,border:"1px solid #2d4057",background:"#0f1923",color:liveLastBets.length>0?"#86efac":"#374151",fontSize:9,fontWeight:700}}>♻ Rpt</button>
+              </div>
+              {liveTotalBet>0 && <div style={{textAlign:"center",fontSize:11,fontWeight:800,color:"#fbbf24"}}>Total Bet: {cur.symbol}{fmtNum(liveTotalBet)}</div>}
+              {/* Choose Winning Number button */}
+              <button onClick={()=>setLiveSelectingWinner(!liveSelectingWinner)} style={{width:"100%",padding:"14px 0",borderRadius:12,border:liveSelectingWinner?"2px solid #fbbf24":"2px solid #2d4057",background:liveSelectingWinner?"linear-gradient(135deg,#92400e,#78350f)":"#0f1923",color:liveSelectingWinner?"#fbbf24":"#94a3b8",fontSize:14,fontWeight:800,cursor:"pointer"}}>
+                {liveSelectingWinner?"👆 Tap the winning number...":"🎯 Choose Winning Number"}
+              </button>
+              {/* Roulette Board */}
+              <RouletteBoard roulette={sess.roulette} winningNumber={liveSelectingWinner?null:flashNum} stratBets={stratBets} spinning={false} onBet={livePlaceBet} boardBets={liveBoardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={liveBetResults}/>
+              <div style={{textAlign:"center",fontSize:9,color:"#475569"}}>{liveSelectingWinner?"Tap a number on the table to record the spin result":"Tap table to place bets, then Choose Winning Number"}</div>
+            </div>
+          );
+        })()}
 
       </div>
     );

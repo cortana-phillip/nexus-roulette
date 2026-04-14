@@ -7100,10 +7100,31 @@ function App() {
     _useState88 = _slicedToArray(_useState87, 2),
     selectedChip = _useState88[0],
     setSelectedChip = _useState88[1];
-  var _useState89 = (0, _react.useState)(null),
+  var _useState89 = (0, _react.useState)(false),
     _useState90 = _slicedToArray(_useState89, 2),
-    updateAvailable = _useState90[0],
-    setUpdateAvailable = _useState90[1]; // {version, notes}
+    liveSelectingWinner = _useState90[0],
+    setLiveSelectingWinner = _useState90[1];
+  var _useState91 = (0, _react.useState)([]),
+    _useState92 = _slicedToArray(_useState91, 2),
+    liveManualBets = _useState92[0],
+    setLiveManualBets = _useState92[1];
+  var _useState93 = (0, _react.useState)([]),
+    _useState94 = _slicedToArray(_useState93, 2),
+    liveLastBets = _useState94[0],
+    setLiveLastBets = _useState94[1];
+  var _useState95 = (0, _react.useState)(null),
+    _useState96 = _slicedToArray(_useState95, 2),
+    liveBetResults = _useState96[0],
+    setLiveBetResults = _useState96[1];
+  var _useState97 = (0, _react.useState)([]),
+    _useState98 = _slicedToArray(_useState97, 2),
+    liveUndoStack = _useState98[0],
+    setLiveUndoStack = _useState98[1];
+  var liveClearTimerRef = React.useRef(null);
+  var _useState99 = (0, _react.useState)(null),
+    _useState100 = _slicedToArray(_useState99, 2),
+    updateAvailable = _useState100[0],
+    setUpdateAvailable = _useState100[1]; // {version, notes}
 
   // Check for app updates
   (0, _react.useEffect)(function () {
@@ -7123,46 +7144,46 @@ function App() {
       return clearInterval(iv);
     };
   }, []);
-  var _useState91 = (0, _react.useState)(false),
-    _useState92 = _slicedToArray(_useState91, 2),
-    buyInOpen = _useState92[0],
-    setBuyInOpen = _useState92[1];
-  var _useState93 = (0, _react.useState)(false),
-    _useState94 = _slicedToArray(_useState93, 2),
-    currencyOpen = _useState94[0],
-    setCurrencyOpen = _useState94[1];
-  var _useState95 = (0, _react.useState)(false),
-    _useState96 = _slicedToArray(_useState95, 2),
-    changelogOpen = _useState96[0],
-    setChangelogOpen = _useState96[1];
-  var _useState97 = (0, _react.useState)(false),
-    _useState98 = _slicedToArray(_useState97, 2),
-    editBankroll = _useState98[0],
-    setEditBankroll = _useState98[1];
-  var _useState99 = (0, _react.useState)(false),
-    _useState100 = _slicedToArray(_useState99, 2),
-    cashOutOpen = _useState100[0],
-    setCashOutOpen = _useState100[1];
   var _useState101 = (0, _react.useState)(false),
     _useState102 = _slicedToArray(_useState101, 2),
-    hardResetOpen = _useState102[0],
-    setHardResetOpen = _useState102[1];
+    buyInOpen = _useState102[0],
+    setBuyInOpen = _useState102[1];
   var _useState103 = (0, _react.useState)(false),
     _useState104 = _slicedToArray(_useState103, 2),
-    feedbackOpen = _useState104[0],
-    setFeedbackOpen = _useState104[1];
-  var _useState105 = (0, _react.useState)(""),
+    currencyOpen = _useState104[0],
+    setCurrencyOpen = _useState104[1];
+  var _useState105 = (0, _react.useState)(false),
     _useState106 = _slicedToArray(_useState105, 2),
-    feedbackText = _useState106[0],
-    setFeedbackText = _useState106[1];
-  var _useState107 = (0, _react.useState)("fibonacci"),
+    changelogOpen = _useState106[0],
+    setChangelogOpen = _useState106[1];
+  var _useState107 = (0, _react.useState)(false),
     _useState108 = _slicedToArray(_useState107, 2),
-    pendingTrackType = _useState108[0],
-    setPendingTrackType = _useState108[1];
-  var _useState109 = (0, _react.useState)(defaultFibCfg()),
+    editBankroll = _useState108[0],
+    setEditBankroll = _useState108[1];
+  var _useState109 = (0, _react.useState)(false),
     _useState110 = _slicedToArray(_useState109, 2),
-    pendingTrackCfg = _useState110[0],
-    setPendingTrackCfg = _useState110[1];
+    cashOutOpen = _useState110[0],
+    setCashOutOpen = _useState110[1];
+  var _useState111 = (0, _react.useState)(false),
+    _useState112 = _slicedToArray(_useState111, 2),
+    hardResetOpen = _useState112[0],
+    setHardResetOpen = _useState112[1];
+  var _useState113 = (0, _react.useState)(false),
+    _useState114 = _slicedToArray(_useState113, 2),
+    feedbackOpen = _useState114[0],
+    setFeedbackOpen = _useState114[1];
+  var _useState115 = (0, _react.useState)(""),
+    _useState116 = _slicedToArray(_useState115, 2),
+    feedbackText = _useState116[0],
+    setFeedbackText = _useState116[1];
+  var _useState117 = (0, _react.useState)("fibonacci"),
+    _useState118 = _slicedToArray(_useState117, 2),
+    pendingTrackType = _useState118[0],
+    setPendingTrackType = _useState118[1];
+  var _useState119 = (0, _react.useState)(defaultFibCfg()),
+    _useState120 = _slicedToArray(_useState119, 2),
+    pendingTrackCfg = _useState120[0],
+    setPendingTrackCfg = _useState120[1];
   var sessKey = appMode === "game" ? "gameSession" : "currentSession";
   var sess = appState[sessKey] || appState.currentSession;
   var livePauseOffset = livePausedTotal + (livePausedAt ? Date.now() - livePausedAt : 0);
@@ -7949,22 +7970,22 @@ function App() {
     var hasActiveTracks = nonClosedTracks.some(function (t) {
       return t.state === "active";
     });
-    var _useState111 = (0, _react.useState)([]),
-      _useState112 = _slicedToArray(_useState111, 2),
-      manualBets = _useState112[0],
-      setManualBets = _useState112[1];
-    var _useState113 = (0, _react.useState)([]),
-      _useState114 = _slicedToArray(_useState113, 2),
-      lastBets = _useState114[0],
-      setLastBets = _useState114[1];
-    var _useState115 = (0, _react.useState)(null),
-      _useState116 = _slicedToArray(_useState115, 2),
-      betResults = _useState116[0],
-      setBetResults = _useState116[1];
-    var _useState117 = (0, _react.useState)([]),
-      _useState118 = _slicedToArray(_useState117, 2),
-      undoStack = _useState118[0],
-      setUndoStack = _useState118[1]; // how many bets each action added
+    var _useState121 = (0, _react.useState)([]),
+      _useState122 = _slicedToArray(_useState121, 2),
+      manualBets = _useState122[0],
+      setManualBets = _useState122[1];
+    var _useState123 = (0, _react.useState)([]),
+      _useState124 = _slicedToArray(_useState123, 2),
+      lastBets = _useState124[0],
+      setLastBets = _useState124[1];
+    var _useState125 = (0, _react.useState)(null),
+      _useState126 = _slicedToArray(_useState125, 2),
+      betResults = _useState126[0],
+      setBetResults = _useState126[1];
+    var _useState127 = (0, _react.useState)([]),
+      _useState128 = _slicedToArray(_useState127, 2),
+      undoStack = _useState128[0],
+      setUndoStack = _useState128[1]; // how many bets each action added
     var clearTimerRef = React.useRef(null);
     var tMin = settings.tableMinBet || 1;
     var CHIPS = [{
@@ -9614,26 +9635,335 @@ function App() {
           flexShrink: 0
         }
       }), TRACK_ICONS[t.type], " Lvl ", t.level);
-    }))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Lbl, null, sess.sessionStartedAt ? "Tap Winning Number" : "Catch-up -- Tap to Log Spin"), /*#__PURE__*/React.createElement(FibGrid, {
-      onNumber: function onNumber(v) {
-        return tapNumber(v, nonClosedTracks.some(function (t) {
-          return t.state === "active";
-        }));
-      },
-      onGhost: ghostSpin,
-      dozenTargets: primaryTrack && primaryTrack.type === "fibonacci" ? dts : [],
-      colTargets: primaryTrack && primaryTrack.type === "fibonacci" ? cts : [],
-      fibRow: primaryTrack && primaryTrack.type === "fibonacci" ? row : null,
-      trackOverlays: trackOverlays,
-      flashNum: flashNum
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center",
-        fontSize: 9,
-        color: "#374151",
-        marginTop: 4
+    }))), function () {
+      var tMin = settings.tableMinBet || 1;
+      var CHIPS = [{
+        val: 0.25,
+        color: "#89CFF0",
+        border: "#5BA3D9",
+        label: "25¢"
+      }, {
+        val: 0.50,
+        color: "#FFB6C1",
+        border: "#E8929E",
+        label: "50¢"
+      }, {
+        val: 1,
+        color: "#ffffff",
+        border: "#aaaaaa",
+        label: "$1"
+      }, {
+        val: 5,
+        color: "#ef4444",
+        border: "#b91c1c",
+        label: "$5"
+      }, {
+        val: 25,
+        color: "#22c55e",
+        border: "#15803d",
+        label: "$25"
+      }, {
+        val: 100,
+        color: "#1e293b",
+        border: "#64748b",
+        label: "$100"
+      }, {
+        val: 500,
+        color: "#8b5cf6",
+        border: "#6d28d9",
+        label: "$500"
+      }].filter(function (c) {
+        return c.val >= tMin;
+      });
+      var liveTotalBet = liveManualBets.reduce(function (s, b) {
+        return s + b.amount;
+      }, 0);
+      var liveBoardBets = {};
+      liveManualBets.forEach(function (b) {
+        var key = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
+        liveBoardBets[key] = (liveBoardBets[key] || 0) + b.amount;
+      });
+      var stratBets = {};
+      nonClosedTracks.filter(function (t) {
+        return t.state === "active";
+      }).forEach(function (t) {
+        if (t.type === "fibonacci") {
+          (t.config.dozenTargets || []).forEach(function (d) {
+            stratBets["dozen:" + d] = t.color;
+          });
+          (t.config.colTargets || []).forEach(function (c) {
+            stratBets["column:" + c] = t.color;
+          });
+          (t.config.evenTargets || []).forEach(function (key) {
+            stratBets[key] = t.color;
+          });
+        }
+        if (t.type === "solution") {
+          (t.config.activeBets || []).forEach(function (b) {
+            if (!stratBets["s:" + b.number]) stratBets["s:" + b.number] = t.color;
+          });
+        }
+      });
+      function livePlaceBet(type, target) {
+        if (liveSelectingWinner) {
+          // In winner selection mode - process the spin
+          var val = type === "straight" ? target : null;
+          if (!val) return; // Can only select numbers as winners
+          tapNumber(val, nonClosedTracks.some(function (t) {
+            return t.state === "active";
+          }));
+          // Resolve manual bets
+          if (liveManualBets.length > 0) {
+            var isZ = val === "0" || val === "00";
+            var n = isZ ? null : +val;
+            var totalWin = 0,
+              totalBet = 0,
+              posResults = {};
+            liveManualBets.forEach(function (b) {
+              totalBet += b.amount;
+              var won = false;
+              var posKey = b.type === "straight" ? "s:" + b.target : b.type + (b.target !== undefined ? ":" + b.target : "");
+              if (b.type === "straight" && String(b.target) === val) won = true;
+              if (!isZ && n) {
+                if (b.type === "dozen") {
+                  var d = n <= 12 ? 0 : n <= 24 ? 1 : 2;
+                  if (b.target === d) won = true;
+                }
+                if (b.type === "column") {
+                  var c = n % 3 === 0 ? 2 : n % 3 === 1 ? 0 : 1;
+                  if (b.target === c) won = true;
+                }
+                if (b.type === "red" && RED.has(n)) won = true;
+                if (b.type === "black" && !RED.has(n)) won = true;
+                if (b.type === "odd" && n % 2 === 1) won = true;
+                if (b.type === "even" && n % 2 === 0) won = true;
+                if (b.type === "low" && n <= 18) won = true;
+                if (b.type === "high" && n >= 19) won = true;
+              }
+              if (won) {
+                totalWin += b.type === "straight" ? b.amount * 36 : b.type === "dozen" || b.type === "column" ? b.amount * 3 : b.amount * 2;
+                posResults[posKey] = "won";
+              } else {
+                if (!posResults[posKey]) posResults[posKey] = "lost";
+              }
+            });
+            updSess(function (s) {
+              s.bankrollCurrent = Math.round((s.bankrollCurrent + (totalWin - totalBet)) * 100) / 100;
+            });
+            setLiveBetResults(posResults);
+            setLiveLastBets(_toConsumableArray(liveManualBets));
+            setLiveUndoStack([]);
+            liveClearTimerRef.current = setTimeout(function () {
+              setLiveBetResults(null);
+              setLiveManualBets([]);
+              liveClearTimerRef.current = null;
+            }, 3000);
+          }
+          setLiveSelectingWinner(false);
+          return;
+        }
+        // Normal bet placement mode
+        if (liveBetResults) {
+          if (liveClearTimerRef.current) {
+            clearTimeout(liveClearTimerRef.current);
+            liveClearTimerRef.current = null;
+          }
+          setLiveBetResults(null);
+          setLiveManualBets([]);
+        }
+        setLiveManualBets(function (prev) {
+          return [].concat(_toConsumableArray(prev), [{
+            id: Date.now() + Math.random(),
+            type: type,
+            target: target,
+            amount: selectedChip
+          }]);
+        });
+        setLiveUndoStack(function (prev) {
+          return [].concat(_toConsumableArray(prev), [1]);
+        });
+        if (settings.vibration !== false && navigator.vibrate) navigator.vibrate(10);
       }
-    }, "Long-press = ghost spin (drought tracking only)")));
+      function liveUndoBet() {
+        if (liveBetResults) return;
+        setLiveUndoStack(function (prev) {
+          if (prev.length === 0) return prev;
+          var count = prev[prev.length - 1];
+          setLiveManualBets(function (mb) {
+            return mb.slice(0, -count);
+          });
+          return prev.slice(0, -1);
+        });
+      }
+      function liveClearBets() {
+        setLiveManualBets([]);
+        setLiveUndoStack([]);
+      }
+      function liveDoubleBets() {
+        if (liveBetResults) return;
+        setLiveManualBets(function (prev) {
+          setLiveUndoStack(function (us) {
+            return [].concat(_toConsumableArray(us), [prev.length]);
+          });
+          return [].concat(_toConsumableArray(prev), _toConsumableArray(prev.map(function (b) {
+            return _objectSpread(_objectSpread({}, b), {}, {
+              id: Date.now() + Math.random()
+            });
+          })));
+        });
+      }
+      function liveRepeatBets() {
+        if (liveLastBets.length === 0) return;
+        if (liveClearTimerRef.current) {
+          clearTimeout(liveClearTimerRef.current);
+          liveClearTimerRef.current = null;
+        }
+        if (liveBetResults) {
+          setLiveBetResults(null);
+          setLiveManualBets([]);
+        }
+        var repeated = liveLastBets.map(function (b) {
+          return _objectSpread(_objectSpread({}, b), {}, {
+            id: Date.now() + Math.random()
+          });
+        });
+        setLiveManualBets(repeated);
+        setLiveUndoStack([repeated.length]);
+      }
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 8
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 4,
+          justifyContent: "center",
+          flexWrap: "wrap"
+        }
+      }, CHIPS.map(function (c) {
+        return /*#__PURE__*/React.createElement("button", {
+          key: c.val,
+          onClick: function onClick() {
+            return setSelectedChip(c.val);
+          },
+          style: {
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: "3px solid " + (selectedChip === c.val ? "#fbbf24" : c.border),
+            background: c.color,
+            color: c.val >= 100 ? "#fff" : c.val <= 0.5 ? "#1e293b" : "#1e293b",
+            fontSize: c.val < 1 ? 7 : 9,
+            fontWeight: 900,
+            cursor: "pointer",
+            boxShadow: selectedChip === c.val ? "0 0 10px #fbbf24" : "0 2px 4px rgba(0,0,0,0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }
+        }, c.label);
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 4,
+          alignItems: "center"
+        }
+      }, /*#__PURE__*/React.createElement("button", {
+        onClick: liveUndoBet,
+        disabled: liveManualBets.length === 0 || !!liveBetResults,
+        style: {
+          flex: 1,
+          padding: "7px 0",
+          borderRadius: 8,
+          border: "1px solid #2d4057",
+          background: "#0f1923",
+          color: liveManualBets.length > 0 && !liveBetResults ? "#60a5fa" : "#374151",
+          fontSize: 9,
+          fontWeight: 700
+        }
+      }, "\u21A9 Undo"), /*#__PURE__*/React.createElement("button", {
+        onClick: liveClearBets,
+        disabled: liveManualBets.length === 0 || !!liveBetResults,
+        style: {
+          flex: 1,
+          padding: "7px 0",
+          borderRadius: 8,
+          border: "1px solid #2d4057",
+          background: "#0f1923",
+          color: liveManualBets.length > 0 && !liveBetResults ? "#f87171" : "#374151",
+          fontSize: 9,
+          fontWeight: 700
+        }
+      }, "\u2715 Clear"), /*#__PURE__*/React.createElement("button", {
+        onClick: liveDoubleBets,
+        disabled: liveManualBets.length === 0 || !!liveBetResults,
+        style: {
+          flex: 1,
+          padding: "7px 0",
+          borderRadius: 8,
+          border: "1px solid #2d4057",
+          background: "#0f1923",
+          color: liveManualBets.length > 0 && !liveBetResults ? "#fbbf24" : "#374151",
+          fontSize: 9,
+          fontWeight: 700
+        }
+      }, "2\xD7 Dbl"), /*#__PURE__*/React.createElement("button", {
+        onClick: liveRepeatBets,
+        disabled: liveLastBets.length === 0,
+        style: {
+          flex: 1,
+          padding: "7px 0",
+          borderRadius: 8,
+          border: "1px solid #2d4057",
+          background: "#0f1923",
+          color: liveLastBets.length > 0 ? "#86efac" : "#374151",
+          fontSize: 9,
+          fontWeight: 700
+        }
+      }, "\u267B Rpt")), liveTotalBet > 0 && /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "center",
+          fontSize: 11,
+          fontWeight: 800,
+          color: "#fbbf24"
+        }
+      }, "Total Bet: ", cur.symbol, fmtNum(liveTotalBet)), /*#__PURE__*/React.createElement("button", {
+        onClick: function onClick() {
+          return setLiveSelectingWinner(!liveSelectingWinner);
+        },
+        style: {
+          width: "100%",
+          padding: "14px 0",
+          borderRadius: 12,
+          border: liveSelectingWinner ? "2px solid #fbbf24" : "2px solid #2d4057",
+          background: liveSelectingWinner ? "linear-gradient(135deg,#92400e,#78350f)" : "#0f1923",
+          color: liveSelectingWinner ? "#fbbf24" : "#94a3b8",
+          fontSize: 14,
+          fontWeight: 800,
+          cursor: "pointer"
+        }
+      }, liveSelectingWinner ? "👆 Tap the winning number..." : "🎯 Choose Winning Number"), /*#__PURE__*/React.createElement(RouletteBoard, {
+        roulette: sess.roulette,
+        winningNumber: liveSelectingWinner ? null : flashNum,
+        stratBets: stratBets,
+        spinning: false,
+        onBet: livePlaceBet,
+        boardBets: liveBoardBets,
+        chipColor: (CHIPS.find(function (c) {
+          return c.val === selectedChip;
+        }) || CHIPS[0]).color,
+        betResults: liveBetResults
+      }), /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "center",
+          fontSize: 9,
+          color: "#475569"
+        }
+      }, liveSelectingWinner ? "Tap a number on the table to record the spin result" : "Tap table to place bets, then Choose Winning Number"));
+    }());
   }
   function TablePage() {
     var selTrack = sess.tracks.find(function (t) {
@@ -9806,10 +10136,10 @@ function App() {
 
   // -- Spin Log Page --
   function SpinPage() {
-    var _useState119 = (0, _react.useState)(false),
-      _useState120 = _slicedToArray(_useState119, 2),
-      showAll = _useState120[0],
-      setShowAll = _useState120[1];
+    var _useState129 = (0, _react.useState)(false),
+      _useState130 = _slicedToArray(_useState129, 2),
+      showAll = _useState130[0],
+      setShowAll = _useState130[1];
     var displaySpins = showAll ? _toConsumableArray(sess.spins).reverse() : _toConsumableArray(sess.spins).reverse().slice(0, 60);
     return /*#__PURE__*/React.createElement("div", {
       style: {
@@ -10342,10 +10672,10 @@ function App() {
 
   // -- Settings Page --
   function SettingsPage() {
-    var _useState121 = (0, _react.useState)(settings.defaultBuyIn || 100),
-      _useState122 = _slicedToArray(_useState121, 2),
-      localBuyIn = _useState122[0],
-      setLocalBuyIn = _useState122[1];
+    var _useState131 = (0, _react.useState)(settings.defaultBuyIn || 100),
+      _useState132 = _slicedToArray(_useState131, 2),
+      localBuyIn = _useState132[0],
+      setLocalBuyIn = _useState132[1];
     function saveBuyIn() {
       updSettings(function (s) {
         s.defaultBuyIn = localBuyIn;
@@ -10866,10 +11196,10 @@ function App() {
   // -- Bankroll Edit --
   function BankrollEdit(_ref73) {
     var onClose = _ref73.onClose;
-    var _useState123 = (0, _react.useState)(sess.bankrollCurrent),
-      _useState124 = _slicedToArray(_useState123, 2),
-      val = _useState124[0],
-      setVal = _useState124[1];
+    var _useState133 = (0, _react.useState)(sess.bankrollCurrent),
+      _useState134 = _slicedToArray(_useState133, 2),
+      val = _useState134[0],
+      setVal = _useState134[1];
     function save() {
       updSess(function (s) {
         s.bankrollCurrent = val;
