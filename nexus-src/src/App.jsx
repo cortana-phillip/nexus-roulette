@@ -785,14 +785,14 @@ export default function App() {
         })()}
 
         {/* Chips + controls (compact, matching Live mode) */}
-        <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap"}}>
-          {CHIPS.map(c=>(<button key={c.val} onClick={()=>setSelectedChip(c.val)} style={{width:34,height:34,borderRadius:"50%",border:"2px solid "+(selectedChip===c.val?"#fbbf24":c.border),background:c.color,color:c.val>=100?"#fff":c.val<=0.5?"#1e293b":"#1e293b",fontSize:c.val<1?7:8,fontWeight:900,cursor:"pointer",boxShadow:selectedChip===c.val?"0 0 8px #fbbf24":"none",display:"flex",alignItems:"center",justifyContent:"center"}}>{c.label}</button>))}
+        <div style={{display:"flex",gap:isLandscape?6:3,justifyContent:"center",flexWrap:"wrap"}}>
+          {CHIPS.map(c=>(<button key={c.val} onClick={()=>setSelectedChip(c.val)} style={{width:isLandscape?44:34,height:isLandscape?44:34,borderRadius:"50%",border:(isLandscape?"3":"2")+"px solid "+(selectedChip===c.val?"#fbbf24":c.border),background:c.color,color:c.val>=100?"#fff":c.val<=0.5?"#1e293b":"#1e293b",fontSize:isLandscape?(c.val<1?9:11):(c.val<1?7:8),fontWeight:900,cursor:"pointer",boxShadow:selectedChip===c.val?"0 0 8px #fbbf24":"none",display:"flex",alignItems:"center",justifyContent:"center"}}>{c.label}</button>))}
         </div>
-        <div style={{display:"flex",gap:3}}>
-          <button onClick={undoBet} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#60a5fa":"#374151",fontSize:8,fontWeight:700}}>↩Undo</button>
-          <button onClick={clearBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#f87171":"#374151",fontSize:8,fontWeight:700}}>✕Clear</button>
-          <button onClick={doubleBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#fbbf24":"#374151",fontSize:8,fontWeight:700}}>2×</button>
-          <button onClick={repeatBets} disabled={lastBets.length===0} style={{flex:1,padding:"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:lastBets.length>0?"#86efac":"#374151",fontSize:8,fontWeight:700}}>♻Rpt</button>
+        <div style={{display:"flex",gap:isLandscape?6:3}}>
+          <button onClick={undoBet} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:isLandscape?"8px 0":"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#60a5fa":"#374151",fontSize:isLandscape?11:8,fontWeight:700}}>↩Undo</button>
+          <button onClick={clearBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:isLandscape?"8px 0":"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#f87171":"#374151",fontSize:isLandscape?11:8,fontWeight:700}}>✕Clear</button>
+          <button onClick={doubleBets} disabled={manualBets.length===0||!!betResults} style={{flex:1,padding:isLandscape?"8px 0":"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:manualBets.length>0&&!betResults?"#fbbf24":"#374151",fontSize:isLandscape?11:8,fontWeight:700}}>2×</button>
+          <button onClick={repeatBets} disabled={lastBets.length===0} style={{flex:1,padding:isLandscape?"8px 0":"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:lastBets.length>0?"#86efac":"#374151",fontSize:isLandscape?11:8,fontWeight:700}}>♻Rpt</button>
         </div>
         {totalBetAmt>0 && <div style={{textAlign:"center",fontSize:10,fontWeight:800,color:"#fbbf24"}}>Bet: {cur.symbol}{fmtNum(totalBetAmt)}</div>}
         {totalBetAmt>0 && !betResults && (

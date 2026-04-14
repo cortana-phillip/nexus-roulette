@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.24";
+  var MY_V="0.40.25";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.24";
+var APP_VERSION = "0.40.25";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2696,7 +2696,7 @@ function RouletteBoard(_ref16) {
   var canBet = !!onBet && !spinning && !betResults;
   var BOARD_ROWS = [[3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36], [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35], [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]];
   var g = 2;
-  var cellH = landscape ? Math.floor(Math.min(window.innerHeight - 160, 300) / 3.2) : 30;
+  var cellH = landscape ? Math.floor(Math.min(window.innerHeight - 190, 250) / 3) : 30;
   var zeroW = landscape ? 40 : 22;
   var colW = landscape ? 36 : 24;
   var cellFs = landscape ? Math.max(14, Math.floor(cellH / 3)) : 11;
@@ -9175,7 +9175,7 @@ function App() {
     }(), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
-        gap: 3,
+        gap: isLandscape ? 6 : 3,
         justifyContent: "center",
         flexWrap: "wrap"
       }
@@ -9186,13 +9186,13 @@ function App() {
           return setSelectedChip(c.val);
         },
         style: {
-          width: 34,
-          height: 34,
+          width: isLandscape ? 44 : 34,
+          height: isLandscape ? 44 : 34,
           borderRadius: "50%",
-          border: "2px solid " + (selectedChip === c.val ? "#fbbf24" : c.border),
+          border: (isLandscape ? "3" : "2") + "px solid " + (selectedChip === c.val ? "#fbbf24" : c.border),
           background: c.color,
           color: c.val >= 100 ? "#fff" : c.val <= 0.5 ? "#1e293b" : "#1e293b",
-          fontSize: c.val < 1 ? 7 : 8,
+          fontSize: isLandscape ? c.val < 1 ? 9 : 11 : c.val < 1 ? 7 : 8,
           fontWeight: 900,
           cursor: "pointer",
           boxShadow: selectedChip === c.val ? "0 0 8px #fbbf24" : "none",
@@ -9204,19 +9204,19 @@ function App() {
     })), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
-        gap: 3
+        gap: isLandscape ? 6 : 3
       }
     }, /*#__PURE__*/React.createElement("button", {
       onClick: undoBet,
       disabled: manualBets.length === 0 || !!betResults,
       style: {
         flex: 1,
-        padding: "5px 0",
+        padding: isLandscape ? "8px 0" : "5px 0",
         borderRadius: 6,
         border: "1px solid #2d4057",
         background: "#0f1923",
         color: manualBets.length > 0 && !betResults ? "#60a5fa" : "#374151",
-        fontSize: 8,
+        fontSize: isLandscape ? 11 : 8,
         fontWeight: 700
       }
     }, "\u21A9Undo"), /*#__PURE__*/React.createElement("button", {
@@ -9224,12 +9224,12 @@ function App() {
       disabled: manualBets.length === 0 || !!betResults,
       style: {
         flex: 1,
-        padding: "5px 0",
+        padding: isLandscape ? "8px 0" : "5px 0",
         borderRadius: 6,
         border: "1px solid #2d4057",
         background: "#0f1923",
         color: manualBets.length > 0 && !betResults ? "#f87171" : "#374151",
-        fontSize: 8,
+        fontSize: isLandscape ? 11 : 8,
         fontWeight: 700
       }
     }, "\u2715Clear"), /*#__PURE__*/React.createElement("button", {
@@ -9237,12 +9237,12 @@ function App() {
       disabled: manualBets.length === 0 || !!betResults,
       style: {
         flex: 1,
-        padding: "5px 0",
+        padding: isLandscape ? "8px 0" : "5px 0",
         borderRadius: 6,
         border: "1px solid #2d4057",
         background: "#0f1923",
         color: manualBets.length > 0 && !betResults ? "#fbbf24" : "#374151",
-        fontSize: 8,
+        fontSize: isLandscape ? 11 : 8,
         fontWeight: 700
       }
     }, "2\xD7"), /*#__PURE__*/React.createElement("button", {
@@ -9250,12 +9250,12 @@ function App() {
       disabled: lastBets.length === 0,
       style: {
         flex: 1,
-        padding: "5px 0",
+        padding: isLandscape ? "8px 0" : "5px 0",
         borderRadius: 6,
         border: "1px solid #2d4057",
         background: "#0f1923",
         color: lastBets.length > 0 ? "#86efac" : "#374151",
-        fontSize: 8,
+        fontSize: isLandscape ? 11 : 8,
         fontWeight: 700
       }
     }, "\u267BRpt")), totalBetAmt > 0 && /*#__PURE__*/React.createElement("div", {

@@ -112,7 +112,7 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
   ];
   const g = 2;
-  const cellH = landscape ? Math.floor(Math.min(window.innerHeight - 160, 300) / 3.2) : 30;
+  const cellH = landscape ? Math.floor(Math.min(window.innerHeight - 190, 250) / 3) : 30;
   const zeroW = landscape ? 40 : 22;
   const colW = landscape ? 36 : 24;
   const cellFs = landscape ? Math.max(14, Math.floor(cellH/3)) : 11;
