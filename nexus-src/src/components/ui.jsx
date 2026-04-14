@@ -99,7 +99,7 @@ function SessionClock({startedAt, endedAt, style, pauseOffset}) {
 }
 
 // -- Roulette Table Board --
-function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boardBets, chipColor, betResults, stratChips}) {
+function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boardBets, chipColor, betResults, stratChips, landscape}) {
   const isAmerican = roulette === "american";
   const sb = stratBets || {};
   const bb = boardBets || {};
@@ -112,6 +112,10 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
   ];
   const g = 2;
+  const cellH = landscape ? 44 : 30;
+  const zeroW = landscape ? 28 : 22;
+  const colW = landscape ? 30 : 24;
+  const cellFs = landscape ? 14 : 11;
   const winStr = winningNumber ? String(winningNumber) : null;
   const winN = winStr && winStr!=="0" && winStr!=="00" ? +winStr : null;
   // Only highlight outside bets on FINAL result, not during spin
@@ -132,11 +136,11 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
     var stratC = sb["s:"+numStr]||null;
     return {
       position:"relative", display:"flex", alignItems:"center", justifyContent:"center",
-      height:30, borderRadius:3, cursor:"default",
+      height:cellH, borderRadius:3, cursor:"default",
       background: isZero?"#166534":isRed?"#991b1b":"#1e293b",
       border: isWin?"2px solid #fbbf24":stratC?"2px solid "+stratC:"1px solid #374151",
       color: isWin?"#fbbf24":"white",
-      fontSize: isZero?10:11, fontWeight:800,
+      fontSize: isZero?(cellFs-1):cellFs, fontWeight:800,
       boxShadow: isWin?"0 0 10px #fbbf24, inset 0 0 6px #fbbf2444":stratC?"inset 0 0 5px "+stratC+"44":"none",
       zIndex: isWin?2:1,
     };
@@ -332,14 +336,14 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
       var minR=3,maxR=-1,minC=12,maxC=-1;
       betNums.forEach(function(p){if(p.r<minR)minR=p.r;if(p.r>maxR)maxR=p.r;if(p.c<minC)minC=p.c;if(p.c>maxC)maxC=p.c;});
       var leftPct, topPx;
-      if(bType==="corner") { leftPct=(minC+1)/12*100; topPx=(minR+1)*(30+g)-g; }
+      if(bType==="corner") { leftPct=(minC+1)/12*100; topPx=(minR+1)*(cellH+g)-g; }
       else if(bType==="split") {
-        if(minR!==maxR) { leftPct=(minC+0.5)/12*100; topPx=(minR+1)*(30+g)-g; }
-        else { leftPct=(minC+1)/12*100; topPx=minR*(30+g)+15; }
+        if(minR!==maxR) { leftPct=(minC+0.5)/12*100; topPx=(minR+1)*(cellH+g)-g; }
+        else { leftPct=(minC+1)/12*100; topPx=minR*(cellH+g)+cellH/2; }
       }
-      else if(bType==="street") { leftPct=(minC+0.5)/12*100; topPx=(30+g)*3-g; }
-      else if(bType==="line") { leftPct=(minC+1)/12*100; topPx=(30+g)*3-g; }
-      else { leftPct=(minC+0.5)/12*100; topPx=1*(30+g)+15; }
+      else if(bType==="street") { leftPct=(minC+0.5)/12*100; topPx=(cellH+g)*3-g; }
+      else if(bType==="line") { leftPct=(minC+1)/12*100; topPx=(cellH+g)*3-g; }
+      else { leftPct=(minC+0.5)/12*100; topPx=1*(cellH+g)+cellH/2; }
       overlayChips.push({left:leftPct,top:topPx,amount:ac.amount,posKey:ac.posKey});
     });
   });
@@ -347,12 +351,12 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
   return (
     <div style={{width:"100%",borderRadius:8,border:"1px solid #2d4057",background:"#0a1218",padding:3,display:"flex",flexDirection:"column",gap:g,overflow:"hidden",boxSizing:"border-box"}}>
       <div style={{display:"flex",gap:g}}>
-        <div style={{display:"flex",flexDirection:"column",gap:g,width:22,flexShrink:0,overflow:"visible"}}>
+        <div style={{display:"flex",flexDirection:"column",gap:g,width:zeroW,flexShrink:0}}>
           {cell(0,true,"0")}
           {isAmerican&&cell(0,true,"00")}
         </div>
         <div style={{position:"relative",flex:1,minWidth:0}}>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(12,1fr)",gridTemplateRows:"repeat(3,30px)",gap:g}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(12,1fr)",gridTemplateRows:"repeat(3,"+cellH+"px)",gap:g}}>
             {BOARD_ROWS.map(function(row){return row.map(function(num){return cell(num,false);});})}
           </div>
           {overlayChips.length>0 && React.createElement("div",{style:{position:"absolute",top:0,left:0,right:0,bottom:0,pointerEvents:"none",zIndex:20}},
@@ -366,14 +370,14 @@ function RouletteBoard({roulette, winningNumber, stratBets, spinning, onBet, boa
             })
           )}
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:g,width:24,flexShrink:0}}>
+        <div style={{display:"flex",flexDirection:"column",gap:g,width:colW,flexShrink:0}}>
           {[2,1,0].map(function(c){var on=winGroups.col===c;var bk="column:"+c;var sc=sb[bk]||null;var sCh=sChipsMap[bk]||null;return React.createElement("div",{key:c,onClick:function(){if(canBet)onBet("column",c);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:3,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",fontSize:8,fontWeight:700,cursor:canBet?"pointer":"default",position:"relative"}},"2:1",sCh&&React.createElement(StratChipBadge,{chips:sCh}),bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
         </div>
       </div>
-      <div style={{display:"flex",gap:g,marginLeft:22+g}}>
+      <div style={{display:"flex",gap:g,marginLeft:zeroW+g}}>
         {[{l:"1st 12",i:0},{l:"2nd 12",i:1},{l:"3rd 12",i:2}].map(function(d){var on=winGroups.doz===d.i;var bk="dozen:"+d.i;var sc=sb[bk]||null;var sCh=sChipsMap[bk]||null;return React.createElement("div",{key:d.i,onClick:function(){if(canBet)onBet("dozen",d.i);},style:{flex:1,padding:"6px 0",borderRadius:3,textAlign:"center",fontSize:10,fontWeight:700,border:bb[bk]?"2px solid #fbbf24":on?"2px solid #fbbf24":sc?"2px solid "+sc:"1px solid #374151",color:on?"#fbbf24":sc?sc:bb[bk]?"#fbbf24":"#94a3b8",background:on?"#1c1000":"#0f1923",boxShadow:on?glow(true):sc?"inset 0 0 6px "+sc+"44":bb[bk]?"0 0 6px #fbbf2466":"none",cursor:canBet?"pointer":"default",position:"relative"}},d.l,sCh&&React.createElement(StratChipBadge,{chips:sCh}),bb[bk]&&React.createElement(BetChip,{amount:bb[bk],posKey:bk}));})}
       </div>
-      <div style={{display:"flex",gap:g,marginLeft:22+g}}>
+      <div style={{display:"flex",gap:g,marginLeft:zeroW+g}}>
         {[
           {l:"1-18",k:"low",bg:"#0f1923"},
           {l:"EVEN",k:"even",bg:"#0f1923"},

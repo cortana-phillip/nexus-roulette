@@ -21,7 +21,7 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;font-fa
 <script>
 // Pre-app update check — runs before React, works even when HTML is cached
 (function(){
-  var MY_V="0.40.17";
+  var MY_V="0.40.18";
   try{
     fetch("version.json?t="+Date.now()).then(function(r){return r.json();}).then(function(d){
       if(d.version && d.version!==MY_V && !sessionStorage.getItem("nexus_updating")){
@@ -392,7 +392,7 @@ var TRACK_ICONS = {
   custom: "🃏"
 };
 var KEY = "nexus-roulette-v1";
-var APP_VERSION = "0.40.17";
+var APP_VERSION = "0.40.18";
 var ROI_PRESETS = [5, 10, 15, 20, 25, 30];
 var UNITS = [0.25, 0.50, 1.00];
 var CURRENCIES = {
@@ -2686,7 +2686,8 @@ function RouletteBoard(_ref16) {
     boardBets = _ref16.boardBets,
     chipColor = _ref16.chipColor,
     betResults = _ref16.betResults,
-    stratChips = _ref16.stratChips;
+    stratChips = _ref16.stratChips,
+    landscape = _ref16.landscape;
   var isAmerican = roulette === "american";
   var sb = stratBets || {};
   var bb = boardBets || {};
@@ -2695,6 +2696,10 @@ function RouletteBoard(_ref16) {
   var canBet = !!onBet && !spinning && !betResults;
   var BOARD_ROWS = [[3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36], [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35], [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]];
   var g = 2;
+  var cellH = landscape ? 44 : 30;
+  var zeroW = landscape ? 28 : 22;
+  var colW = landscape ? 30 : 24;
+  var cellFs = landscape ? 14 : 11;
   var winStr = winningNumber ? String(winningNumber) : null;
   var winN = winStr && winStr !== "0" && winStr !== "00" ? +winStr : null;
   // Only highlight outside bets on FINAL result, not during spin
@@ -2719,13 +2724,13 @@ function RouletteBoard(_ref16) {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      height: 30,
+      height: cellH,
       borderRadius: 3,
       cursor: "default",
       background: isZero ? "#166534" : isRed ? "#991b1b" : "#1e293b",
       border: isWin ? "2px solid #fbbf24" : stratC ? "2px solid " + stratC : "1px solid #374151",
       color: isWin ? "#fbbf24" : "white",
-      fontSize: isZero ? 10 : 11,
+      fontSize: isZero ? cellFs - 1 : cellFs,
       fontWeight: 800,
       boxShadow: isWin ? "0 0 10px #fbbf24, inset 0 0 6px #fbbf2444" : stratC ? "inset 0 0 5px " + stratC + "44" : "none",
       zIndex: isWin ? 2 : 1
@@ -3142,24 +3147,24 @@ function RouletteBoard(_ref16) {
       var leftPct, topPx;
       if (bType === "corner") {
         leftPct = (minC + 1) / 12 * 100;
-        topPx = (minR + 1) * (30 + g) - g;
+        topPx = (minR + 1) * (cellH + g) - g;
       } else if (bType === "split") {
         if (minR !== maxR) {
           leftPct = (minC + 0.5) / 12 * 100;
-          topPx = (minR + 1) * (30 + g) - g;
+          topPx = (minR + 1) * (cellH + g) - g;
         } else {
           leftPct = (minC + 1) / 12 * 100;
-          topPx = minR * (30 + g) + 15;
+          topPx = minR * (cellH + g) + cellH / 2;
         }
       } else if (bType === "street") {
         leftPct = (minC + 0.5) / 12 * 100;
-        topPx = (30 + g) * 3 - g;
+        topPx = (cellH + g) * 3 - g;
       } else if (bType === "line") {
         leftPct = (minC + 1) / 12 * 100;
-        topPx = (30 + g) * 3 - g;
+        topPx = (cellH + g) * 3 - g;
       } else {
         leftPct = (minC + 0.5) / 12 * 100;
-        topPx = 1 * (30 + g) + 15;
+        topPx = 1 * (cellH + g) + cellH / 2;
       }
       overlayChips.push({
         left: leftPct,
@@ -3192,9 +3197,8 @@ function RouletteBoard(_ref16) {
       display: "flex",
       flexDirection: "column",
       gap: g,
-      width: 22,
-      flexShrink: 0,
-      overflow: "visible"
+      width: zeroW,
+      flexShrink: 0
     }
   }, cell(0, true, "0"), isAmerican && cell(0, true, "00")), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3206,7 +3210,7 @@ function RouletteBoard(_ref16) {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(12,1fr)",
-      gridTemplateRows: "repeat(3,30px)",
+      gridTemplateRows: "repeat(3," + cellH + "px)",
       gap: g
     }
   }, BOARD_ROWS.map(function (row) {
@@ -3257,7 +3261,7 @@ function RouletteBoard(_ref16) {
       display: "flex",
       flexDirection: "column",
       gap: g,
-      width: 24,
+      width: colW,
       flexShrink: 0
     }
   }, [2, 1, 0].map(function (c) {
@@ -3295,7 +3299,7 @@ function RouletteBoard(_ref16) {
     style: {
       display: "flex",
       gap: g,
-      marginLeft: 22 + g
+      marginLeft: zeroW + g
     }
   }, [{
     l: "1st 12",
@@ -3340,7 +3344,7 @@ function RouletteBoard(_ref16) {
     style: {
       display: "flex",
       gap: g,
-      marginLeft: 22 + g
+      marginLeft: zeroW + g
     }
   }, [{
     l: "1-18",
@@ -7616,26 +7620,42 @@ function App() {
     _useState40 = _slicedToArray(_useState39, 2),
     appState = _useState40[0],
     setAppState = _useState40[1];
-  var _useState41 = (0, _react.useState)(getDriveToken() ? "connected" : "disconnected"),
+  var _useState41 = (0, _react.useState)(window.innerWidth > window.innerHeight),
     _useState42 = _slicedToArray(_useState41, 2),
-    driveSyncStatus = _useState42[0],
-    setDriveSyncStatus = _useState42[1];
-  var _useState43 = (0, _react.useState)(0),
+    isLandscape = _useState42[0],
+    setIsLandscape = _useState42[1];
+  React.useEffect(function () {
+    function checkOrientation() {
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    }
+    window.addEventListener("resize", checkOrientation);
+    window.addEventListener("orientationchange", function () {
+      return setTimeout(checkOrientation, 100);
+    });
+    return function () {
+      window.removeEventListener("resize", checkOrientation);
+    };
+  }, []);
+  var _useState43 = (0, _react.useState)(getDriveToken() ? "connected" : "disconnected"),
     _useState44 = _slicedToArray(_useState43, 2),
-    tab = _useState44[0],
-    setTab = _useState44[1];
-  var _useState45 = (0, _react.useState)("game"),
+    driveSyncStatus = _useState44[0],
+    setDriveSyncStatus = _useState44[1];
+  var _useState45 = (0, _react.useState)(0),
     _useState46 = _slicedToArray(_useState45, 2),
-    appMode = _useState46[0],
-    setAppMode = _useState46[1]; // "game" | "live" | "sim"
-  var _useState47 = (0, _react.useState)(Date.now()),
+    tab = _useState46[0],
+    setTab = _useState46[1];
+  var _useState47 = (0, _react.useState)("game"),
     _useState48 = _slicedToArray(_useState47, 2),
-    livePausedAt = _useState48[0],
-    setLivePausedAt = _useState48[1]; // paused since app starts in game mode
-  var _useState49 = (0, _react.useState)(0),
+    appMode = _useState48[0],
+    setAppMode = _useState48[1]; // "game" | "live" | "sim"
+  var _useState49 = (0, _react.useState)(Date.now()),
     _useState50 = _slicedToArray(_useState49, 2),
-    livePausedTotal = _useState50[0],
-    setLivePausedTotal = _useState50[1];
+    livePausedAt = _useState50[0],
+    setLivePausedAt = _useState50[1]; // paused since app starts in game mode
+  var _useState51 = (0, _react.useState)(0),
+    _useState52 = _slicedToArray(_useState51, 2),
+    livePausedTotal = _useState52[0],
+    setLivePausedTotal = _useState52[1];
 
   // Track paused time when leaving/entering live mode
   (0, _react.useEffect)(function () {
@@ -7652,133 +7672,133 @@ function App() {
       if (!livePausedAt) setLivePausedAt(Date.now());
     }
   }, [appMode]);
-  var _useState51 = (0, _react.useState)(defaultSimConfig),
-    _useState52 = _slicedToArray(_useState51, 2),
-    simCfg = _useState52[0],
-    setSimCfg = _useState52[1];
-  var _useState53 = (0, _react.useState)(false),
+  var _useState53 = (0, _react.useState)(defaultSimConfig),
     _useState54 = _slicedToArray(_useState53, 2),
-    simRunning = _useState54[0],
-    setSimRunning = _useState54[1];
+    simCfg = _useState54[0],
+    setSimCfg = _useState54[1];
   var _useState55 = (0, _react.useState)(false),
     _useState56 = _slicedToArray(_useState55, 2),
-    simPaused = _useState56[0],
-    setSimPaused = _useState56[1];
-  var _useState57 = (0, _react.useState)(0),
+    simRunning = _useState56[0],
+    setSimRunning = _useState56[1];
+  var _useState57 = (0, _react.useState)(false),
     _useState58 = _slicedToArray(_useState57, 2),
-    simProgress = _useState58[0],
-    setSimProgress = _useState58[1]; // sessions completed
-  var _useState59 = (0, _react.useState)(null),
+    simPaused = _useState58[0],
+    setSimPaused = _useState58[1];
+  var _useState59 = (0, _react.useState)(0),
     _useState60 = _slicedToArray(_useState59, 2),
-    simResults = _useState60[0],
-    setSimResults = _useState60[1];
-  var _useState61 = (0, _react.useState)(false),
+    simProgress = _useState60[0],
+    setSimProgress = _useState60[1]; // sessions completed
+  var _useState61 = (0, _react.useState)(null),
     _useState62 = _slicedToArray(_useState61, 2),
-    simDone = _useState62[0],
-    setSimDone = _useState62[1];
-  var simStopRef = React.useRef(false);
+    simResults = _useState62[0],
+    setSimResults = _useState62[1];
   var _useState63 = (0, _react.useState)(false),
     _useState64 = _slicedToArray(_useState63, 2),
-    addOpen = _useState64[0],
-    setAddOpen = _useState64[1];
-  var _useState65 = (0, _react.useState)(null),
+    simDone = _useState64[0],
+    setSimDone = _useState64[1];
+  var simStopRef = React.useRef(false);
+  var _useState65 = (0, _react.useState)(false),
     _useState66 = _slicedToArray(_useState65, 2),
-    selectedTrackId = _useState66[0],
-    setSelectedTrackId = _useState66[1];
+    addOpen = _useState66[0],
+    setAddOpen = _useState66[1];
   var _useState67 = (0, _react.useState)(null),
     _useState68 = _slicedToArray(_useState67, 2),
-    result = _useState68[0],
-    setResult = _useState68[1];
+    selectedTrackId = _useState68[0],
+    setSelectedTrackId = _useState68[1];
   var _useState69 = (0, _react.useState)(null),
     _useState70 = _slicedToArray(_useState69, 2),
-    flashNum = _useState70[0],
-    setFlashNum = _useState70[1];
+    result = _useState70[0],
+    setResult = _useState70[1];
   var _useState71 = (0, _react.useState)(null),
     _useState72 = _slicedToArray(_useState71, 2),
-    prevSessState = _useState72[0],
-    setPrevSessState = _useState72[1];
+    flashNum = _useState72[0],
+    setFlashNum = _useState72[1];
   var _useState73 = (0, _react.useState)(null),
     _useState74 = _slicedToArray(_useState73, 2),
-    draggingId = _useState74[0],
-    setDraggingId = _useState74[1];
+    prevSessState = _useState74[0],
+    setPrevSessState = _useState74[1];
   var _useState75 = (0, _react.useState)(null),
     _useState76 = _slicedToArray(_useState75, 2),
-    dragOverId = _useState76[0],
-    setDragOverId = _useState76[1];
+    draggingId = _useState76[0],
+    setDraggingId = _useState76[1];
   var _useState77 = (0, _react.useState)(null),
     _useState78 = _slicedToArray(_useState77, 2),
-    highlightTrackId = _useState78[0],
-    setHighlightTrackId = _useState78[1];
+    dragOverId = _useState78[0],
+    setDragOverId = _useState78[1];
   var _useState79 = (0, _react.useState)(null),
     _useState80 = _slicedToArray(_useState79, 2),
-    editTrackId = _useState80[0],
-    setEditTrackId = _useState80[1];
-  var _useState81 = (0, _react.useState)(false),
+    highlightTrackId = _useState80[0],
+    setHighlightTrackId = _useState80[1];
+  var _useState81 = (0, _react.useState)(null),
     _useState82 = _slicedToArray(_useState81, 2),
-    gameSpinning = _useState82[0],
-    setGameSpinning = _useState82[1];
-  var _useState83 = (0, _react.useState)(null),
+    editTrackId = _useState82[0],
+    setEditTrackId = _useState82[1];
+  var _useState83 = (0, _react.useState)(false),
     _useState84 = _slicedToArray(_useState83, 2),
-    gameResult = _useState84[0],
-    setGameResult = _useState84[1];
+    gameSpinning = _useState84[0],
+    setGameSpinning = _useState84[1];
   var _useState85 = (0, _react.useState)(null),
     _useState86 = _slicedToArray(_useState85, 2),
-    lastSpinDelta = _useState86[0],
-    setLastSpinDelta = _useState86[1];
-  var _useState87 = (0, _react.useState)(1),
+    gameResult = _useState86[0],
+    setGameResult = _useState86[1];
+  var _useState87 = (0, _react.useState)(null),
     _useState88 = _slicedToArray(_useState87, 2),
-    selectedChip = _useState88[0],
-    setSelectedChip = _useState88[1];
-  var _useState89 = (0, _react.useState)([]),
+    lastSpinDelta = _useState88[0],
+    setLastSpinDelta = _useState88[1];
+  var _useState89 = (0, _react.useState)(1),
     _useState90 = _slicedToArray(_useState89, 2),
-    manualBets = _useState90[0],
-    setManualBets = _useState90[1];
+    selectedChip = _useState90[0],
+    setSelectedChip = _useState90[1];
   var _useState91 = (0, _react.useState)([]),
     _useState92 = _slicedToArray(_useState91, 2),
-    lastBets = _useState92[0],
-    setLastBets = _useState92[1];
-  var _useState93 = (0, _react.useState)(null),
+    manualBets = _useState92[0],
+    setManualBets = _useState92[1];
+  var _useState93 = (0, _react.useState)([]),
     _useState94 = _slicedToArray(_useState93, 2),
-    betResults = _useState94[0],
-    setBetResults = _useState94[1];
-  var _useState95 = (0, _react.useState)([]),
+    lastBets = _useState94[0],
+    setLastBets = _useState94[1];
+  var _useState95 = (0, _react.useState)(null),
     _useState96 = _slicedToArray(_useState95, 2),
-    undoStack = _useState96[0],
-    setUndoStack = _useState96[1];
-  var _useState97 = (0, _react.useState)(null),
+    betResults = _useState96[0],
+    setBetResults = _useState96[1];
+  var _useState97 = (0, _react.useState)([]),
     _useState98 = _slicedToArray(_useState97, 2),
-    animNumber = _useState98[0],
-    setAnimNumber = _useState98[1];
-  var clearTimerRef = React.useRef(null);
-  var _useState99 = (0, _react.useState)(true),
+    undoStack = _useState98[0],
+    setUndoStack = _useState98[1];
+  var _useState99 = (0, _react.useState)(null),
     _useState100 = _slicedToArray(_useState99, 2),
-    liveSelectingWinner = _useState100[0],
-    setLiveSelectingWinner = _useState100[1];
-  var _useState101 = (0, _react.useState)(null),
+    animNumber = _useState100[0],
+    setAnimNumber = _useState100[1];
+  var clearTimerRef = React.useRef(null);
+  var _useState101 = (0, _react.useState)(true),
     _useState102 = _slicedToArray(_useState101, 2),
-    liveWinNumber = _useState102[0],
-    setLiveWinNumber = _useState102[1];
-  var _useState103 = (0, _react.useState)([]),
+    liveSelectingWinner = _useState102[0],
+    setLiveSelectingWinner = _useState102[1];
+  var _useState103 = (0, _react.useState)(null),
     _useState104 = _slicedToArray(_useState103, 2),
-    liveManualBets = _useState104[0],
-    setLiveManualBets = _useState104[1];
+    liveWinNumber = _useState104[0],
+    setLiveWinNumber = _useState104[1];
   var _useState105 = (0, _react.useState)([]),
     _useState106 = _slicedToArray(_useState105, 2),
-    liveLastBets = _useState106[0],
-    setLiveLastBets = _useState106[1];
-  var _useState107 = (0, _react.useState)(null),
+    liveManualBets = _useState106[0],
+    setLiveManualBets = _useState106[1];
+  var _useState107 = (0, _react.useState)([]),
     _useState108 = _slicedToArray(_useState107, 2),
-    liveBetResults = _useState108[0],
-    setLiveBetResults = _useState108[1];
-  var _useState109 = (0, _react.useState)([]),
+    liveLastBets = _useState108[0],
+    setLiveLastBets = _useState108[1];
+  var _useState109 = (0, _react.useState)(null),
     _useState110 = _slicedToArray(_useState109, 2),
-    liveUndoStack = _useState110[0],
-    setLiveUndoStack = _useState110[1];
-  var liveClearTimerRef = React.useRef(null);
-  var _useState111 = (0, _react.useState)(null),
+    liveBetResults = _useState110[0],
+    setLiveBetResults = _useState110[1];
+  var _useState111 = (0, _react.useState)([]),
     _useState112 = _slicedToArray(_useState111, 2),
-    updateAvailable = _useState112[0],
-    setUpdateAvailable = _useState112[1]; // {version, notes}
+    liveUndoStack = _useState112[0],
+    setLiveUndoStack = _useState112[1];
+  var liveClearTimerRef = React.useRef(null);
+  var _useState113 = (0, _react.useState)(null),
+    _useState114 = _slicedToArray(_useState113, 2),
+    updateAvailable = _useState114[0],
+    setUpdateAvailable = _useState114[1]; // {version, notes}
 
   // Check for app updates
   (0, _react.useEffect)(function () {
@@ -7798,46 +7818,46 @@ function App() {
       return clearInterval(iv);
     };
   }, []);
-  var _useState113 = (0, _react.useState)(false),
-    _useState114 = _slicedToArray(_useState113, 2),
-    buyInOpen = _useState114[0],
-    setBuyInOpen = _useState114[1];
   var _useState115 = (0, _react.useState)(false),
     _useState116 = _slicedToArray(_useState115, 2),
-    currencyOpen = _useState116[0],
-    setCurrencyOpen = _useState116[1];
+    buyInOpen = _useState116[0],
+    setBuyInOpen = _useState116[1];
   var _useState117 = (0, _react.useState)(false),
     _useState118 = _slicedToArray(_useState117, 2),
-    changelogOpen = _useState118[0],
-    setChangelogOpen = _useState118[1];
+    currencyOpen = _useState118[0],
+    setCurrencyOpen = _useState118[1];
   var _useState119 = (0, _react.useState)(false),
     _useState120 = _slicedToArray(_useState119, 2),
-    editBankroll = _useState120[0],
-    setEditBankroll = _useState120[1];
+    changelogOpen = _useState120[0],
+    setChangelogOpen = _useState120[1];
   var _useState121 = (0, _react.useState)(false),
     _useState122 = _slicedToArray(_useState121, 2),
-    cashOutOpen = _useState122[0],
-    setCashOutOpen = _useState122[1];
+    editBankroll = _useState122[0],
+    setEditBankroll = _useState122[1];
   var _useState123 = (0, _react.useState)(false),
     _useState124 = _slicedToArray(_useState123, 2),
-    hardResetOpen = _useState124[0],
-    setHardResetOpen = _useState124[1];
+    cashOutOpen = _useState124[0],
+    setCashOutOpen = _useState124[1];
   var _useState125 = (0, _react.useState)(false),
     _useState126 = _slicedToArray(_useState125, 2),
-    feedbackOpen = _useState126[0],
-    setFeedbackOpen = _useState126[1];
-  var _useState127 = (0, _react.useState)(""),
+    hardResetOpen = _useState126[0],
+    setHardResetOpen = _useState126[1];
+  var _useState127 = (0, _react.useState)(false),
     _useState128 = _slicedToArray(_useState127, 2),
-    feedbackText = _useState128[0],
-    setFeedbackText = _useState128[1];
-  var _useState129 = (0, _react.useState)("fibonacci"),
+    feedbackOpen = _useState128[0],
+    setFeedbackOpen = _useState128[1];
+  var _useState129 = (0, _react.useState)(""),
     _useState130 = _slicedToArray(_useState129, 2),
-    pendingTrackType = _useState130[0],
-    setPendingTrackType = _useState130[1];
-  var _useState131 = (0, _react.useState)(defaultFibCfg()),
+    feedbackText = _useState130[0],
+    setFeedbackText = _useState130[1];
+  var _useState131 = (0, _react.useState)("fibonacci"),
     _useState132 = _slicedToArray(_useState131, 2),
-    pendingTrackCfg = _useState132[0],
-    setPendingTrackCfg = _useState132[1];
+    pendingTrackType = _useState132[0],
+    setPendingTrackType = _useState132[1];
+  var _useState133 = (0, _react.useState)(defaultFibCfg()),
+    _useState134 = _slicedToArray(_useState133, 2),
+    pendingTrackCfg = _useState134[0],
+    setPendingTrackCfg = _useState134[1];
   var sessKey = appMode === "game" ? "gameSession" : "currentSession";
   var sess = appState[sessKey] || appState.currentSession;
   var livePauseOffset = livePausedTotal + (livePausedAt ? Date.now() - livePausedAt : 0);
@@ -9097,7 +9117,8 @@ function App() {
           return c.val === selectedChip;
         }) || CHIPS[0]).color,
         betResults: betResults,
-        stratChips: computeStratChips()
+        stratChips: computeStratChips(),
+        landscape: isLandscape
       });
     }(), /*#__PURE__*/React.createElement("div", {
       style: {
@@ -9980,7 +10001,8 @@ function App() {
           return c.val === selectedChip;
         }) || CHIPS[0]).color,
         betResults: liveBetResults,
-        stratChips: computeStratChips()
+        stratChips: computeStratChips(),
+        landscape: isLandscape
       }), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
@@ -10972,10 +10994,10 @@ function App() {
 
   // -- Spin Log Page --
   function SpinPage() {
-    var _useState133 = (0, _react.useState)(false),
-      _useState134 = _slicedToArray(_useState133, 2),
-      showAll = _useState134[0],
-      setShowAll = _useState134[1];
+    var _useState135 = (0, _react.useState)(false),
+      _useState136 = _slicedToArray(_useState135, 2),
+      showAll = _useState136[0],
+      setShowAll = _useState136[1];
     var displaySpins = showAll ? _toConsumableArray(sess.spins).reverse() : _toConsumableArray(sess.spins).reverse().slice(0, 60);
     return /*#__PURE__*/React.createElement("div", {
       style: {
@@ -11508,10 +11530,10 @@ function App() {
 
   // -- Settings Page --
   function SettingsPage() {
-    var _useState135 = (0, _react.useState)(settings.defaultBuyIn || 100),
-      _useState136 = _slicedToArray(_useState135, 2),
-      localBuyIn = _useState136[0],
-      setLocalBuyIn = _useState136[1];
+    var _useState137 = (0, _react.useState)(settings.defaultBuyIn || 100),
+      _useState138 = _slicedToArray(_useState137, 2),
+      localBuyIn = _useState138[0],
+      setLocalBuyIn = _useState138[1];
     function saveBuyIn() {
       updSettings(function (s) {
         s.defaultBuyIn = localBuyIn;
@@ -12032,10 +12054,10 @@ function App() {
   // -- Bankroll Edit --
   function BankrollEdit(_ref74) {
     var onClose = _ref74.onClose;
-    var _useState137 = (0, _react.useState)(sess.bankrollCurrent),
-      _useState138 = _slicedToArray(_useState137, 2),
-      val = _useState138[0],
-      setVal = _useState138[1];
+    var _useState139 = (0, _react.useState)(sess.bankrollCurrent),
+      _useState140 = _slicedToArray(_useState139, 2),
+      val = _useState140[0],
+      setVal = _useState140[1];
     function save() {
       updSess(function (s) {
         s.bankrollCurrent = val;

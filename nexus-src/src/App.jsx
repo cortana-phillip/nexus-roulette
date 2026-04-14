@@ -1,6 +1,13 @@
 // -- Main App Component --
 export default function App() {
   const [appState, setAppState] = useState(loadApp);
+  const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+  React.useEffect(()=>{
+    function checkOrientation(){setIsLandscape(window.innerWidth > window.innerHeight);}
+    window.addEventListener("resize",checkOrientation);
+    window.addEventListener("orientationchange",()=>setTimeout(checkOrientation,100));
+    return ()=>{window.removeEventListener("resize",checkOrientation);};
+  },[]);
   const [driveSyncStatus, setDriveSyncStatus] = useState(getDriveToken()?"connected":"disconnected");
   const [tab, setTab] = useState(0);
   const [appMode, setAppMode] = useState("game"); // "game" | "live" | "sim"
@@ -774,7 +781,7 @@ export default function App() {
             if(t.type==="solution") { (t.config.activeBets||[]).forEach(b=>{if(!stratBets["s:"+b.number])stratBets["s:"+b.number]=t.color;}); }
             if(t.type==="custom") { (t.config.positions||[]).forEach(function(p){var pk=p.type==="straight"?"s:"+p.target:p.type+(p.target!==undefined?":"+p.target:"");if(!stratBets[pk])stratBets[pk]=t.color;}); }
           });
-          return <RouletteBoard roulette={sess.roulette} winningNumber={gameSpinning?null:gameResult} stratBets={stratBets} spinning={false} onBet={placeBet} boardBets={boardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={betResults} stratChips={computeStratChips()}/>;
+          return <RouletteBoard roulette={sess.roulette} winningNumber={gameSpinning?null:gameResult} stratBets={stratBets} spinning={false} onBet={placeBet} boardBets={boardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={betResults} stratChips={computeStratChips()} landscape={isLandscape}/>;
         })()}
 
         {/* Chips + controls (compact, matching Live mode) */}
@@ -984,7 +991,7 @@ export default function App() {
           return (
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
               <button onClick={()=>setLiveSelectingWinner(!liveSelectingWinner)} style={{width:"100%",padding:"12px 0",borderRadius:10,border:liveSelectingWinner?"2px solid #fbbf24":"2px solid #2d4057",background:liveSelectingWinner?"linear-gradient(135deg,#92400e,#78350f)":"#0f1923",color:liveSelectingWinner?"#fbbf24":"#94a3b8",fontSize:13,fontWeight:800,cursor:"pointer"}}>{liveSelectingWinner?"👆 Tap the winning number...":"🎯 Choose Winning Number"}</button>
-              <RouletteBoard roulette={sess.roulette} winningNumber={liveWinNumber} stratBets={stratBets} spinning={false} onBet={livePlaceBet} boardBets={liveBoardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={liveBetResults} stratChips={computeStratChips()}/>
+              <RouletteBoard roulette={sess.roulette} winningNumber={liveWinNumber} stratBets={stratBets} spinning={false} onBet={livePlaceBet} boardBets={liveBoardBets} chipColor={(CHIPS.find(c=>c.val===selectedChip)||CHIPS[0]).color} betResults={liveBetResults} stratChips={computeStratChips()} landscape={isLandscape}/>
               <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap"}}>{CHIPS.map(c=>(<button key={c.val} onClick={()=>{setSelectedChip(c.val);setLiveSelectingWinner(false);}} style={{width:34,height:34,borderRadius:"50%",border:"2px solid "+(selectedChip===c.val&&!liveSelectingWinner?"#fbbf24":c.border),background:c.color,color:c.val>=100?"#fff":c.val<=0.5?"#1e293b":"#1e293b",fontSize:c.val<1?6:8,fontWeight:900,cursor:"pointer",boxShadow:selectedChip===c.val&&!liveSelectingWinner?"0 0 8px #fbbf24":"none",display:"flex",alignItems:"center",justifyContent:"center"}}>{c.label}</button>))}</div>
               <div style={{display:"flex",gap:3}}><button onClick={liveUndoBet} disabled={liveManualBets.length===0||!!liveBetResults} style={{flex:1,padding:"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:liveManualBets.length>0&&!liveBetResults?"#60a5fa":"#374151",fontSize:8,fontWeight:700}}>↩Undo</button><button onClick={liveClearBets} disabled={liveManualBets.length===0||!!liveBetResults} style={{flex:1,padding:"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:liveManualBets.length>0&&!liveBetResults?"#f87171":"#374151",fontSize:8,fontWeight:700}}>✕Clear</button><button onClick={liveDoubleBets} disabled={liveManualBets.length===0||!!liveBetResults} style={{flex:1,padding:"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:liveManualBets.length>0&&!liveBetResults?"#fbbf24":"#374151",fontSize:8,fontWeight:700}}>2×</button><button onClick={liveRepeatBets} disabled={liveLastBets.length===0} style={{flex:1,padding:"5px 0",borderRadius:6,border:"1px solid #2d4057",background:"#0f1923",color:liveLastBets.length>0?"#86efac":"#374151",fontSize:8,fontWeight:700}}>♻Rpt</button></div>
               {liveTotalBet>0&&<div style={{textAlign:"center",fontSize:10,fontWeight:800,color:"#fbbf24"}}>Bet: {cur.symbol}{fmtNum(liveTotalBet)}</div>}

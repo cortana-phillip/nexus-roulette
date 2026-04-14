@@ -1,1 +1,1 @@
-{"version":"0.40.17","date":"2026-04-14","notes":"Fixed chips disappearing - moved bet state to App level so React hooks run unconditionally on every render."}
+{"version":"0.40.18","date":"2026-04-14","notes":"Landscape mode! Rotate your phone sideways for a bigger roulette table with taller cells and larger numbers."}
